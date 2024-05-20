@@ -4,14 +4,13 @@ const AuthPage = () => {
     const [loginStatus, setLoginStatus] = useState(null);
 
     useEffect(() => {
-        // Check if the URL contains a success parameter indicating successful login
         const params = new URLSearchParams(window.location.search);
         if (params.get('success')) {
           setLoginStatus('success');
         }
       }, []);
   const handleClick = ()=>{
-    const url= `${process.env.REACT_APP_API_URL}/auth/google`;
+    const url= `http://localhost:5001/auth/google`;
     console.log(url);
     window.location.href = url;
   }
