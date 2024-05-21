@@ -4,6 +4,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import Profile from './profile';
 
 const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -22,12 +23,12 @@ const Home = () => {
       const response = await axios.post('http://localhost:5001/start-recording', { meetUrl });
       console.log('Recording started successfully:', response.data);
       setIsLoading(false);
-      toast.success('Meeting Recording successfully started!');
+      // toast.success('Meeting Recording successfully started!');
 
     } catch (error) {
       console.error('Error starting recording:', error);
       setIsLoading(false);
-      toast.error('Failed to record meetings');
+      // toast.error('Failed to record meetings');
     }
   };
 
@@ -85,7 +86,10 @@ const Home = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <div style={{display:"flex",justifyContent:'space-between'}}>
       <h1 className="text-2xl font-bold mb-4">Home Page</h1>
+      <Profile/>
+      </div>
       <button
         className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded"
         onClick={() => setIsModalOpen(true)}
