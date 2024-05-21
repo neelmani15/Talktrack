@@ -43,10 +43,10 @@ app.get('/', (req, res) => {
 });
 
 
-const userRouter= require("./routes/user")
-
+const userRouter= require("./Routes/user")
+const OAuthRouter= require("./Routes/oauth")
 app.use("/user",userRouter)
-
+app.use("/auth",OAuthRouter)
 const calendar = google.calendar({
     version:"v3",
     auth:process.env.API_KEY
@@ -64,15 +64,15 @@ const scopes = [
     'https://www.googleapis.com/auth/calendar'
   ];
 
-app.get('/auth/google',(req,res)=>{
-    const url = oauth2Client.generateAuthUrl({
-        access_type: 'offline',
-        scope: scopes
-    });
-    // const myUrl = new URL(url); 
-    // res.redirect(myUrl);
-    res.redirect(url);
-});
+// app.get('/auth/google',(req,res)=>{
+//     const url = oauth2Client.generateAuthUrl({
+//         access_type: 'offline',
+//         scope: scopes
+//     });
+//     // const myUrl = new URL(url); 
+//     // res.redirect(myUrl);
+//     res.redirect(url);
+// });
 
 // app.get('/auth/google/callback',async (req,res)=>{
 //     // console.log(req.query);
@@ -354,38 +354,38 @@ const cookieOptions = {
     httpOnly: false // Allows the cookie to be accessed via JavaScript
   };
   
-  app.get('/auth/google/callback', async (req, res) => {
-    try {
-      const code = req.query.code;
-      const { tokens } = await oauth2Client.getToken(code);
-      oauth2Client.setCredentials(tokens);
+//   app.get('/auth/google/callback', async (req, res) => {
+//     try {
+//       const code = req.query.code;
+//       const { tokens } = await oauth2Client.getToken(code);
+//       oauth2Client.setCredentials(tokens);
   
-      const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
-        headers: {
-          Authorization: `Bearer ${tokens.access_token}`
-        }
-      });
+//       const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
+//         headers: {
+//           Authorization: `Bearer ${tokens.access_token}`
+//         }
+//       });
   
-      await User.findOneAndUpdate({ googleId: data.id }, {
-        googleId: data.id,
-        email: data.email,
-        displayName: data.name,
-        googleAccessToken: tokens.access_token
-      }, { upsert: true });
+//       await User.findOneAndUpdate({ googleId: data.id }, {
+//         googleId: data.id,
+//         email: data.email,
+//         displayName: data.name,
+//         googleAccessToken: tokens.access_token
+//       }, { upsert: true });
   
-      console.log(data);
+//       console.log(data);
   
-      // Encode the email
-      const encodedEmail = encodeURIComponent(data.email);
-      // Set cookie with the email
-      res.cookie('user_email', data.email, { httpOnly: true, secure: false });
-      // Redirect with encoded email as a query parameter
-      res.redirect(`http://localhost:3000/login/success?email=${encodedEmail}`);
-    } catch (err) {
-      console.log("Error in Login", err);
-      res.status(404).json({ message: 'Unable to Register User' });
-    }
-  });
+//       // Encode the email
+//       const encodedEmail = encodeURIComponent(data.email);
+//       // Set cookie with the email
+//       res.cookie('user_email', data.email, { httpOnly: true, secure: false });
+//       // Redirect with encoded email as a query parameter
+//       res.redirect(`http://localhost:3000/login/success?email=${encodedEmail}`);
+//     } catch (err) {
+//       console.log("Error in Login", err);
+//       res.status(404).json({ message: 'Unable to Register User' });
+//     }
+//   });
   
   
 
@@ -765,22 +765,22 @@ app.get('/allevents', async (req, res) => {
             // Initialize the list to store all events
             var alleventslist = [];
 
-            // Iterate through each event and add it to the list
-            user.events.forEach(event => {
-                alleventslist.push(event);
-            });
+//             // Iterate through each event and add it to the list
+//             user.events.forEach(event => {
+//                 alleventslist.push(event);
+//             });
 
-            // Send the list of all events to the frontend
-            // res.json(alleventslist);
-            res.status(200).json({ message: 'All Events are listed',alleventslist });
-        } else {
-            res.status(404).json({ message: 'User not found or no events found for the user.' });
-        }
-    } catch (error) {
-        console.error('Error fetching events:', error);
-        res.status(500).send('Internal Server Error');
-    }
-});
+//             // Send the list of all events to the frontend
+//             // res.json(alleventslist);
+//             res.status(200).json({ message: 'All Events are listed',alleventslist });
+//         } else {
+//             res.status(404).json({ message: 'User not found or no events found for the user.' });
+//         }
+//     } catch (error) {
+//         console.error('Error fetching events:', error);
+//         res.status(500).send('Internal Server Error');
+//     }
+// });
 
 app.listen(Port,()=>{
     DBConnection();

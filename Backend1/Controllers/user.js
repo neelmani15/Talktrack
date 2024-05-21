@@ -24,129 +24,207 @@ const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { fromEnv } = require('@aws-sdk/credential-provider-env');
 
-async function HandleScheduleEvent(req,res){
-    console.log(req.body.formData);
-    // const code = req.query;
-    // console.log(code);
-    // const {tokens}= await oauth2Client.getToken(code);
-    // oauth2Client.setCredentials(tokens);
-    // console.log(oauth2Client.credentials);
-    console.log(oauth2Client.credentials.access_token)
-    console.log(oauth2Client)
-    const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
-        headers: {
-            Authorization: `Bearer ${oauth2Client.credentials.access_token}`
-        }
-    });
+// async function HandleScheduleEvent(req,res){
+//     console.log(req.body.formData);
 
-    const attendeesEmails = [
-        { 'email': 'neelmani242@gmail.com' },
-        // { 'email': 'user2@example.com' }
-        ];
-
-    const user = await User.findOne({ googleId: data.id });
-    // const event = {
-    //     summary:"This is a test event",
-    //     description:"Some event is very important",
-    //     start:{
-    //         dateTime: new Date().toISOString(),
-    //     },
-    //     end: {
-    //         dateTime: new Date(new Date().getTime() + 3600000).toISOString(), 
-    //     },
-    // };
-    // user.events.push(event);
-    // await user.save();
-
-    const event = {
-        summary: req.body.formData.summary,
-        location: 'Virtual / Google Meet',
-        description: req.body.formData.description,
-        start: {
-          dateTime: req.body.formData.startTime,
-        },
-        end: {
-          dateTime: req.body.formData.endTime,
-        },
-        attendees: attendeesEmails,
-        reminders: {
-          useDefault: false,
-          overrides: [
-            { method: 'email', 'minutes': 24 * 60 },
-            { method: 'popup', 'minutes': 10 },
-          ],
-        },
-        conferenceData: {
-          createRequest: {
-            conferenceSolutionKey: {
-              type: 'hangoutsMeet'
-            },
-            requestId: 'coding-calendar-demo'
-          }
-        },
-      };
+//     const attendeesEmails = [
+//         { 'email': 'neelmani242@gmail.com' },
+//         // { 'email': 'user2@example.com' }
+//         ];
+//     const { userEmail, formData } = req.body;
+//     const user = await User.findOne({  email: userEmail});
+//     const event = {
+//         summary: req.body.formData.summary,
+//         location: 'Virtual / Google Meet',
+//         description: req.body.formData.description,
+//         start: {
+//           dateTime: req.body.formData.startTime,
+//         },
+//         end: {
+//           dateTime: req.body.formData.endTime,
+//         },
+//         attendees: attendeesEmails,
+//         reminders: {
+//           useDefault: false,
+//           overrides: [
+//             { method: 'email', 'minutes': 24 * 60 },
+//             { method: 'popup', 'minutes': 10 },
+//           ],
+//         },
+//         conferenceData: {
+//           createRequest: {
+//             conferenceSolutionKey: {
+//               type: 'hangoutsMeet'
+//             },
+//             requestId: 'coding-calendar-demo'
+//           }
+//         },
+//       };
       
 
-      try {
-        const response = await calendar.events.insert({
-            calendarId: 'primary',
-            auth:oauth2Client,
-            resource: event,
-            conferenceDataVersion: 1
-        });
+//       try {
+//         const response = await calendar.events.insert({
+//             calendarId: 'primary',
+//             auth:oauth2Client,
+//             resource: event,
+//             conferenceDataVersion: 1
+//         });
 
-        console.log(response);
+//         console.log(response);
 
-        const summary = response.data.summary;
-        const description = response.data.description;
-        const location = response.data.location;
-        const scheduleStartTime = response.data.start.dateTime;
-        const scheduleEndTime = response.data.end.dateTime;
-        const meetinglink = response.data.hangoutLink;
-        const attendees = response.data.attendees;
-        const alldata={
-            summary:summary,
-            description:description,
-            start:scheduleStartTime,
-            end:scheduleEndTime,
-            url:meetinglink,
-            // attendees:attendees
-        }
+//         const summary = response.data.summary;
+//         const description = response.data.description;
+//         const location = response.data.location;
+//         const scheduleStartTime = response.data.start.dateTime;
+//         const scheduleEndTime = response.data.end.dateTime;
+//         const meetinglink = response.data.hangoutLink;
+//         const attendees = response.data.attendees;
+//         const alldata={
+//             summary:summary,
+//             description:description,
+//             start:scheduleStartTime,
+//             end:scheduleEndTime,
+//             url:meetinglink,
+//             // attendees:attendees
+//         }
 
-        user.events.push(alldata);
-        await user.save();
+//         user.events.push(alldata);
+//         await user.save();
         
     
-        // const { data: { summary, location, start, end, attendees }, config: { data: { conferenceData } } } = response;
+//         // const { data: { summary, location, start, end, attendees }, config: { data: { conferenceData } } } = response;
     
-        // Get the Google Meet conference URL in order to join the call
-        // const { uri } = conferenceData.entryPoints[0];
-        console.log(`📅 Calendar event created: ${summary} at ${location}, from ${scheduleStartTime} to ${scheduleEndTime}, attendees:\n${attendees.map(person => `🧍 ${person.email}`).join('\n')} \n 💻 Join conference call link: ${meetinglink}`);
-        res.send({
-            message:"Event Added"
-        })
-    } catch (error) {
-        console.error("Error:", error.message);
-        if (error.response && error.response.data) {
-            console.error("Google Calendar API error:", error.response.data);
-            res.status(404).json({ message: 'Google Calendar API Error.' });
-        }else{
-            res.status(404).json({ message: 'Unable to add the Event' });
-        }
-    }
+//         // Get the Google Meet conference URL in order to join the call
+//         // const { uri } = conferenceData.entryPoints[0];
+//         console.log(`📅 Calendar event created: ${summary} at ${location}, from ${scheduleStartTime} to ${scheduleEndTime}, attendees:\n${attendees.map(person => `🧍 ${person.email}`).join('\n')} \n 💻 Join conference call link: ${meetinglink}`);
+//         res.send({
+//             message:"Event Added"
+//         })
+//     } catch (error) {
+//         console.error("Error:", error.message);
+//         if (error.response && error.response.data) {
+//             console.error("Google Calendar API error:", error.response.data);
+//             res.status(404).json({ message: 'Google Calendar API Error.' });
+//         }else{
+//             res.status(404).json({ message: 'Unable to add the Event' });
+//         }
+//     }
+// }
+async function HandleScheduleEvent(req, res) {
+  console.log("schedule  executed");
+
+  const attendeesEmails = [
+      { email: 'neelmani242@gmail.com' },
+      // { 'email': 'user2@example.com' }
+  ];
+
+  const { dataToSubmit } = req.body; // Destructure userEmail and formData from the request body
+    console.log(dataToSubmit)
+   
+  try {
+      const user = await User.findOne({ email: dataToSubmit.userEmail });
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      oauth2Client.setCredentials({
+          access_token: user.googleAccessToken,
+          // If you have a refresh token, set it here as well
+          // refresh_token: user.googleRefreshToken,
+      });
+
+      const calendar = google.calendar({
+          version: 'v3',
+          auth: oauth2Client
+      });
+
+      const event = {
+          summary: dataToSubmit.summary,
+          location: 'Virtual / Google Meet',
+          description: dataToSubmit.description,
+          start: {
+              dateTime: dataToSubmit.startTime,
+          },
+          end: {
+              dateTime: dataToSubmit.endTime,
+          },
+          attendees: attendeesEmails,
+          reminders: {
+              useDefault: false,
+              overrides: [
+                  { method: 'email', minutes: 24 * 60 },
+                  { method: 'popup', minutes: 10 },
+              ],
+          },
+          conferenceData: {
+              createRequest: {
+                  conferenceSolutionKey: {
+                      type: 'hangoutsMeet'
+                  },
+                  requestId: 'coding-calendar-demo'
+              }
+          },
+      };
+
+      const response = await calendar.events.insert({
+          calendarId: 'primary',
+          resource: event,
+          conferenceDataVersion: 1
+      });
+
+      console.log(response);
+
+      const summary = response.data.summary;
+      const description = response.data.description;
+      const location = response.data.location;
+      const scheduleStartTime = response.data.start.dateTime;
+      const scheduleEndTime = response.data.end.dateTime;
+      const meetinglink = response.data.hangoutLink;
+      const attendees = response.data.attendees;
+      const alldata = {
+          summary: summary,
+          description: description,
+          start: scheduleStartTime,
+          end: scheduleEndTime,
+          url: meetinglink,
+          // attendees: attendees
+      };
+
+      user.events.push(alldata);
+      await user.save();
+
+      console.log(`📅 Calendar event created: ${summary} at ${location}, from ${scheduleStartTime} to ${scheduleEndTime}, attendees:\n${attendees.map(person => `🧍 ${person.email}`).join('\n')} \n 💻 Join conference call link: ${meetinglink}`);
+      res.send({
+          message: "Event Added"
+      });
+  } catch (error) {
+      console.error("Error:", error.message);
+      if (error.response && error.response.data) {
+          console.error("Google Calendar API error:", error.response.data);
+          res.status(500).json({ message: 'Google Calendar API Error.' });
+      } else {
+          res.status(500).json({ message: 'Unable to add the Event' });
+      }
+  }
 }
 
- async function HandelEventList(req, res) {
+async function HandelEventList(req, res) {
     try {
-        const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
-            headers: {
-                Authorization: `Bearer ${oauth2Client.credentials.access_token}`
-            }
-        });
+        // const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
+        //     headers: {
+        //         Authorization: `Bearer ${oauth2Client.credentials.access_token}`
+        //     }
+        // });
 
-        const user = await User.findOne({ googleId: data.id });
+        const {userEmail}=req.body
+        const user = await User.findOne({  email: userEmail});
+        // oauth2Client.setCredentials({
+        //     access_token:  user.googleAccessToken, 
+        // });
 
-        // Check if user exists and has events
+        // const user = await User.findOne({ googleId: data.id });
+
+        // // Check if user exists and has events
         if (user && user.events.length > 0) {
             // Initialize the list to store all events
             var alleventslist = [];
@@ -173,11 +251,15 @@ async function HandleScheduleEvent(req,res){
       const { meetingId } = req.query;
   
       const meeting = await Meeting.findOne({ meetingId });
-  
+    //   if(meeting ){
+    //     var videoaccess_url = await HandleVideoStream(meetingId)
+    //   }
       if (!meeting) {
         return res.status(404).json({ message: 'Meeting not found' });
       }
-      res.status(200).json(meeting);
+    //   res.status(200).json(meeting,videoaccess_url);
+    const videoaccess_url = await HandleVideoStream(meetingId);
+    res.status(200).json({ meeting, videoaccess_url });
     } catch (error) {
       console.error('Error fetching meeting details:', error);
       res.status(500).json({ error: 'An error occurred while fetching meeting details' });
@@ -189,8 +271,7 @@ const s3Client = new S3Client({
   credentials: fromEnv() // Automatically fetch credentials from environment variables
 });
 
-async function HandleVideoStream(req, res){
-  const { meetingId } = req.params;
+async function HandleVideoStream(meetingId){
 
   const params = {
     Bucket: process.env.S3_BUCKET_NAME,
@@ -200,10 +281,11 @@ async function HandleVideoStream(req, res){
   try {
     const command = new GetObjectCommand(params);
     const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour expiration
-    res.json({ url });
+    // res.json({ url });
+    return url
   } catch (error) {
     console.error("Error generating presigned URL:", error);
-    res.status(500).json({ error: "Error generating presigned URL" });
+    // res.status(500).json({ error: "Error generating presigned URL" });
   }
 }
 

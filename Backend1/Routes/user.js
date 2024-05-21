@@ -16,7 +16,7 @@ const {
 
 router.post("/schedule-event",HandleScheduleEvent)
 
-router.get('/allevents',HandelEventList)
+router.post('/allevents',HandelEventList)
 
 router.get('/meetingdetails',HandleMeetingdetails)
 router.get('/video',HandleVideoStream)
