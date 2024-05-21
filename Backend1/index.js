@@ -403,19 +403,19 @@ async function stopRecording(browser, stream, fileStream,meetingId,userEmail) {
         // const s3Url = await uploadToS3(fileStream.path, 'riktam-recordings',meetingId);
         // console.log(s3Url)
         // isRecordingStopped=true
-        await browser.close();
-        console.log("browser closed")
         const meetingRecord = new Meeting({
             userEmail: userEmail,
             meetingId: meetingId,
             videoS3url: s3Url
         });
-
+        
         // Save the meeting record to the database
         await meetingRecord.save();
-
+        
         console.log("Meeting record saved successfully.");
-
+        
+        await browser.close();
+        console.log("browser closed")
         isRecordingStopped=true
         
     } catch (error) {
@@ -469,8 +469,12 @@ async function checkBotPresence(page, browser, stream, fileStream,meetingId,user
             }
         }
     } catch (error) {
-            console.error('Error checking bot presence:', error);
+        if (error instanceof puppeteer.errors.TargetCloseError) {
+            console.error('Target closed. Terminating gracefully.');
             await stopRecording(browser, stream, fileStream);
+        } else {
+            console.error('Error checking bot presence:', error);
+        }
     }
 }
 
@@ -533,13 +537,15 @@ app.post("/schedule-event", async (req, res) => {
             resource: event,
             conferenceDataVersion: 1
         });
-
+        // console.log(response);
         const summary = response.data.summary;
         const description = response.data.description;
         const location = response.data.location;
         const scheduleStartTime = response.data.start.dateTime;
         const scheduleEndTime = response.data.end.dateTime;
         const meetinglink = response.data.hangoutLink;
+        const userEmail = response.data.organizer.email
+
 
         const alldata = {
             summary: summary,
@@ -552,6 +558,7 @@ app.post("/schedule-event", async (req, res) => {
         user.events.push(alldata);
         await user.save();
 
+        console.log("User Email",userEmail);
         // Schedule the bot to join 5 minutes before the meeting start time
         // const startTime = parseISO(scheduleStartTime);
         // const endTime = parseISO(scheduleEndTime);
@@ -579,7 +586,7 @@ app.post("/schedule-event", async (req, res) => {
             }
             const now = new Date();
             if (isAfter(now, startTime) && isBefore(now, endTime)) {
-                joined = await joinMeeting(meetinglink, startTime);
+                joined = await joinMeeting(meetinglink, userEmail);
                 if (joined) {
                     clearInterval(intervalId);
                     joined=false;
@@ -607,13 +614,14 @@ app.post("/schedule-event", async (req, res) => {
     }
 });
 
-async function joinMeeting(meetUrl, meetingStartTime) {
+async function joinMeeting(meetUrl, userEmail) {
     console.log("Joining Meet");
     // const { meetUrl } = req.body;
     console.log(meetUrl);
     console.log(userEmail);
     const parts = meetUrl.split('/');
 const meetingId = parts[parts.length - 1];
+// const file = fs.createWriteStream("./report/test2.mp4");
 
 console.log(meetingId);
 
@@ -638,8 +646,8 @@ console.log(meetingId);
         
         // Get the media stream
         const stream = await getStream(page, { audio: true, video: true });
-        // stream.pipe(fileStream);
-        stream.pipe(file);
+        stream.pipe(fileStream);
+        // stream.pipe(file);
 
         const navigationPromise = page.waitForNavigation();
         const context = browser.defaultBrowserContext();
