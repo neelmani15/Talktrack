@@ -1,26 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState ,useEffect} from 'react';
 import axios from 'axios';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Profile from './profile';
-
+import { useLocation } from 'react-router-dom';
+import { useUser } from '../contextapi/UserEmailContext';
+import { useNavigate } from 'react-router-dom';
 const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
   const [events, setEvents] = useState([]);
+  const [userId, setUserId] = useState(null);
+  const { userEmail}= useUser();
+  console.log(userEmail)
   const [formData, setFormData] = useState({
     summary: '',
     description: '',
     startTime: '',
     endTime: ''
   });
+
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const startRecording = async (meetUrl) => {
     try {
       setIsLoading(true);
       // Make a POST request to your backend to start recording
-      const response = await axios.post('http://localhost:5001/start-recording', { meetUrl });
+      const response = await axios.post('http://localhost:5001/start-recording', { meetUrl ,userEmail});
       console.log('Recording started successfully:', response.data);
       setIsLoading(false);
       // toast.success('Meeting Recording successfully started!');
@@ -78,7 +86,22 @@ const Home = () => {
       toast.error('Failed to fetch events.');
     }
   };
-
+  const HandleMeetingdetails = async (eventUrl) => {
+    console.log(eventUrl);
+    const parts = eventUrl.split('/');
+    const meetingId = parts[parts.length - 1];
+    console.log(meetingId);
+  
+    try {
+      const response = await axios.get(`http://localhost:5001/user/meetingdetails`, {
+        params: { meetingId } // Passing meetingId as a query parameter
+      });
+      console.log(response.data);
+      navigate('/meetingdetails', { state: { meetingDetails: response.data } });
+    } catch (error) {
+      console.error('Error fetching meeting details:', error);
+    }
+  };
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     alert('Link copied to clipboard!');
@@ -175,7 +198,6 @@ const Home = () => {
   </div>
 </div>
 
-
                 </div>
                 <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                   <button
@@ -228,7 +250,14 @@ const Home = () => {
             {events.map((event, index) => (
               <tr key={index}>
                 <td className="px-6 py-4 whitespace-nowrap">{event.summary}</td>
-                <td className="px-6 py-4 whitespace-nowrap">{event.description}</td>
+                {/* <td className="px-6 py-4 whitespace-nowrap">{event.description}</td> */}
+                <td
+        className="px-6 py-4 whitespace-nowrap"
+        onClick={() => HandleMeetingdetails(event.url)}
+        style={{ cursor: 'pointer' }}
+      >
+        {event.description}
+      </td>
                 <td className="px-6 py-4 whitespace-nowrap">{new Date(event.start).toLocaleString()}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{new Date(event.end).toLocaleString()}</td>
                 <td className="px-14 py-4 whitespace-nowrap relative">

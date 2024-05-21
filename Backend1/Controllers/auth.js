@@ -61,7 +61,7 @@ async  function HandleGcallback(req,res){
         console.log(data);
         
         // res.status(200).json({ message: 'User Login successfully.' });
-        res.redirect('http://localhost:3000/login/success',data);
+        res.redirect('http://localhost:3000/login/success',{ data });
         // const user_info = await axios.get(https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${token})
         // console.log(user_info);
         // res.send({

@@ -17,7 +17,8 @@ const uploadToS3 = async (filePath, bucketName,meetingId) => {
   const uploadParams = {
     Bucket: bucketName,
     Key: `recorded_video_MeetingId_${meetingId}.webm`,
-    Body: fileStream
+    Body: fileStream,
+    
   };
 
   try {
