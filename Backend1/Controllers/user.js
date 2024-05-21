@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 
 const axios = require('axios');
 const User = require('../Models/userSchema.js');
-
+const Meeting=require('../Models/MeetRecord.js');
 
 const calendar = google.calendar({
     version:"v3",
@@ -19,7 +19,10 @@ const oauth2Client = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_URL
 );
 
-
+require('dotenv').config();
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
+const { fromEnv } = require('@aws-sdk/credential-provider-env');
 
 async function HandleScheduleEvent(req,res){
     console.log(req.body.formData);
@@ -165,8 +168,48 @@ async function HandleScheduleEvent(req,res){
     }
 }
 
+ async function HandleMeetingdetails(req, res){
+    try {
+      const { meetingId } = req.query;
+  
+      const meeting = await Meeting.findOne({ meetingId });
+  
+      if (!meeting) {
+        return res.status(404).json({ message: 'Meeting not found' });
+      }
+      res.status(200).json(meeting);
+    } catch (error) {
+      console.error('Error fetching meeting details:', error);
+      res.status(500).json({ error: 'An error occurred while fetching meeting details' });
+    }
+  }
+  
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: fromEnv() // Automatically fetch credentials from environment variables
+});
+
+async function HandleVideoStream(req, res){
+  const { meetingId } = req.params;
+
+  const params = {
+    Bucket: process.env.S3_BUCKET_NAME,
+    Key: `recorded_video_MeetingId_${meetingId}.webm`
+  };
+
+  try {
+    const command = new GetObjectCommand(params);
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour expiration
+    res.json({ url });
+  } catch (error) {
+    console.error("Error generating presigned URL:", error);
+    res.status(500).json({ error: "Error generating presigned URL" });
+  }
+}
 
 module.exports={
     HandleScheduleEvent,
-    HandelEventList
+    HandelEventList,
+    HandleMeetingdetails,
+    HandleVideoStream
 }

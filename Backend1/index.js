@@ -7,6 +7,7 @@ const DBConnection = require('./Connection/db.js');
 const axios = require('axios');
 // const puppeteer = require('puppeteer');
 const User = require('./Models/userSchema.js');
+const Meeting=require('./Models/MeetRecord.js');
 // const URL = require('url');
 const puppeteerScreenRecorder = require('puppeteer-screen-recorder');
 const puppeteer = require('puppeteer-extra');
@@ -39,6 +40,11 @@ app.get('/', (req, res) => {
     res.send('Hello, Welcome to TalkTrack Backend!');
 });
 
+
+const userRouter= require("./routes/user")
+
+app.use("/user",userRouter)
+
 const calendar = google.calendar({
     version:"v3",
     auth:process.env.API_KEY
@@ -66,41 +72,35 @@ app.get('/auth/google',(req,res)=>{
     res.redirect(url);
 });
 
-app.get('/auth/google/callback',async (req,res)=>{
-    // console.log(req.query);
-    try{
+// app.get('/auth/google/callback',async (req,res)=>{
+//     // console.log(req.query);
+//     try{
 
-        const code = req.query.code;
-        const {tokens}= await oauth2Client.getToken(code);
-        oauth2Client.setCredentials(tokens);
-        // console.log(oauth2Client);
+//         const code = req.query.code;
+//         const {tokens}= await oauth2Client.getToken(code);
+//         oauth2Client.setCredentials(tokens);
+//         // console.log(oauth2Client);
     
-        const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
-            headers: {
-                Authorization: `Bearer ${tokens.access_token}`
-            }
-        });
+//         const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
+//             headers: {
+//                 Authorization: `Bearer ${tokens.access_token}`
+//             }
+//         });
     
-        await User.findOneAndUpdate({ googleId: data.id }, {
-            googleId: data.id,
-            email: data.email,
-            displayName: data.name,
-            googleAccessToken:tokens.access_token
-        }, { upsert: true });
-        console.log(data);
+//         await User.findOneAndUpdate({ googleId: data.id }, {
+//             googleId: data.id,
+//             email: data.email,
+//             displayName: data.name,
+//             googleAccessToken:tokens.access_token
+//         }, { upsert: true });
+//         console.log(data);
+//         res.redirect('http://localhost:3000/login/success');
         
-        // res.status(200).json({ message: 'User Login successfully.' });
-        res.redirect('http://localhost:3000/login/success');
-        // const user_info = await axios.get(https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${token})
-        // console.log(user_info);
-        // res.send({
-        //     message:"You have successfully logged in"
-        // })
-    }catch(err){
-        console.log("Error in Login",err);
-        res.status(404).json({ message: 'Unable to Register User'});
-    }
-});
+//     }catch(err){
+//         console.log("Error in Login",err);
+//         res.status(404).json({ message: 'Unable to Register User'});
+//     }
+// });
 
 // case1 working but it is bot stored the video
 // async function stopRecording(browser, stream, file) {
@@ -345,20 +345,74 @@ app.get('/auth/google/callback',async (req,res)=>{
 //   });
 
 
+const cookieOptions = {
+    secure: process.env.NODE_ENV === 'production', // Set to true if using HTTPS
+    maxAge: 3600000, // Cookie expiration time in milliseconds (1 hour)
+    sameSite: 'None', // Allows the cookie to be sent with cross-origin requests
+    httpOnly: false // Allows the cookie to be accessed via JavaScript
+  };
+  
+  app.get('/auth/google/callback', async (req, res) => {
+    try {
+      const code = req.query.code;
+      const { tokens } = await oauth2Client.getToken(code);
+      oauth2Client.setCredentials(tokens);
+  
+      const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: {
+          Authorization: `Bearer ${tokens.access_token}`
+        }
+      });
+  
+      await User.findOneAndUpdate({ googleId: data.id }, {
+        googleId: data.id,
+        email: data.email,
+        displayName: data.name,
+        googleAccessToken: tokens.access_token
+      }, { upsert: true });
+  
+      console.log(data);
+  
+      // Encode the email
+      const encodedEmail = encodeURIComponent(data.email);
+      // Set cookie with the email
+      res.cookie('user_email', data.email, { httpOnly: true, secure: false });
+      // Redirect with encoded email as a query parameter
+      res.redirect(`http://localhost:3000/login/success?email=${encodedEmail}`);
+    } catch (err) {
+      console.log("Error in Login", err);
+      res.status(404).json({ message: 'Unable to Register User' });
+    }
+  });
+  
+  
 
 const uploadToS3 = require('.//Connection/uploadToS3');
 const { trusted } = require('mongoose');
 
 // case -2 working and storing the video
-async function stopRecording(browser, stream, fileStream,meetingId) {
+async function stopRecording(browser, stream, fileStream,meetingId,userEmail) {
     try {
         stream.unpipe(fileStream);
         fileStream.end();
         console.log("Recording stopped successfully.");
         const s3Url = await uploadToS3(fileStream.path, 'riktam-recordings',meetingId);
         console.log(s3Url)
-        isRecordingStopped=true
         await browser.close();
+        console.log("browser closed")
+        const meetingRecord = new Meeting({
+            userEmail: userEmail,
+            meetingId: meetingId,
+            videoS3url: s3Url
+        });
+
+        // Save the meeting record to the database
+        await meetingRecord.save();
+
+        console.log("Meeting record saved successfully.");
+
+        isRecordingStopped=true
+        
     } catch (error) {
         console.error('Error stopping recording:', error);
     }
@@ -367,7 +421,7 @@ async function stopRecording(browser, stream, fileStream,meetingId) {
 // Function to check bot presence and handle "Got it" button
 let gotItClicked = false;
 let isRecordingStopped=false
-async function checkBotPresence(page, browser, stream, fileStream,meetingId) {
+async function checkBotPresence(page, browser, stream, fileStream,meetingId,userEmail) {
     try {
         const botName = 'riktam.ai NoteTaker'; // Adjust this to match the bot's name
         if (isRecordingStopped) {
@@ -390,7 +444,7 @@ async function checkBotPresence(page, browser, stream, fileStream,meetingId) {
                 console.log('Meeting status:', leftMeetingText);
 
                 if (leftMeetingText) {
-                    await stopRecording(browser, stream, fileStream,meetingId);
+                    await stopRecording(browser, stream, fileStream,meetingId,userEmail);
                     return;
                 }
 
@@ -404,7 +458,7 @@ async function checkBotPresence(page, browser, stream, fileStream,meetingId) {
 
                 if (participants.length === 1) {
                     gotItClicked = false;
-                    await stopRecording(browser, stream, fileStream,meetingId);
+                    await stopRecording(browser, stream, fileStream,meetingId,userEmail);
                     return;
                 }
             }
@@ -419,15 +473,15 @@ async function checkBotPresence(page, browser, stream, fileStream,meetingId) {
     }
 }
 
+
 let stop=false;
 app.post('/start-recording', async (req, res) => {
-    const { meetUrl } = req.body;
+    const { meetUrl,userEmail} = req.body;
     console.log(meetUrl);
-
+    console.log(userEmail);
     const parts = meetUrl.split('/');
-const meetingId = parts[parts.length - 1];
-
-console.log(meetingId);
+    const meetingId = parts[parts.length - 1];
+    console.log(meetingId);
 
     try {
         puppeteer.use(StealthPlugin());
@@ -491,13 +545,13 @@ console.log(meetingId);
             console.log(url);
             if (!url.includes('meet.google.com')) {
                 console.log("Meeting Stopped");
-                await stopRecording(browser, stream, fileStream,meetingId);
+                await stopRecording(browser, stream, fileStream,meetingId,userEmail);
                 return
             }
         });
 
         setInterval(async () => {
-           let answer=await checkBotPresence(page, browser, stream, fileStream,meetingId);
+           let answer=await checkBotPresence(page, browser, stream, fileStream,meetingId,userEmail);
            if (answer){
             stop=true
             return
@@ -997,3 +1051,4 @@ app.listen(Port,()=>{
     DBConnection();
     console.log(`Server is running on ${Port}`);
 });
+
