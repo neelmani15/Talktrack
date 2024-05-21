@@ -59,9 +59,10 @@ async  function HandleGcallback(req,res){
             googleAccessToken:tokens.access_token
         }, { upsert: true });
         console.log(data);
-        
+        const encodedEmail = encodeURIComponent(data.email);
         // res.status(200).json({ message: 'User Login successfully.' });
-        res.redirect('http://localhost:3000/login/success',{ data });
+        // res.redirect('http://localhost:3000/login/success');
+        res.redirect(`http://localhost:3000/login/success?email=${encodedEmail}`);
         // const user_info = await axios.get(https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${token})
         // console.log(user_info);
         // res.send({
@@ -73,8 +74,48 @@ async  function HandleGcallback(req,res){
     }
 }
 
-
+ async function HandleFetchevents(req, res)  {
+    try {
+        const {userEmail}=req.body
+        const user = await User.findOne({  email: userEmail});
+        oauth2Client.setCredentials({
+            access_token:  user.googleAccessToken, 
+        });
+        const calendar = google.calendar({
+            version: 'v3',
+            auth: oauth2Client
+        });
+        const now = new Date();
+        const oneMonthLater = new Date();
+        oneMonthLater.setMonth(now.getMonth() + 1); 
+        const response = await calendar.events.list({
+            calendarId: 'primary', 
+            timeMin: now.toISOString(),
+            timeMax: oneMonthLater.toISOString(),
+            maxResults: 10, 
+            singleEvents: true,
+            orderBy: 'startTime'
+        });
+         console.log(response)
+        const events = response.data.items;
+        if (events.length) {
+            console.log('Upcoming events:');
+            events.map((event, i) => {
+                const start = event.start.dateTime || event.start.date;
+                console.log(`${start} - ${event.summary}`);
+            });
+            res.json(events);
+        } else {
+            console.log('No upcoming events found.');
+            res.json({ message: 'No upcoming events found.' });
+        }
+    } catch (error) {
+        console.error('Error fetching events:', error);
+        res.status(500).json({ error: 'Error fetching events' });
+    }
+  }
 module.exports={
     HandelGoogleAuthentication,
-    HandleGcallback
+    HandleGcallback,
+    HandleFetchevents
  }
