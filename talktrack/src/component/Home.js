@@ -23,12 +23,12 @@ const Home = () => {
       const response = await axios.post('http://localhost:5001/start-recording', { meetUrl });
       console.log('Recording started successfully:', response.data);
       setIsLoading(false);
-      toast.success('Meeting Recording successfully started!');
+      // toast.success('Meeting Recording successfully started!');
 
     } catch (error) {
       console.error('Error starting recording:', error);
       setIsLoading(false);
-      toast.error('Failed to record meetings');
+      // toast.error('Failed to record meetings');
     }
   };
 
