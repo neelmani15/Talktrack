@@ -6,7 +6,8 @@ const bodyParser = require('body-parser');
 const axios = require('axios');
 const User = require('../Models/userSchema.js');
 const Meeting=require('../Models/MeetRecord.js');
-
+const OpenAI = require("openai");
+const fs = require('fs');
 const calendar = google.calendar({
     version:"v3",
     auth:process.env.API_KEY
@@ -246,25 +247,42 @@ async function HandelEventList(req, res) {
     }
 }
 
- async function HandleMeetingdetails(req, res){
+async function HandleMeetingdetails(req, res){
     try {
-      const { meetingId } = req.query;
-  
-      const meeting = await Meeting.findOne({ meetingId });
+    const { meetingId } = req.query;
+
+    const meeting = await Meeting.findOne({ meetingId });
+    console.log(meeting)
     //   if(meeting ){
     //     var videoaccess_url = await HandleVideoStream(meetingId)
     //   }
-      if (!meeting) {
+    if (!meeting) {
         return res.status(404).json({ message: 'Meeting not found' });
-      }
+    }
     //   res.status(200).json(meeting,videoaccess_url);
     const videoaccess_url = await HandleVideoStream(meetingId);
-    res.status(200).json({ meeting, videoaccess_url });
+    // const transcript=await GetTranscript(meeting.videoS3url)
+    res.status(200).json({ meeting, videoaccess_url});
     } catch (error) {
-      console.error('Error fetching meeting details:', error);
-      res.status(500).json({ error: 'An error occurred while fetching meeting details' });
+    console.error('Error fetching meeting details:', error);
+    res.status(500).json({ error: 'An error occurred while fetching meeting details' });
     }
-  }
+ }
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); 
+const GetTranscript = async(s3videourl)=>{
+    const transcription = await openai.audio.transcriptions.create({
+        // file:fs.createReadStream("./audio/audio.mp3"),
+        // file:fs.createReadStream("./report/test6.mp4"),
+        // file:fs.createReadStream("./report/test4.mp4"),
+        file:fs.createReadStream(s3videourl),
+        // file:fs.createReadStream('https://riktam-recordings.s3.ap-south-1.amazonaws.com/recorded_video_MeetingId_bqu-ehua-ttt.webm'),
+        model:"whisper-1",
+        language: "en"
+    })
+    console.log(transcription);
+    return transcription
+}
   
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
