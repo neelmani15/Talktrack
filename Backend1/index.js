@@ -5,25 +5,9 @@ const bodyParser = require('body-parser');
 const { google } = require('googleapis');
 const DBConnection = require('./Connection/db.js');
 const axios = require('axios');
-// const puppeteer = require('puppeteer');
-const User = require('./Models/userSchema.js');
-const Meeting=require('./Models/MeetRecord.js');
-// const URL = require('url');
-const puppeteerScreenRecorder = require('puppeteer-screen-recorder');
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-const { executablePath } = require('puppeteer');
+
 const fs = require('fs');
 const  OpenAIApi  = require('openai');
-// const AudioRecorder = require('node-audiorecorder');
-const cron = require('node-cron');
-const { parseISO, subMinutes, addMinutes, isAfter,isBefore } = require('date-fns');
-const PuppeteerScreenRecorder = require('puppeteer-screen-recorder');
-// const RecordRTC = require('recordrtc');
-
-const { launch, getStream,wss } = require("puppeteer-stream");
-const { log } = require('console');
-
 
 dotenv.config()
 
@@ -47,305 +31,6 @@ const userRouter= require("./Routes/user")
 const OAuthRouter= require("./Routes/oauth")
 app.use("/user",userRouter)
 app.use("/auth",OAuthRouter)
-const calendar = google.calendar({
-    version:"v3",
-    auth:process.env.API_KEY
-})
-
-const oauth2Client = new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_CLIENT_URL
-);
-
-const scopes = [
-    "email",
-    "profile",
-    'https://www.googleapis.com/auth/calendar'
-  ];
-
-// app.get('/auth/google',(req,res)=>{
-//     const url = oauth2Client.generateAuthUrl({
-//         access_type: 'offline',
-//         scope: scopes
-//     });
-//     // const myUrl = new URL(url); 
-//     // res.redirect(myUrl);
-//     res.redirect(url);
-// });
-
-// app.get('/auth/google/callback',async (req,res)=>{
-//     // console.log(req.query);
-//     try{
-
-//         const code = req.query.code;
-//         const {tokens}= await oauth2Client.getToken(code);
-//         oauth2Client.setCredentials(tokens);
-//         // console.log(oauth2Client);
-    
-//         const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
-//             headers: {
-//                 Authorization: `Bearer ${tokens.access_token}`
-//             }
-//         });
-    
-//         await User.findOneAndUpdate({ googleId: data.id }, {
-//             googleId: data.id,
-//             email: data.email,
-//             displayName: data.name,
-//             googleAccessToken:tokens.access_token
-//         }, { upsert: true });
-//         console.log(data);
-//         res.redirect('http://localhost:3000/login/success');
-        
-//     }catch(err){
-//         console.log("Error in Login",err);
-//         res.status(404).json({ message: 'Unable to Register User'});
-//     }
-// });
-
-// case1 working but it is bot stored the video
-// async function stopRecording(browser, stream, file) {
-//     try {
-//         await stream.destroy();
-//         file.close();
-//         console.log("Recording stopped successfully.");
-//         await browser.close();
-//         // await wss.close();
-//     } catch (error) {
-//         console.error('Error stopping recording:', error);
-//     }
-// }
-
-// let gotItClicked = false;
-// async function checkBotPresence(page, browser, stream, file){
-//     try {
-//         const botName = 'Nikhil.ai Bot'; // Adjust this to match the bot's name
-//         const frame = page.mainFrame();
-//         if (!frame.isDetached()) {
-//             const participants = await frame.evaluate(() => {
-//                 const participants = [];
-//                 const participantElements = document.querySelectorAll('[data-self-name]');
-//                 for (let participant of participantElements) {
-//                     participants.push(participant.getAttribute('data-self-name'));
-//                 }
-//                 return participants;
-//             });
-
-//         console.log(participants);
-//         if (participants.length >= 1) {
-//             // Click on "Got it" button only if it hasn't been clicked already
-//             if (!gotItClicked) {
-//                 await page.click('span[jsname="V67aGc"].mUIrbf-vQzf8d');
-//                 console.log('Clicked on "Got it" button');
-//                 gotItClicked = true; // Update flag to indicate that button has been clicked
-//             }
-//         }
-//         if (participants.length === 1) {
-//             gotItClicked=false;
-//             await stopRecording(browser, stream, file);
-//         }
-//     }
-//     } catch (error) {
-//         console.error('Error checking bot presence:', error);
-//     }
-// }
-
-// app.post('/start-recording', async (req, res) => {
-//     const { meetUrl } = req.body;
-//     console.log(meetUrl);
-  
-//     try {
-//         puppeteer.use(StealthPlugin());
-//         const browser = await launch(puppeteer,{
-//             defaultViewport: null,
-//             headless: true,
-//             devtools: false,
-//             args: [
-//                 // "--window-size=1920,1080",
-//                 // "--window-position=1921,0",
-//                 "--autoplay-policy=no-user-gesture-required",
-//               ],
-//             executablePath: executablePath(),
-//         });
-//     const page = (await browser.pages())[0];
-//     const stream = await getStream(page, { audio: true, video: true })
-//     stream.pipe(file)
-  
-//     const navigationPromise = page.waitForNavigation();
-//     const context = browser.defaultBrowserContext();
-//     await context.overridePermissions(
-//         "https://meet.google.com/", ["microphone", "camera", "notifications"]
-//       );
-//       await page.goto(meetUrl,{
-//         waitUntil: "networkidle0",
-//         timeout: 120000
-//         });
-
-//         await navigationPromise;
-
-//         await page.waitForSelector('input[aria-label="Your name"]', { visible: true, timeout: 50000 });
-//         console.log('Name input found');
-//         await page.type('input[aria-label="Your name"]', 'riktam.ai NoteTaker');
-
-//         try {
-//             const cameraButtonSelector = '[aria-label*="Turn off camera"]';
-//             const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
-            
-//             await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 60000 });
-//             console.log('Camera button found');
-//             await page.click(cameraButtonSelector);
-//             console.log('Camera turned off');
-            
-//             await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 60000 });
-//             console.log('Microphone button found');
-//             await page.click(microphoneButtonSelector);
-//             console.log('Microphone turned off');
-//         } catch (err) {
-//             console.error('Error turning off camera/microphone:', err);
-//         }
-
-//         const askToJoinButtonSelector = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 jEvJdc QJgqC"]';
-//         await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 50000 });
-//         console.log('Ask to join button found');
-//         await page.click(askToJoinButtonSelector);
-//         console.log('Clicked on Ask to join button');
-
-//         page.on('framenavigated', async (frame) => {
-//             const url = frame.url();
-//             console.log(url);
-
-//             if (!url.includes('meet.google.com')) {
-//                 console.log("Meeting Stopped");
-//                 await stopRecording(browser, stream, file);
-//             }
-//         });
-//         setInterval(async () => {
-//             await checkBotPresence(page, browser, stream, file);
-//         }, 10000); 
-//       res.status(200).json({ message: 'Recording started successfully.' });
-
-//     } catch (error) {
-//       console.error('Error starting recording:', error);
-//       res.status(500).json({ error: 'An error occurred while starting recording.' });
-//     }
-//   });
-
-// app.post('/start-recording', async (req, res) => {
-//     const { meetUrl } = req.body;
-//     console.log(meetUrl);
-  
-//     try {
-//         puppeteer.use(StealthPlugin());
-//         const browser = await puppeteer.launch({headless: false,
-//             defaultViewport: null,
-//             devtools: false,
-//             args : [
-// '--disable-features=IsolateOrigins,site-per-process',
-// '--disable-infobars',
-// '--no-sandbox',
-// '--disable-setuid-sandbox',
-// ],
-//             executablePath: executablePath(),
-//           });
-//         // For Chrome Browser
-//         // const browser = await puppeteer.connect({
-//         //     browserWSEndpoint: 'ws://localhost:9222/devtools/page/9B244F5A7DB4A2E60C404888E25424F0'
-//         //   });
-//     //   const page = await browser.newPage();
-//     const page = (await browser.pages())[0];
-//     const navigationPromise = page.waitForNavigation();
-//     const context = browser.defaultBrowserContext();
-//     await context.overridePermissions(
-//         "https://meet.google.com/", ["microphone", "camera", "notifications"]
-//       );
-      
-//       // Navigate to the Google Meet URL
-//       await page.goto(meetUrl,{
-//         waitUntil: "networkidle0",
-//         timeout: 120000
-//         });
-
-//         await navigationPromise;
-
-//         await page.waitForSelector('input[aria-label="Your name"]', {
-//             visible: true,
-//             timeout: 50000,
-//             hidden: false,
-//         });
-
-//         // console.log(page);
-        
-      
-//         await page.waitForSelector('[aria-label="Turn off camera (ctrl + e)"]', {
-//             visible: true,
-//             timeout: 50000,
-//             hidden: false,
-//         });
-//         await page.click('[aria-label="Turn off camera (ctrl + e)"]');
-//         await page.waitForSelector('[aria-label="Turn off microphone (ctrl + d)"]', {
-//             visible: true,
-//             timeout: 50000,
-//             hidden: false,
-//         });
-//         await page.click('[aria-label="Turn off microphone (ctrl + d)"]');
-
-
-//         await page.click(`input[aria-label="Your name"]`);
-
-
-//         //enter name
-//         await page.type(`input[aria-label="Your name"]`, 'Nikhil.ai Bot');
-
-//         //click on ask to join button
-//         await page.click(
-//             `button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 jEvJdc QJgqC"]`
-//         );
-
-//         const recorder = new PuppeteerScreenRecorder.PuppeteerScreenRecorder(page);
-//         await recorder.start('./report/video/simple.webm');
-
-        
-
-//         // const audioRecorder = new RecordRTC.MRecordRTC();
-//         // audioRecorder.addStream(page.mediaDevices.getUserMedia({ audio: true }));
-
-//         // // Start recording audio
-//         // audioRecorder.startRecording();
-      
-//       // Start recording
-//     //   const recording = await startRecording(page, {
-//     //     output: 'recording.mp4', // Output file name
-//     //     fps: 25, // Frames per second
-//     //   });
-  
-//       // Provide feedback to the frontend
-//       res.status(200).json({ message: 'Recording started successfully.' });
-
-//     //   page.on('dialog', async dialog => {
-//     //     if (dialog.message().includes('You left the meeting')) {
-//     //         // Stop recording and save the video
-//     //         await recorder.stop();
-//     //         await browser.close();
-//     //     }
-//     // });
-
-//     setTimeout(async () => {
-//         await recorder.stop();
-//         // await stream.destroy();
-//         // file.close();
-//         console.log("finished");
-//         await browser.close();
-//       }, 30000)
-  
-//       // Close the browser after recording is done
-//     //   await browser.close();
-//     } catch (error) {
-//       console.error('Error starting recording:', error);
-//       res.status(500).json({ error: 'An error occurred while starting recording.' });
-//     }
-//   });
-
 
 const cookieOptions = {
     secure: process.env.NODE_ENV === 'production', // Set to true if using HTTPS
@@ -926,20 +611,20 @@ const audioFun = async()=>{
 }
 
 // audioFun()
-// app.get('/allevents', async (req, res) => {
-//     try {
-//         const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
-//             headers: {
-//                 Authorization: `Bearer ${oauth2Client.credentials.access_token}`
-//             }
-//         });
+app.get('/allevents', async (req, res) => {
+    try {
+        const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
+            headers: {
+                Authorization: `Bearer ${oauth2Client.credentials.access_token}`
+            }
+        });
 
-//         const user = await User.findOne({ googleId: data.id });
+        const user = await User.findOne({ googleId: data.id });
 
-//         // Check if user exists and has events
-//         if (user && user.events.length > 0) {
-//             // Initialize the list to store all events
-//             var alleventslist = [];
+        // Check if user exists and has events
+        if (user && user.events.length > 0) {
+            // Initialize the list to store all events
+            var alleventslist = [];
 
 //             // Iterate through each event and add it to the list
 //             user.events.forEach(event => {

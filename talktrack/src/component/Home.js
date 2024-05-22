@@ -318,6 +318,8 @@ import { format } from 'date-fns';
 import { FaClock } from 'react-icons/fa';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+import { FaPlus, FaTrash } from 'react-icons/fa';
+
 const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -327,7 +329,8 @@ const Home = () => {
     summary: '',
     description: '',
     startTime: '',
-    endTime: ''
+    endTime: '',
+    attendees: [''] 
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -344,6 +347,22 @@ const Home = () => {
       // toast.error('Failed to record meetings');
     }
   };
+  const handleAttendeeChange = (index, e) => {
+    const newAttendees = formData.attendees.map((attendee, i) =>
+      i === index ? e.target.value : attendee
+    );
+    setFormData({ ...formData, attendees: newAttendees });
+  };
+  
+  const addAttendee = () => {
+    setFormData({ ...formData, attendees: [...formData.attendees, ''] });
+  };
+  
+  const removeAttendee = (index) => {
+    const newAttendees = formData.attendees.filter((_, i) => i !== index);
+    setFormData({ ...formData, attendees: newAttendees });
+  };
+  
 
   const handleMeetingLinkClick = (meetUrl) => {
     startRecording(meetUrl);
@@ -358,7 +377,9 @@ const Home = () => {
     e.preventDefault();
     try {
       setIsLoading(true);
-      const dataToSubmit = { ...formData, userEmail };
+      const filteredAttendees = formData.attendees.filter(email => email.trim() !== '');
+      const dataToSubmit = { ...formData, userEmail, attendees: filteredAttendees };
+      // const dataToSubmit = { ...formData, userEmail };
       const response = await axios.post('http://localhost:5001/user/schedule-event', { dataToSubmit });
       setIsLoading(false);
       setIsModalOpen(false);
@@ -483,6 +504,37 @@ const Home = () => {
                           />
                         </div>
                       </div>
+                      <div className="mb-4">
+                        <label className="block text-gray-700 text-sm font-bold mb-2">
+                          Attendees
+                        </label>
+                        {formData.attendees.map((attendee, index) => (
+                          <div key={index} className="flex mb-2 items-center">
+                            <input
+                              type="email"
+                              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                              placeholder="Attendee Email"
+                              value={attendee}
+                              onChange={(e) => handleAttendeeChange(index, e)}
+                            />
+                            <button
+                              type="button"
+                              className="ml-2 p-2 bg-red-500 text-white rounded-full"
+                              onClick={() => removeAttendee(index)}
+                            >
+                              <FaTrash />
+                            </button>
+                            <button
+                              type="button"
+                              className="ml-2 p-2 bg-green-500 text-white rounded-full"
+                              onClick={addAttendee}
+                            >
+                              <FaPlus />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
                     </div>
                     <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                       <button
