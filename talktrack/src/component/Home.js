@@ -636,7 +636,6 @@ import Modal from './Modal';
 const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const [events, setEvents] = useState([]);
   const { userEmail,userPicture,userName, meetings, setMeetings } = useUser();
   const [isNoEvents, setIsNoEvents] = useState(false);
   const [formData, setFormData] = useState({
@@ -711,7 +710,7 @@ const Home = () => {
         setIsLoading(false);
         return
       }else{
-      setEvents(response.data.alleventslist);
+      setMeetings(response.data.alleventslist);
       console.log(response.data)
       setIsLoading(false);
       toast.success('Events fetched successfully!');
