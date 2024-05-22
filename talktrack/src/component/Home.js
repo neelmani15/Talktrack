@@ -319,12 +319,14 @@ import { FaClock } from 'react-icons/fa';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { FaPlus, FaTrash } from 'react-icons/fa';
+import Modal from './Modal';
 
 const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [events, setEvents] = useState([]);
-  const { userEmail } = useUser();
+  const { userEmail,userPicture,userName } = useUser();
+  const [isNoEvents, setIsNoEvents] = useState(false);
   const [formData, setFormData] = useState({
     summary: '',
     description: '',
@@ -394,10 +396,17 @@ const Home = () => {
     try {
       setIsLoading(true);
       const response = await axios.post('http://localhost:5001/user/allevents', {userEmail});
+      if(response.data.message === "No events found for the user."){
+        setIsNoEvents(true);
+        // toast.warning('No events found for the user.');
+        setIsLoading(false);
+        return
+      }else{
       setEvents(response.data.alleventslist);
       console.log(response.data)
       setIsLoading(false);
       toast.success('Events fetched successfully!');
+      }
     } catch (error) {
       setIsLoading(false);
       toast.error('Failed to fetch events.');
@@ -419,6 +428,9 @@ const Home = () => {
     navigator.clipboard.writeText(text);
     alert('Link copied to clipboard!');
   };
+  const handleCloseModal = () => {
+    setIsNoEvents(false);
+  };
 
   return (
     <div className="h-screen flex">
@@ -428,6 +440,13 @@ const Home = () => {
         isLoading={isLoading}
       />
       <div className="flex-1 p-6">
+      {isNoEvents && (
+        <Modal
+          title="No Events Found"
+          message="No events found for the user."
+          onClose={handleCloseModal}
+        />
+      )}
         <Navbar />
         <div className="container mx-auto px-4 py-8">
           <h1 className="text-2xl font-bold mb-4">Home Page</h1>

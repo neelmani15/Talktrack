@@ -168,6 +168,9 @@ async function HandleScheduleEvent(req, res) {
   }
 }
 
+let stop = false;
+
+
 async function HandlejoinMeeting(meetUrl, userEmail) {
     console.log("Joining Meet");
     // const { meetUrl } = req.body;
@@ -238,23 +241,31 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
         await page.click(askToJoinButtonSelector);
         console.log('Clicked on Ask to join button');
 
-        page.on('framenavigated', async (frame) => {
-            const url = frame.url();
-            console.log(url);
-            if (!url.includes('meet.google.com')) {
-                console.log("Meeting Stopped");
-                await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
-                return
+        const participantCheckInterval = setInterval(async () => {
+            const botPresence = await HandleCheckBotPresence(page, browser, meetingId, userEmail);
+            if (botPresence || isRecordingStopped) {
+                clearInterval(participantCheckInterval);
+                await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail);
             }
-        });
+        },10000)
 
-        setInterval(async () => {
-           let answer=await HandleCheckBotPresence(page, browser, stream, fileStream,meetingId,userEmail);
-           if (answer){
-            stop=true
-            return
-           }
-        }, 10000);
+        // page.on('framenavigated', async (frame) => {
+        //     const url = frame.url();
+        //     console.log(url);
+        //     if (!url.includes('meet.google.com')) {
+        //         console.log("Meeting Stopped");
+        //         await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
+        //         return
+        //     }
+        // });
+
+        // setInterval(async () => {
+        //    let answer=await HandleCheckBotPresence(page, browser, stream, fileStream,meetingId,userEmail);
+        //    if (answer){
+        //     stop=true
+        //     return
+        //    }
+        // }, 10000);
         return true;
 
         // res.status(200).json({ message: 'Recording started successfully.' });
@@ -268,27 +279,27 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
 
 async function HandleStopRecording(browser, stream, fileStream,meetingId,userEmail) {
     try {
+        stop=true
         stream.unpipe(fileStream);
         fileStream.end();
         console.log("Recording stopped successfully.");
         const s3Url = await uploadToS3(fileStream.path, 'riktam-recordings',meetingId);
         console.log(s3Url)
-        // const s3Url = await uploadToS3(fileStream.path, 'riktam-recordings',meetingId);
-        // console.log(s3Url)
-        // isRecordingStopped=true
+        console.log(userEmail)
+        const transcription= await GetTranscript(fileStream.path)
         const meetingRecord = new Meeting({
             userEmail: userEmail,
             meetingId: meetingId,
-            videoS3url: s3Url
+            videoS3url: s3Url,
+            transcript:transcription
         });
         
-        // Save the meeting record to the database
         await meetingRecord.save();
         
         console.log("Meeting record saved successfully.");
-        
         await browser?.close();
         console.log("browser closed")
+
         isRecordingStopped=true
         
     } catch (error) {
@@ -320,11 +331,6 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream,meetingI
                 console.log('Participants:', participants);
                 console.log('Meeting status:', leftMeetingText);
 
-                if (leftMeetingText) {
-                    await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
-                    return;
-                }
-
                 if (participants.length >= 1) {
                     if (!gotItClicked) {
                         await page.click('span[jsname="V67aGc"].mUIrbf-vQzf8d');
@@ -333,20 +339,24 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream,meetingI
                     }
                 }
 
-                if (participants.length === 1) {
-                    gotItClicked = false;
-                    await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
-                    return;
+                if (leftMeetingText || participants.length === 1){
+                    // await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
+                    return true;
                 }
+
+
+                // if (participants.length === 1) {
+                //     gotItClicked = false;
+                //     await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
+                //     return;
+                // }
             }
+            return false;
         }
     } catch (error) {
-        if (error instanceof puppeteer.errors.TargetCloseError) {
-            console.error('Target closed. Terminating gracefully.');
-            await HandleStopRecording(browser, stream, fileStream);
-        } else {
+            await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
             console.error('Error checking bot presence:', error);
-        }
+            return true;
     }
 }
 
@@ -367,20 +377,19 @@ async function HandelEventList(req, res) {
         // const user = await User.findOne({ googleId: data.id });
 
         // // Check if user exists and has events
-        if (user && user.events.length > 0) {
-            // Initialize the list to store all events
-            var alleventslist = [];
-
-            // Iterate through each event and add it to the list
-            user.events.forEach(event => {
-                alleventslist.push(event);
-            });
-
-            // Send the list of all events to the frontend
-            // res.json(alleventslist);
-            res.status(200).json({ message: 'All Events are listed',alleventslist });
+       
+        if (user) {
+            if (user.events.length > 0) {
+                // If user exists and has events, send the list of events
+                const alleventslist = user.events.map(event => event);
+                res.status(200).json({ message: 'All Events are listed', alleventslist });
+            } else {
+                // If user exists but has no events, send a custom message
+                res.status(200).json({ message: 'No events found for the user.' });
+            }
         } else {
-            res.status(404).json({ message: 'User not found or no events found for the user.' });
+            // If user doesn't exist, send a message indicating user not found
+            res.status(404).json({ message: 'User not found.' });
         }
     } catch (error) {
         console.error('Error fetching events:', error);
@@ -422,7 +431,7 @@ const GetTranscript = async(s3videourl)=>{
         language: "en"
     })
     console.log(transcription);
-    return transcription
+    return transcription.text
 }
   
 const s3Client = new S3Client({

@@ -6,13 +6,19 @@ import { useNavigate } from 'react-router-dom';
 const UserDummyComponent = () => {
   const location = useLocation(); // Get the current location
   const navigate = useNavigate();
-  const { setUserEmail } = useUser();
+  const { setUserEmail,setUserPicture,setUserName } = useUser();
 
   useEffect(() => {
     const queryParams = new URLSearchParams(location.search);
     const email = queryParams.get('email');
+    const picture = queryParams.get('picture')
+    const name = queryParams.get('name')
     console.log(email);
+    console.log(picture);
+    console.log(name);
     setUserEmail(email || '');
+    setUserPicture(picture || '')
+    setUserName(name || '')
     navigate('/user');
   }, [location, navigate, setUserEmail]);
 

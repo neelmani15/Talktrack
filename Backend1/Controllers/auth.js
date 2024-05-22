@@ -60,9 +60,11 @@ async  function HandleGcallback(req,res){
         }, { upsert: true });
         console.log(data);
         const encodedEmail = encodeURIComponent(data.email);
+        const encodePicture = encodeURIComponent(data.picture)
+        const encodeName = encodeURIComponent(data.name) 
         // res.status(200).json({ message: 'User Login successfully.' });
         // res.redirect('http://localhost:3000/login/success');
-        res.redirect(`http://localhost:3000/login/success?email=${encodedEmail}`);
+        res.redirect(`http://localhost:3000/login/success?email=${encodedEmail}&picture=${encodePicture}&name=${encodeName}`);
         // const user_info = await axios.get(https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${token})
         // console.log(user_info);
         // res.send({

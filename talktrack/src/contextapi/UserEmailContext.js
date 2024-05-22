@@ -8,9 +8,11 @@ export const useUser = () => useContext(UserContext);
 
 export const UserProvider = ({ children }) => {
   const [userEmail, setUserEmail] = useState('');
+  const [userPicture, setUserPicture] = useState('');
+  const [userName, setUserName] = useState('');
 
   return (
-    <UserContext.Provider value={{ userEmail, setUserEmail }}>
+    <UserContext.Provider value={{ userEmail, setUserEmail,userPicture, setUserPicture, userName, setUserName }}>
       {children}
     </UserContext.Provider>
   );
