@@ -92,6 +92,9 @@ const MeetingDetails = () => {
           <strong>User Email:</strong> {meetingDetails.meeting.userEmail}
         </div>
         <div className="mb-4">
+          <strong>Transcript:</strong> {meetingDetails.meeting.transcript}
+        </div>
+        <div className="mb-4">
           <strong>Video URL:</strong> 
           <a href={meetingDetails.meeting.videoS3url} target="_blank" rel="noopener noreferrer">
             {meetingDetails.meeting.videoS3url}

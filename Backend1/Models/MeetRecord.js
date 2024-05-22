@@ -12,6 +12,10 @@ const meetingRecordSchema = new mongoose.Schema({
   videoS3url: {
     type: String,
     required: true
+  },
+  transcript: {
+    type: String,
+    required: true
   }
 });
 

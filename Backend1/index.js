@@ -5,8 +5,19 @@ const bodyParser = require('body-parser');
 const { google } = require('googleapis');
 const DBConnection = require('./Connection/db.js');
 const axios = require('axios');
-
+const OpenAI = require("openai");
+const puppeteerScreenRecorder = require('puppeteer-screen-recorder');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const { executablePath } = require('puppeteer');
 const fs = require('fs');
+// const AudioRecorder = require('node-audiorecorder');
+const PuppeteerScreenRecorder = require('puppeteer-screen-recorder');
+// const RecordRTC = require('recordrtc');
+
+const { launch, getStream,wss } = require("puppeteer-stream");
+const { log } = require('console');
+
 const  OpenAIApi  = require('openai');
 
 dotenv.config()
@@ -32,47 +43,7 @@ const OAuthRouter= require("./Routes/oauth")
 app.use("/user",userRouter)
 app.use("/auth",OAuthRouter)
 
-const cookieOptions = {
-    secure: process.env.NODE_ENV === 'production', // Set to true if using HTTPS
-    maxAge: 3600000, // Cookie expiration time in milliseconds (1 hour)
-    sameSite: 'None', // Allows the cookie to be sent with cross-origin requests
-    httpOnly: false // Allows the cookie to be accessed via JavaScript
-  };
-  
-//   app.get('/auth/google/callback', async (req, res) => {
-//     try {
-//       const code = req.query.code;
-//       const { tokens } = await oauth2Client.getToken(code);
-//       oauth2Client.setCredentials(tokens);
-  
-//       const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
-//         headers: {
-//           Authorization: `Bearer ${tokens.access_token}`
-//         }
-//       });
-  
-//       await User.findOneAndUpdate({ googleId: data.id }, {
-//         googleId: data.id,
-//         email: data.email,
-//         displayName: data.name,
-//         googleAccessToken: tokens.access_token
-//       }, { upsert: true });
-  
-//       console.log(data);
-  
-//       // Encode the email
-//       const encodedEmail = encodeURIComponent(data.email);
-//       // Set cookie with the email
-//       res.cookie('user_email', data.email, { httpOnly: true, secure: false });
-//       // Redirect with encoded email as a query parameter
-//       res.redirect(`http://localhost:3000/login/success?email=${encodedEmail}`);
-//     } catch (err) {
-//       console.log("Error in Login", err);
-//       res.status(404).json({ message: 'Unable to Register User' });
-//     }
-//   });
-  
-  
+const Meeting=require('./Models/MeetRecord.js');
 
 const uploadToS3 = require('.//Connection/uploadToS3');
 const { trusted } = require('mongoose');
@@ -172,8 +143,24 @@ const { trusted } = require('mongoose');
 //     return `${minutes} ${hours} ${dayOfMonth} ${month} ${dayOfWeek}`;
 // }
 // case -2 working and storing the video
+
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); 
+const GetTranscript = async(s3videourl)=>{
+    const transcription = await openai.audio.transcriptions.create({
+        // file:fs.createReadStream("./audio/audio.mp3"),
+        // file:fs.createReadStream("./report/test6.mp4"),
+        // file:fs.createReadStream("./report/test4.mp4"),
+        file:fs.createReadStream(s3videourl),
+        // file:fs.createReadStream('https://riktam-recordings.s3.ap-south-1.amazonaws.com/recorded_video_MeetingId_bqu-ehua-ttt.webm'),
+        model:"whisper-1",
+        language: "en"
+    })
+    console.log(transcription);
+    return transcription.text
+}
 async function stopRecording(browser, stream, fileStream,meetingId,userEmail) {
     try {
+        stop=true
         stream.unpipe(fileStream);
         fileStream.end();
         console.log("Recording stopped successfully.");
@@ -182,13 +169,14 @@ async function stopRecording(browser, stream, fileStream,meetingId,userEmail) {
         await browser.close();
         console.log("browser closed")
         console.log(userEmail)
+        const transcription= await GetTranscript(fileStream.path)
         const meetingRecord = new Meeting({
             userEmail: userEmail,
             meetingId: meetingId,
-            videoS3url: s3Url
+            videoS3url: s3Url,
+            transcript:transcription
         });
 
-        // Save the meeting record to the database
         await meetingRecord.save();
 
         console.log("Meeting record saved successfully.");
@@ -332,13 +320,16 @@ app.post('/start-recording', async (req, res) => {
             }
         });
 
-        setInterval(async () => {
-           let answer=await checkBotPresence(page, browser, stream, fileStream,meetingId,userEmail);
-           if (answer){
-            stop=true
-            return
-           }
-        }, 10000);
+        if(!stop){
+            setInterval(async () => {
+                let answer=await checkBotPresence(page, browser, stream, fileStream,meetingId,userEmail);
+                if (answer){
+                 stop=true
+                 return
+                }
+             }, 10000);
+
+        }
 
         res.status(200).json({ message: 'Recording started successfully.' });
 
@@ -348,132 +339,6 @@ app.post('/start-recording', async (req, res) => {
     }
 });
 
-// app.post("/schedule-event", async (req, res) => {
-//     console.log(req.body.formData);
-
-//     const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
-//         headers: {
-//             Authorization: `Bearer ${oauth2Client.credentials.access_token}`
-//         }
-//     });
-
-//     const attendeesEmails = [
-//         { 'email': 'neelmani242@gmail.com' },
-//     ];
-
-//     const user = await User.findOne({ googleId: data.id });
-
-//     const event = {
-//         summary: req.body.formData.summary,
-//         location: 'Virtual / Google Meet',
-//         description: req.body.formData.description,
-//         start: {
-//             dateTime: req.body.formData.startTime,
-//         },
-//         end: {
-//             dateTime: req.body.formData.endTime,
-//         },
-//         attendees: attendeesEmails,
-//         reminders: {
-//             useDefault: false,
-//             overrides: [
-//                 { method: 'email', 'minutes': 24 * 60 },
-//                 { method: 'popup', 'minutes': 10 },
-//             ],
-//         },
-//         conferenceData: {
-//             createRequest: {
-//                 conferenceSolutionKey: {
-//                     type: 'hangoutsMeet'
-//                 },
-//                 requestId: 'coding-calendar-demo'
-//             }
-//         },
-//     };
-
-//     try {
-//         const response = await calendar.events.insert({
-//             calendarId: 'primary',
-//             auth: oauth2Client,
-//             resource: event,
-//             conferenceDataVersion: 1
-//         });
-//         // console.log(response);
-//         const summary = response.data.summary;
-//         const description = response.data.description;
-//         const location = response.data.location;
-//         const scheduleStartTime = response.data.start.dateTime;
-//         const scheduleEndTime = response.data.end.dateTime;
-//         const meetinglink = response.data.hangoutLink;
-//         const userEmail = response.data.organizer.email
-
-
-//         const alldata = {
-//             summary: summary,
-//             description: description,
-//             start: scheduleStartTime,
-//             end: scheduleEndTime,
-//             url: meetinglink,
-//         };
-
-//         user.events.push(alldata);
-//         await user.save();
-
-//         console.log("User Email",userEmail);
-//         // Schedule the bot to join 5 minutes before the meeting start time
-//         // const startTime = parseISO(scheduleStartTime);
-//         // const endTime = parseISO(scheduleEndTime);
-//         // const botJoinTime = subMinutes(startTime, 4);
-//         // console.log(botJoinTime);
-//         // const cronTime = dateToCron(botJoinTime);
-//         // console.log(cronTime);
-
-//         // cron.schedule(cronTime, async () => {
-//         //     await joinMeeting(meetinglink, startTime);
-//         // });
-
-//         const startTime = parseISO(scheduleStartTime);
-//         const endTime = parseISO(scheduleEndTime);
-//         const botJoinTime = subMinutes(startTime, 5);
-//         const interval = 1 * 60 * 1000; // 1 minutes in milliseconds
-
-//         let joined = false;
-
-//         const checkAndJoinMeeting = async () => {
-//             if (joined) {
-//                 clearInterval(intervalId);
-//                 joined=false;
-//                 return;
-//             }
-//             const now = new Date();
-//             if (isAfter(now, startTime) && isBefore(now, endTime)) {
-//                 joined = await joinMeeting(meetinglink, userEmail);
-//                 if (joined) {
-//                     clearInterval(intervalId);
-//                     joined=false;
-//                 }
-//             } else if (isAfter(now, endTime)) {
-//                 clearInterval(intervalId);
-//                 joined=false;
-//             }
-//         };
-
-//         const intervalId = setInterval(checkAndJoinMeeting, interval);
-
-//         console.log(`📅 Calendar event created: ${summary}at ${location}, from ${scheduleStartTime} to ${scheduleEndTime}, \n 💻 Join conference call link: ${meetinglink}`);
-//         res.send({
-//             message: "Event Added"
-//         });
-//     } catch (error) {
-//         console.error("Error:", error.message);
-//         if (error.response && error.response.data) {
-//             console.error("Google Calendar API error:", error.response.data);
-//             res.status(404).json({ message: 'Google Calendar API Error.' });
-//         } else {
-//             res.status(404).json({ message: 'Unable to add the Event' });
-//         }
-//     }
-// });
 
 async function joinMeeting(meetUrl, userEmail) {
     console.log("Joining Meet");
@@ -554,7 +419,7 @@ console.log(meetingId);
                 return
             }
         });
-
+        
         setInterval(async () => {
            let answer=await checkBotPresence(page, browser, stream, fileStream,meetingId,userEmail);
            if (answer){
@@ -595,53 +460,22 @@ async function checkMeetingStatus(page) {
     }
 }
 
-const openai = new OpenAIApi({
-    apikeys_v2:process.env.OPENAI_API_KEY
-});
-
-const audioFun = async()=>{
-    const transcription = await openai.audio.transcriptions.create({
-        // file:fs.createReadStream("./audio/audio.mp3"),
-        file:fs.createReadStream("./report/test4.mp4"),
-        // file:fs.createReadStream('https://riktam-recordings.s3.ap-south-1.amazonaws.com/recorded_video_MeetingId_bqu-ehua-ttt.webm'),
-        model:"whisper-1",
-        language: "en"
-    })
-    console.log(transcription);
-}
-
-// audioFun()
-app.get('/allevents', async (req, res) => {
-    try {
-        const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
-            headers: {
-                Authorization: `Bearer ${oauth2Client.credentials.access_token}`
-            }
-        });
-
-        const user = await User.findOne({ googleId: data.id });
-
-        // Check if user exists and has events
-        if (user && user.events.length > 0) {
-            // Initialize the list to store all events
-            var alleventslist = [];
-
-//             // Iterate through each event and add it to the list
-//             user.events.forEach(event => {
-//                 alleventslist.push(event);
-//             });
-
-//             // Send the list of all events to the frontend
-//             // res.json(alleventslist);
-//             res.status(200).json({ message: 'All Events are listed',alleventslist });
-//         } else {
-//             res.status(404).json({ message: 'User not found or no events found for the user.' });
-//         }
-//     } catch (error) {
-//         console.error('Error fetching events:', error);
-//         res.status(500).send('Internal Server Error');
-//     }
+// const openai = new OpenAIApi({
+//     apikeys_v2:process.env.OPENAI_API_KEY
 // });
+
+// const audioFun = async()=>{
+//     const transcription = await openai.audio.transcriptions.create({
+//         // file:fs.createReadStream("./audio/audio.mp3"),
+//         file:fs.createReadStream("./report/test4.mp4"),
+//         // file:fs.createReadStream('https://riktam-recordings.s3.ap-south-1.amazonaws.com/recorded_video_MeetingId_bqu-ehua-ttt.webm'),
+//         model:"whisper-1",
+//         language: "en"
+//     })
+//     console.log(transcription);
+// }
+
+
 
 app.listen(Port,()=>{
     DBConnection();
