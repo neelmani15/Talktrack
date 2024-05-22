@@ -19,7 +19,7 @@ const Sidebar = ({ onScheduleMeetingClick, onShowAllEventsClick, isLoading }) =>
             onClick={onShowAllEventsClick}
             disabled={isLoading}
           >
-            {isLoading ? 'Loading...' : 'List All Events'}
+            {isLoading ? 'Loading...' : 'Meetings'}
           </button>
         </li>
       </ul>
