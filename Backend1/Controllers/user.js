@@ -139,7 +139,7 @@ async function HandleScheduleEvent(req, res) {
             return;
         }
           const now = new Date();
-        if (isAfter(now, startTime) && isBefore(now, endTime)) {
+        if (isAfter(now, botJoinTime) && isBefore(now, endTime)) {
             joined = await HandlejoinMeeting(meetinglink, userEmail);
             if (joined) {
                 clearInterval(intervalId);
