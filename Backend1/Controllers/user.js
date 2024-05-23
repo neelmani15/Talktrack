@@ -113,15 +113,21 @@ async function HandleScheduleEvent(req, res) {
       const meetinglink = response.data.hangoutLink;
       const attendees = response.data.attendees;
       const userEmail = dataToSubmit.userEmail;
+      console.log(meetinglink)
+      const parts = meetinglink.split('/');
+      console.log(parts)
+      const meetingId = parts[parts.length - 1];
+      console.log(meetingId)
       const alldata = {
           summary: summary,
           description: description,
           start: scheduleStartTime,
           end: scheduleEndTime,
           url: meetinglink,
+          MeetingId:meetingId
           // attendees: attendees
       };
-
+    console.log(alldata)
       user.events.push(alldata);
       await user.save();
 
@@ -397,27 +403,76 @@ async function HandelEventList(req, res) {
     }
 }
 
-async function HandleMeetingdetails(req, res){
-    try {
-    const { meetingId } = req.query;
+// async function HandleMeetingdetails(req, res){
+//     try {
+//     const { meetingId,userEmail } = req.body;
 
-    const meeting = await Meeting.findOne({ meetingId });
-    console.log(meeting)
-    //   if(meeting ){
-    //     var videoaccess_url = await HandleVideoStream(meetingId)
-    //   }
-    if (!meeting) {
-        return res.status(404).json({ message: 'Meeting not found' });
-    }
-    //   res.status(200).json(meeting,videoaccess_url);
-    const videoaccess_url = await HandleVideoStream(meetingId);
-    // const transcript=await GetTranscript(meeting.videoS3url)
-    res.status(200).json({ meeting, videoaccess_url});
+//     const meeting = await Meeting.findOne({ meetingId });
+//     console.log(meeting)
+//     //   if(meeting ){
+//     //     var videoaccess_url = await HandleVideoStream(meetingId)
+//     //   }
+//     if (!meeting) {
+//         const user = await User.findOne({  email: userEmail});
+//         if (user.events.length > 0) {
+//             // If user exists and has events, send the list of events
+//             const alleventslist = user.events.map(event => event);
+//             console.log(alleventslist)
+//             res.status(200).json({ message: 'All Events are listed', alleventslist });
+//         }
+
+//         return res.status(404).json({ message: 'Meeting not found' });
+//     }
+//     //   res.status(200).json(meeting,videoaccess_url);
+//     const videoaccess_url = await HandleVideoStream(meetingId);
+//     // const transcript=await GetTranscript(meeting.videoS3url)
+//     res.status(200).json({ meeting, videoaccess_url});
+//     } catch (error) {
+//     console.error('Error fetching meeting details:', error);
+//     res.status(500).json({ error: 'An error occurred while fetching meeting details' });
+//     }
+//  }
+
+async function HandleMeetingdetails(req, res) {
+    try {
+      const { meetingId, userEmail } = req.body;
+  
+      // Check if the meeting exists
+      const meeting = await Meeting.findOne({ meetingId });
+      console.log(meeting);
+  
+      // If meeting doesn't exist
+      if (!meeting) {
+        // Find the user by email
+        const user = await User.findOne({ email: userEmail });
+  
+        // If user exists and has events
+        if (user && user.events.length > 0) {
+          // Search for the event with the matching meetingId
+          const event = user.events.find(event => event.MeetingId === meetingId);
+  
+          // If event is found, send the event
+          if (event) {
+            return res.status(200).json({ message: 'Event found', event });
+          }
+  
+          // If event is not found in user's events
+          return res.status(404).json({ message: 'Event not found in user\'s events' });
+        }
+  
+        // If user has no events
+        return res.status(404).json({ message: 'User has no events' });
+      }
+  
+      // If meeting exists
+      const videoaccess_url = await HandleVideoStream(meetingId);
+      return res.status(200).json({ meeting, videoaccess_url });
     } catch (error) {
-    console.error('Error fetching meeting details:', error);
-    res.status(500).json({ error: 'An error occurred while fetching meeting details' });
+      console.error('Error fetching meeting details:', error);
+      return res.status(500).json({ error: 'An error occurred while fetching meeting details' });
     }
- }
+  }
+  
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); 
 const GetTranscript = async(s3videourl)=>{

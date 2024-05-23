@@ -18,7 +18,7 @@ router.post("/schedule-event",HandleScheduleEvent)
 
 router.post('/allevents',HandelEventList)
 
-router.get('/meetingdetails',HandleMeetingdetails)
+router.post('/meetingdetails',HandleMeetingdetails)
 router.get('/video',HandleVideoStream)
 
 module.exports=router

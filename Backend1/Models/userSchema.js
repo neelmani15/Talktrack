@@ -29,6 +29,7 @@ const userSchema = new mongoose.Schema({
         //     dateTime: { type: String, required: true }
         // },
         url: String,
+        MeetingId:String,
         // attendees: [String]
     }]
 });
