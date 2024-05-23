@@ -725,7 +725,8 @@ const Home = () => {
     const parts = eventUrl.split('/');
     const meetingId = parts[parts.length - 1];
     try {
-      const response = await axios.get('http://localhost:5001/user/meetingdetails', { params: { meetingId } });
+      const response = await axios.post('http://localhost:5001/user/meetingdetails', { meetingId,userEmail });
+      
       navigate('/meetingdetails', { state: { meetingDetails: response.data } });
     } catch (error) {
       console.error('Error fetching meeting details:', error);
