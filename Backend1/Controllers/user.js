@@ -14,8 +14,11 @@ const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const { executablePath } = require('puppeteer');
 const uploadToS3 = require('../Connection/uploadToS3');
+const uploadAudioToS3  = require('../Connection/uploadaudioToS3');
+const getAudio = require('..//Connection/getaudio');
 const { trusted } = require('mongoose');
-
+const ffmpeg = require('fluent-ffmpeg');
+const path = require('path');
 const calendar = google.calendar({
     version:"v3",
     auth:process.env.API_KEY
@@ -290,9 +293,18 @@ async function HandleStopRecording(browser, stream, fileStream,meetingId,userEma
         fileStream.end();
         console.log("Recording stopped successfully.");
         const s3Url = await uploadToS3(fileStream.path, 'riktam-recordings',meetingId);
+        
         console.log(s3Url)
         console.log(userEmail)
-        const transcription= await GetTranscript(fileStream.path)
+
+        const videoPath = fileStream.path;
+        const audioOutputDir = path.dirname(videoPath);
+
+        // Extract audio from the video file
+        const audioPath = await getAudio(videoPath, audioOutputDir);
+        const audios3Url = await uploadAudioToS3(audioPath, 'riktam-recordings',meetingId);
+        console.log(audios3Url)
+        const transcription= await GetTranscript(audioPath)
         const meetingRecord = new Meeting({
             userEmail: userEmail,
             meetingId: meetingId,
@@ -498,9 +510,8 @@ async function HandleVideoStream(meetingId){
 
   const params = {
     Bucket: process.env.S3_BUCKET_NAME,
-    Key: `recorded_video_MeetingId_${meetingId}.webm`
+    Key: `videos/recorded_video_MeetingId_${meetingId}.webm`
   };
-
   try {
     const command = new GetObjectCommand(params);
     const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour expiration

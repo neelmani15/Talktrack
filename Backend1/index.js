@@ -17,6 +17,8 @@ const PuppeteerScreenRecorder = require('puppeteer-screen-recorder');
 
 const { launch, getStream,wss } = require("puppeteer-stream");
 const { log } = require('console');
+// const ffmpeg = require('fluent-ffmpeg');
+// const path = require('path');
 
 const  OpenAIApi  = require('openai');
 
@@ -46,6 +48,7 @@ app.use("/auth",OAuthRouter)
 const Meeting=require('./Models/MeetRecord.js');
 
 const uploadToS3 = require('.//Connection/uploadToS3');
+// const getAudio = require('.//Connection/getaudio');
 const { trusted } = require('mongoose');
 
 // case -2 working and storing the video
@@ -158,37 +161,82 @@ const { trusted } = require('mongoose');
 //     console.log(transcription);
 //     return transcription.text
 // }
-// async function stopRecording(browser, stream, fileStream,meetingId,userEmail) {
+// // async function stopRecording(browser, stream, fileStream,meetingId,userEmail) {
+// //     try {
+// //         stop=true
+// //         stream.unpipe(fileStream);
+// //         fileStream.end();
+// //         console.log("Recording stopped successfully.");
+// //         const s3Url = await uploadToS3(fileStream.path, 'riktam-recordings',meetingId);
+// //         console.log(s3Url)
+// //         console.log(userEmail)
+// //         const transcription= await GetTranscript(fileStream.path)
+// //         const meetingRecord = new Meeting({
+// //             userEmail: userEmail,
+// //             meetingId: meetingId,
+// //             videoS3url: s3Url,
+// //             transcript:transcription
+// //         });
+        
+// //         await meetingRecord.save();
+        
+// //         console.log("Meeting record saved successfully.");
+// //         await browser?.close();
+// //         console.log("browser closed")
+
+// //         isRecordingStopped=true
+        
+// //     } catch (error) {
+// //         console.error('Error stopping recording:', error);
+// //     }
+// // }
+
+// // Function to check bot presence and handle "Got it" button
+
+
+// async function stopRecording(browser, stream, fileStream, meetingId, userEmail) {
 //     try {
-//         stop=true
+//         stop = true;
 //         stream.unpipe(fileStream);
 //         fileStream.end();
 //         console.log("Recording stopped successfully.");
-//         const s3Url = await uploadToS3(fileStream.path, 'riktam-recordings',meetingId);
-//         console.log(s3Url)
-//         console.log(userEmail)
-//         const transcription= await GetTranscript(fileStream.path)
+
+//         const videoPath = fileStream.path;
+//         const audioOutputDir = path.dirname(videoPath);
+
+//         // Extract audio from the video file
+//         const audioPath = await getAudio(videoPath, audioOutputDir);
+
+//         // Upload the video file to S3
+//         const s3Url = await uploadToS3(videoPath, 'riktam-recordings', meetingId);
+//         console.log(s3Url);
+//         console.log(userEmail);
+
+//         // Get transcription from the audio file
+//         const transcription = await GetTranscript(audioPath);
+
+//         // Save meeting record to the database
 //         const meetingRecord = new Meeting({
 //             userEmail: userEmail,
 //             meetingId: meetingId,
 //             videoS3url: s3Url,
-//             transcript:transcription
+//             transcript: transcription
 //         });
-        
-//         await meetingRecord.save();
-        
-//         console.log("Meeting record saved successfully.");
-//         await browser?.close();
-//         console.log("browser closed")
 
-//         isRecordingStopped=true
+//         await meetingRecord.save();
+//         console.log("Meeting record saved successfully.");
+
+//         await browser?.close();
+//         console.log("Browser closed");
+//         isRecordingStopped = true;
         
 //     } catch (error) {
 //         console.error('Error stopping recording:', error);
 //     }
 // }
 
-// Function to check bot presence and handle "Got it" button
+// module.exports = stopRecording;
+
 // let gotItClicked = false;
 // let isRecordingStopped=false
 // async function checkBotPresence(page, browser, stream, fileStream,meetingId,userEmail) {
