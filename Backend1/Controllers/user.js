@@ -14,8 +14,11 @@ const puppeteer = require('puppeteer-extra');
 const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const { executablePath } = require('puppeteer');
 const uploadToS3 = require('../Connection/uploadToS3');
+const downloadvideoFromS3 = require('../Connection/downloadfroms3');
 const uploadAudioToS3  = require('../Connection/uploadaudioToS3');
 const getAudio = require('..//Connection/getaudio');
+const GetTranscript=require('../Connection/getTranscript.js');
+const checkVideoExists = require('..//Connection/videocheck');
 const { trusted } = require('mongoose');
 const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
@@ -36,6 +39,8 @@ const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
 const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { fromEnv } = require('@aws-sdk/credential-provider-env');
 
+
+//i added the changes related to 
 async function HandleScheduleEvent(req, res) {
   console.log("schedule  executed");
 
@@ -293,26 +298,25 @@ async function HandleStopRecording(browser, stream, fileStream,meetingId,userEma
         fileStream.end();
         console.log("Recording stopped successfully.");
         const s3Url = await uploadToS3(fileStream.path, 'riktam-recordings',meetingId);
-        
         console.log(s3Url)
-        console.log(userEmail)
+        // console.log(userEmail)
 
-        const videoPath = fileStream.path;
-        const audioOutputDir = path.dirname(videoPath);
+        // const videoPath = fileStream.path;
+        // const audioOutputDir = path.dirname(videoPath);
 
         // Extract audio from the video file
-        const audioPath = await getAudio(videoPath, audioOutputDir);
-        const audios3Url = await uploadAudioToS3(audioPath, 'riktam-recordings',meetingId);
-        console.log(audios3Url)
-        const transcription= await GetTranscript(audioPath)
-        const meetingRecord = new Meeting({
-            userEmail: userEmail,
-            meetingId: meetingId,
-            videoS3url: s3Url,
-            transcript:transcription
-        });
+        // const audioPath = await getAudio(videoPath, audioOutputDir);
+        // const audios3Url = await uploadAudioToS3(audioPath, 'riktam-recordings',meetingId);
+        // console.log(audios3Url)
+        // const transcription= await GetTranscript(audioPath)
+        // const meetingRecord = new Meeting({
+        //     userEmail: userEmail,
+        //     meetingId: meetingId,
+        //     videoS3url: s3Url,
+        //     transcript:transcription
+        // });
         
-        await meetingRecord.save();
+        // await meetingRecord.save();
         
         console.log("Meeting record saved successfully.");
         await browser?.close();
@@ -445,61 +449,119 @@ async function HandelEventList(req, res) {
 //     }
 //  }
 
+// async function HandleMeetingdetails(req, res) {
+//     try {
+//       const { meetingId, userEmail } = req.body;
+  
+//       // Check if the meeting exists
+//       const meeting = await Meeting.findOne({ meetingId });
+//       console.log(meeting);
+  
+//       // If meeting doesn't exist
+//       if (!meeting) {
+//         // Find the user by email
+//         const user = await User.findOne({ email: userEmail });
+  
+//         // If user exists and has events
+//         if (user && user.events.length > 0) {
+//           // Search for the event with the matching meetingId
+//           const event = user.events.find(event => event.MeetingId === meetingId);
+  
+//           // If event is found, send the event
+//           if (event) {
+//             return res.status(200).json({ message: 'Event found', event });
+//           }
+  
+//           // If event is not found in user's events
+//           return res.status(404).json({ message: 'Event not found in user\'s events' });
+//         }
+  
+//         // If user has no events
+//         return res.status(404).json({ message: 'User has no events' });
+//       }
+  
+//       // If meeting exists
+//       const videoaccess_url = await HandleVideoStream(meetingId);
+//       return res.status(200).json({ meeting, videoaccess_url });
+//     } catch (error) {
+//       console.error('Error fetching meeting details:', error);
+//       return res.status(500).json({ error: 'An error occurred while fetching meeting details' });
+//     }
+//   }
+  
 async function HandleMeetingdetails(req, res) {
     try {
-      const { meetingId, userEmail } = req.body;
-  
-      // Check if the meeting exists
-      const meeting = await Meeting.findOne({ meetingId });
+      const { meetingId, userEmail } = req.body;  
+      let meeting = await Meeting.findOne({ meetingId });
       console.log(meeting);
   
-      // If meeting doesn't exist
-      if (!meeting) {
-        // Find the user by email
-        const user = await User.findOne({ email: userEmail });
-  
-        // If user exists and has events
-        if (user && user.events.length > 0) {
-          // Search for the event with the matching meetingId
-          const event = user.events.find(event => event.MeetingId === meetingId);
-  
-          // If event is found, send the event
-          if (event) {
-            return res.status(200).json({ message: 'Event found', event });
-          }
-  
-          // If event is not found in user's events
-          return res.status(404).json({ message: 'Event not found in user\'s events' });
+        if (meeting) {
+            const videoaccess_url = await HandleVideoStream(meetingId);
+            return res.status(200).json({ meeting, videoaccess_url });
+        }else {
+            const videoExists = await checkVideoExists('riktam-recordings', meetingId);
+            if(videoExists.exists){
+            const bucketName = 'riktam-recordings';
+            const downloadDir = './downloadfroms3/video';
+            const videoPath = await downloadvideoFromS3(bucketName, meetingId, downloadDir);
+            const audioOutputDir = path.dirname(videoPath);
+    
+            // Extract audio from the video file
+            const audioPath = await getAudio(videoPath, audioOutputDir);
+            const transcription = await GetTranscript(audioPath);
+            console.log(transcription);
+            // Update the existing meeting record with the new transcript
+            const meeting = new Meeting({
+                userEmail: userEmail,
+                meetingId: meetingId,
+                videoS3url: videoExists.url,
+                transcript:transcription
+            });
+            await meeting.save();
+            console.log("Meeting record updated successfully.");
+    
+            const videoaccess_url = await HandleVideoStream(meetingId);
+            return res.status(200).json({ meeting, videoaccess_url });
+
+            }
+            else{
+                const user = await User.findOne({ email: userEmail });
+                // If user exists and has events
+                if (user && user.events.length > 0) {
+                // Search for the event with the matching meetingId
+                const event = user.events.find(event => event.MeetingId === meetingId);
+                // If event is found, send the event
+                if (event) {
+                    return res.status(200).json({ message: 'Event found', event });
+                }
+                // If event is not found in user's events
+                return res.status(404).json({ message: 'Event not found in user\'s events' });
+                }
+                return res.status(404).json({ message: 'User has no events' });
+
+            }
+            
         }
-  
-        // If user has no events
-        return res.status(404).json({ message: 'User has no events' });
-      }
-  
-      // If meeting exists
-      const videoaccess_url = await HandleVideoStream(meetingId);
-      return res.status(200).json({ meeting, videoaccess_url });
     } catch (error) {
       console.error('Error fetching meeting details:', error);
       return res.status(500).json({ error: 'An error occurred while fetching meeting details' });
     }
   }
   
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); 
-const GetTranscript = async(s3videourl)=>{
-    const transcription = await openai.audio.transcriptions.create({
-        // file:fs.createReadStream("./audio/audio.mp3"),
-        // file:fs.createReadStream("./report/test6.mp4"),
-        // file:fs.createReadStream("./report/test4.mp4"),
-        file:fs.createReadStream(s3videourl),
-        // file:fs.createReadStream('https://riktam-recordings.s3.ap-south-1.amazonaws.com/recorded_video_MeetingId_bqu-ehua-ttt.webm'),
-        model:"whisper-1",
-        language: "en"
-    })
-    console.log(transcription);
-    return transcription.text
-}
+// const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); 
+// const GetTranscript = async(s3videourl)=>{
+//     const transcription = await openai.audio.transcriptions.create({
+//         // file:fs.createReadStream("./audio/audio.mp3"),
+//         // file:fs.createReadStream("./report/test6.mp4"),
+//         // file:fs.createReadStream("./report/test4.mp4"),
+//         file:fs.createReadStream(s3videourl),
+//         // file:fs.createReadStream('https://riktam-recordings.s3.ap-south-1.amazonaws.com/recorded_video_MeetingId_bqu-ehua-ttt.webm'),
+//         model:"whisper-1",
+//         language: "en"
+//     })
+//     console.log(transcription);
+//     return transcription.text
+// }
   
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,

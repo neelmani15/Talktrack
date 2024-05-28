@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const path= require('path');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 const { google } = require('googleapis');
@@ -194,198 +195,198 @@ const { trusted } = require('mongoose');
 // // Function to check bot presence and handle "Got it" button
 
 
-// async function stopRecording(browser, stream, fileStream, meetingId, userEmail) {
-//     try {
-//         stop = true;
-//         stream.unpipe(fileStream);
-//         fileStream.end();
-//         console.log("Recording stopped successfully.");
+async function stopRecording(browser, stream, fileStream, meetingId, userEmail) {
+    try {
+        stop = true;
+        stream.unpipe(fileStream);
+        fileStream.end();
+        console.log("Recording stopped successfully.");
 
-//         const videoPath = fileStream.path;
-//         const audioOutputDir = path.dirname(videoPath);
+        // const videoPath = fileStream.path;
+        // const audioOutputDir = path.dirname(videoPath);
 
-//         // Extract audio from the video file
-//         const audioPath = await getAudio(videoPath, audioOutputDir);
+        // // Extract audio from the video file
+        // const audioPath = await getAudio(videoPath, audioOutputDir);
 
-//         // Upload the video file to S3
-//         const s3Url = await uploadToS3(videoPath, 'riktam-recordings', meetingId);
-//         console.log(s3Url);
-//         console.log(userEmail);
+        // Upload the video file to S3
+        const s3Url = await uploadToS3(fileStream.path, 'riktam-recordings', meetingId);
+        console.log(s3Url);
+        // console.log(userEmail);
 
-//         // Get transcription from the audio file
-//         const transcription = await GetTranscript(audioPath);
+        // // Get transcription from the audio file
+        // const transcription = await GetTranscript(audioPath);
 
-//         // Save meeting record to the database
-//         const meetingRecord = new Meeting({
-//             userEmail: userEmail,
-//             meetingId: meetingId,
-//             videoS3url: s3Url,
-//             transcript: transcription
-//         });
+        // // Save meeting record to the database
+        // const meetingRecord = new Meeting({
+        //     userEmail: userEmail,
+        //     meetingId: meetingId,
+        //     videoS3url: s3Url,
+        //     transcript: transcription
+        // });
 
-//         await meetingRecord.save();
-//         console.log("Meeting record saved successfully.");
+        // await meetingRecord.save();
+        // console.log("Meeting record saved successfully.");
 
-//         await browser?.close();
-//         console.log("Browser closed");
-//         isRecordingStopped = true;
+        await browser?.close();
+        console.log("Browser closed");
+        isRecordingStopped = true;
         
-//     } catch (error) {
-//         console.error('Error stopping recording:', error);
-//     }
-// }
+    } catch (error) {
+        console.error('Error stopping recording:', error);
+    }
+}
 
-// module.exports = stopRecording;
+module.exports = stopRecording;
 
-// let gotItClicked = false;
-// let isRecordingStopped=false
-// async function checkBotPresence(page, browser, stream, fileStream,meetingId,userEmail) {
-//     try {
-//         const botName = 'riktam.ai NoteTaker'; // Adjust this to match the bot's name
-//         if (isRecordingStopped) {
-//             return true;
-//         } else {
-//             const frame = page.mainFrame();
-//             if (!frame.isDetached()) {
-//                 const { participants, leftMeetingText } = await frame.evaluate(() => {
-//                     const leftMeetingElement = document.querySelector('h1[jsname="r4nke"].roSPhc');
-//                     const leftMeetingText = leftMeetingElement ? leftMeetingElement.textContent : null;
-//                     const participants = [];
-//                     const participantElements = document.querySelectorAll('[data-self-name]');
-//                     for (let participant of participantElements) {
-//                         participants.push(participant.getAttribute('data-self-name'));
-//                     }
-//                     return { participants, leftMeetingText };
-//                 });
+let gotItClicked = false;
+let isRecordingStopped=false
+async function checkBotPresence(page, browser, stream, fileStream,meetingId,userEmail) {
+    try {
+        const botName = 'riktam.ai NoteTaker'; // Adjust this to match the bot's name
+        if (isRecordingStopped) {
+            return true;
+        } else {
+            const frame = page.mainFrame();
+            if (!frame.isDetached()) {
+                const { participants, leftMeetingText } = await frame.evaluate(() => {
+                    const leftMeetingElement = document.querySelector('h1[jsname="r4nke"].roSPhc');
+                    const leftMeetingText = leftMeetingElement ? leftMeetingElement.textContent : null;
+                    const participants = [];
+                    const participantElements = document.querySelectorAll('[data-self-name]');
+                    for (let participant of participantElements) {
+                        participants.push(participant.getAttribute('data-self-name'));
+                    }
+                    return { participants, leftMeetingText };
+                });
 
-//                 console.log('Participants:', participants);
-//                 console.log('Meeting status:', leftMeetingText);
+                console.log('Participants:', participants);
+                console.log('Meeting status:', leftMeetingText);
 
-//                 if (leftMeetingText) {
-//                     await stopRecording(browser, stream, fileStream,meetingId,userEmail);
-//                     return;
-//                 }
+                if (leftMeetingText) {
+                    await stopRecording(browser, stream, fileStream,meetingId,userEmail);
+                    return;
+                }
 
-//                 if (participants.length >= 1) {
-//                     if (!gotItClicked) {
-//                         await page.click('span[jsname="V67aGc"].mUIrbf-vQzf8d');
-//                         console.log('Clicked on "Got it" button');
-//                         gotItClicked = true;
-//                     }
-//                 }
+                if (participants.length >= 1) {
+                    if (!gotItClicked) {
+                        await page.click('span[jsname="V67aGc"].mUIrbf-vQzf8d');
+                        console.log('Clicked on "Got it" button');
+                        gotItClicked = true;
+                    }
+                }
 
-//                 if (participants.length === 1) {
-//                     gotItClicked = false;
-//                     await stopRecording(browser, stream, fileStream,meetingId,userEmail);
-//                     return;
-//                 }
-//             }
-//         }
-//     } catch (error) {
-//         if (error instanceof puppeteer.errors.TargetCloseError) {
-//             console.error('Target closed. Terminating gracefully.');
-//             await stopRecording(browser, stream, fileStream);
-//         } else {
-//             console.error('Error checking bot presence:', error);
-//         }
-//     }
-// }
+                if (participants.length === 1) {
+                    gotItClicked = false;
+                    await stopRecording(browser, stream, fileStream,meetingId,userEmail);
+                    return;
+                }
+            }
+        }
+    } catch (error) {
+        if (error instanceof puppeteer.errors.TargetCloseError) {
+            console.error('Target closed. Terminating gracefully.');
+            await stopRecording(browser, stream, fileStream);
+        } else {
+            console.error('Error checking bot presence:', error);
+        }
+    }
+}
 
 
-// let stop=false;
-// app.post('/start-recording', async (req, res) => {
-//     const { meetUrl,userEmail} = req.body;
-//     console.log(meetUrl);
-//     console.log(userEmail);
-//     const parts = meetUrl.split('/');
-//     const meetingId = parts[parts.length - 1];
-//     console.log(meetingId);
+let stop=false;
+app.post('/start-recording', async (req, res) => {
+    const { meetUrl,userEmail} = req.body;
+    console.log(meetUrl);
+    console.log(userEmail);
+    const parts = meetUrl.split('/');
+    const meetingId = parts[parts.length - 1];
+    console.log(meetingId);
 
-//     try {
-//         puppeteer.use(StealthPlugin());
-//         const browser = await launch(puppeteer, {
-//             defaultViewport: null,
-//             headless: true,
-//             devtools: false,
-//             args: [
-//                 "--autoplay-policy=no-user-gesture-required",
-//             ],
-//             executablePath: executablePath(),
-//         });
-//         const page = (await browser.pages())[0];
+    try {
+        puppeteer.use(StealthPlugin());
+        const browser = await launch(puppeteer, {
+            defaultViewport: null,
+            headless: true,
+            devtools: false,
+            args: [
+                "--autoplay-policy=no-user-gesture-required",
+            ],
+            executablePath: executablePath(),
+        });
+        const page = (await browser.pages())[0];
         
-//         // Define the path for storing the recorded file
-//         // const filePath = './report/video/meeting_recording.webm';
-//         const filePath = `./report/video/meetingId_${meetingId}.webm`;
-//         console.log(filePath)
-//         const fileStream = fs.createWriteStream(filePath);
+        // Define the path for storing the recorded file
+        // const filePath = './report/video/meeting_recording.webm';
+        const filePath = `./report/video/meetingId_${meetingId}.webm`;
+        console.log(filePath)
+        const fileStream = fs.createWriteStream(filePath);
         
-//         // Get the media stream
-//         const stream = await getStream(page, { audio: true, video: true });
-//         stream.pipe(fileStream);
+        // Get the media stream
+        const stream = await getStream(page, { audio: true, video: true });
+        stream.pipe(fileStream);
 
-//         const navigationPromise = page.waitForNavigation();
-//         const context = browser.defaultBrowserContext();
-//         await context.overridePermissions("https://meet.google.com/", ["microphone", "camera", "notifications"]);
+        const navigationPromise = page.waitForNavigation();
+        const context = browser.defaultBrowserContext();
+        await context.overridePermissions("https://meet.google.com/", ["microphone", "camera", "notifications"]);
         
-//         await page.goto(meetUrl, { waitUntil: "networkidle0", timeout: 120000 });
-//         await navigationPromise;
+        await page.goto(meetUrl, { waitUntil: "networkidle0", timeout: 120000 });
+        await navigationPromise;
 
-//         await page.waitForSelector('input[aria-label="Your name"]', { visible: true, timeout: 50000 });
-//         console.log('Name input found');
-//         await page.type('input[aria-label="Your name"]', 'riktam.ai NoteTaker');
+        await page.waitForSelector('input[aria-label="Your name"]', { visible: true, timeout: 50000 });
+        console.log('Name input found');
+        await page.type('input[aria-label="Your name"]', 'riktam.ai NoteTaker');
 
-//         try {
-//             const cameraButtonSelector = '[aria-label*="Turn off camera"]';
-//             const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
+        try {
+            const cameraButtonSelector = '[aria-label*="Turn off camera"]';
+            const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
             
-//             await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 60000 });
-//             console.log('Camera button found');
-//             await page.click(cameraButtonSelector);
-//             console.log('Camera turned off');
+            await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 60000 });
+            console.log('Camera button found');
+            await page.click(cameraButtonSelector);
+            console.log('Camera turned off');
             
-//             await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 60000 });
-//             console.log('Microphone button found');
-//             await page.click(microphoneButtonSelector);
-//             console.log('Microphone turned off');
-//         } catch (err) {
-//             console.error('Error turning off camera/microphone:', err);
-//         }
+            await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 60000 });
+            console.log('Microphone button found');
+            await page.click(microphoneButtonSelector);
+            console.log('Microphone turned off');
+        } catch (err) {
+            console.error('Error turning off camera/microphone:', err);
+        }
 
-//         const askToJoinButtonSelector = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 jEvJdc QJgqC"]';
-//         await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 50000 });
-//         console.log('Ask to join button found');
-//         await page.click(askToJoinButtonSelector);
-//         console.log('Clicked on Ask to join button');
+        const askToJoinButtonSelector = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 jEvJdc QJgqC"]';
+        await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 50000 });
+        console.log('Ask to join button found');
+        await page.click(askToJoinButtonSelector);
+        console.log('Clicked on Ask to join button');
 
-//         page.on('framenavigated', async (frame) => {
-//             const url = frame.url();
-//             console.log(url);
-//             if (!url.includes('meet.google.com')) {
-//                 console.log("Meeting Stopped");
-//                 await stopRecording(browser, stream, fileStream,meetingId,userEmail);
-//                 return
-//             }
-//         });
+        page.on('framenavigated', async (frame) => {
+            const url = frame.url();
+            console.log(url);
+            if (!url.includes('meet.google.com')) {
+                console.log("Meeting Stopped");
+                await stopRecording(browser, stream, fileStream,meetingId,userEmail);
+                return
+            }
+        });
 
-//         if(!stop){
-//             setInterval(async () => {
-//                 let answer=await checkBotPresence(page, browser, stream, fileStream,meetingId,userEmail);
-//                 if (answer){
-//                  stop=true
-//                  return
-//                 }
-//              }, 10000);
+        if(!stop){
+            setInterval(async () => {
+                let answer=await checkBotPresence(page, browser, stream, fileStream,meetingId,userEmail);
+                if (answer){
+                 stop=true
+                 return
+                }
+             }, 10000);
 
-//         }
+        }
 
-//         res.status(200).json({ message: 'Recording started successfully.' });
+        res.status(200).json({ message: 'Recording started successfully.' });
 
-//     } catch (error) {
-//         console.error('Error starting recording:', error);
-//         res.status(500).json({ error: 'An error occurred while starting recording.' });
-//     }
-// });
+    } catch (error) {
+        console.error('Error starting recording:', error);
+        res.status(500).json({ error: 'An error occurred while starting recording.' });
+    }
+});
 
 
 async function joinMeeting(meetUrl, userEmail) {
