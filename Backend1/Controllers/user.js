@@ -19,6 +19,7 @@ const uploadAudioToS3  = require('../Connection/uploadaudioToS3');
 const getAudio = require('..//Connection/getaudio');
 const GetTranscript=require('../Connection/getTranscript.js');
 const checkVideoExists = require('..//Connection/videocheck');
+const { startTranscriptionJob, getTranscriptionResult } = require('..//Connection/awstranscribe');
 const { trusted } = require('mongoose');
 const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
@@ -637,8 +638,16 @@ async function HandleMeetingdetails(req, res) {
     
             // Extract audio from the video file
             const audioPath = await getAudio(videoPath, audioOutputDir);
+            
             const transcription = await GetTranscript(audioPath);
             console.log(transcription);
+
+            const audios3Url = await uploadAudioToS3(audioPath, 'riktam-recordings',meetingId);
+            console.log(audios3Url)
+            const transcriptionJobName = await startTranscriptionJob(audios3Url, bucketName, meetingId);
+            const transcriptUri = await getTranscriptionResult(transcriptionJobName);
+            console.log(`Transcript available at: ${transcriptUri}`);
+            
             // Update the existing meeting record with the new transcript
             const meeting = new Meeting({
                 userEmail: userEmail,
