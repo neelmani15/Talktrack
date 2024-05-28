@@ -283,6 +283,135 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
     }
 }
 
+async function HandleLiveMeeting(req,res) {
+    console.log("Joining Meet");
+    const { meetUrl,userEmail } = req.body;
+    console.log(meetUrl);
+    console.log(userEmail);
+    const parts = meetUrl.split('/');
+    const meetingId = parts[parts.length - 1];
+    // const file = fs.createWriteStream("./report/test2.mp4");
+
+    console.log(meetingId);
+
+    try {
+        const user = await User.findOne({ email: userEmail });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        oauth2Client.setCredentials({
+            access_token: user.googleAccessToken,
+            // If you have a refresh token, set it here as well
+            // refresh_token: user.googleRefreshToken,
+        });
+        const currentDateTime = new Date();
+        const oneHourLater = new Date(currentDateTime.getTime() + (60 * 60 * 1000));
+        const alldata = {
+            summary: `Live ${meetingId}`,
+            description: "Some Topic",
+            start: currentDateTime,
+            end: oneHourLater,
+            url: meetUrl,
+            MeetingId:meetingId
+            // attendees: attendees
+        };
+        console.log(alldata)
+        user.events.push(alldata);
+        await user.save();
+        puppeteer.use(StealthPlugin());
+        const browser = await launch(puppeteer, {
+            defaultViewport: null,
+            headless: true,
+            devtools: false,
+            args: [
+                "--autoplay-policy=no-user-gesture-required",
+            ],
+            executablePath: executablePath(),
+        });
+        const page = (await browser.pages())[0];
+        
+        // Define the path for storing the recorded file
+        // const filePath = './report/video/meeting_recording.webm';
+        const filePath = `./report/video/meetingId_${meetingId}.webm`;
+        console.log(filePath)
+        const fileStream = fs.createWriteStream(filePath);
+        
+        // Get the media stream
+        const stream = await getStream(page, { audio: true, video: true });
+        stream.pipe(fileStream);
+        // stream.pipe(file);
+
+        const navigationPromise = page.waitForNavigation();
+        const context = browser.defaultBrowserContext();
+        await context.overridePermissions("https://meet.google.com/", ["microphone", "camera", "notifications"]);
+        
+        await page.goto(meetUrl, { waitUntil: "networkidle0", timeout: 120000 });
+        await navigationPromise;
+
+        await page.waitForSelector('input[aria-label="Your name"]', { visible: true, timeout: 50000 });
+        console.log('Name input found');
+        await page.type('input[aria-label="Your name"]', 'riktam.ai NoteTaker');
+
+        try {
+            const cameraButtonSelector = '[aria-label*="Turn off camera"]';
+            const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
+            
+            await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 60000 });
+            console.log('Camera button found');
+            await page.click(cameraButtonSelector);
+            console.log('Camera turned off');
+            
+            await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 60000 });
+            console.log('Microphone button found');
+            await page.click(microphoneButtonSelector);
+            console.log('Microphone turned off');
+
+        } catch (err) {
+            console.error('Error turning off camera/microphone:', err);
+        }
+
+        const askToJoinButtonSelector = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 jEvJdc QJgqC"]';
+        await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 50000 });
+        console.log('Ask to join button found');
+        await page.click(askToJoinButtonSelector);
+        console.log('Clicked on Ask to join button');
+
+        const participantCheckInterval = setInterval(async () => {
+            const botPresence = await HandleCheckBotPresence(page, browser, meetingId, userEmail);
+            if (botPresence || isRecordingStopped) {
+                clearInterval(participantCheckInterval);
+                await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail);
+            }
+        },10000)
+
+        // page.on('framenavigated', async (frame) => {
+        //     const url = frame.url();
+        //     console.log(url);
+        //     if (!url.includes('meet.google.com')) {
+        //         console.log("Meeting Stopped");
+        //         await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
+        //         return
+        //     }
+        // });
+
+        // setInterval(async () => {
+        //    let answer=await HandleCheckBotPresence(page, browser, stream, fileStream,meetingId,userEmail);
+        //    if (answer){
+        //     stop=true
+        //     return
+        //    }
+        // }, 10000);
+        // return true;
+
+        res.status(200).json({ message: 'Recording started successfully.' });
+
+    } catch (error) {
+        console.error('Error starting recording:', error);
+        // return false;
+        res.status(500).json({ error: 'An error occurred while starting recording.' });
+    }
+}
+
 async function HandleStopRecording(browser, stream, fileStream,meetingId,userEmail) {
     try {
         stop=true
@@ -516,5 +645,6 @@ module.exports={
     HandleScheduleEvent,
     HandelEventList,
     HandleMeetingdetails,
-    HandleVideoStream
+    HandleVideoStream,
+    HandleLiveMeeting
 }

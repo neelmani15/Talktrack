@@ -6,7 +6,8 @@ const {
         HandelEventList,
         HandleScheduleEvent,
         HandleMeetingdetails,
-        HandleVideoStream
+        HandleVideoStream,
+        HandleLiveMeeting
         } = require("../Controllers/user");
 
 
@@ -15,6 +16,8 @@ const {
 
 
 router.post("/schedule-event",HandleScheduleEvent)
+
+router.post("/start-live-meeting",HandleLiveMeeting)
 
 router.post('/allevents',HandelEventList)
 
