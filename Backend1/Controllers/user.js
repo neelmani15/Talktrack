@@ -647,7 +647,7 @@ async function HandleMeetingdetails(req, res) {
             const transcriptionJobExist = await checkTranscriptionJobExists(transcriptionJob);
                 if (transcriptionJobExist) {
                     // If transcription job already exists, get its result
-                    const transcriptionResult = await getTranscriptionResult(tran);
+                    const transcriptionResult = await getTranscriptionResult(transcriptionJob);
                     console.log('Transcription result:', transcriptionResult);
                     const transcriptionData = await getTranscriptionJsonFromS3(bucketName, `transcriptions/${meetingId}.json`)
                     console.log("Transcription Data", transcriptionData);
