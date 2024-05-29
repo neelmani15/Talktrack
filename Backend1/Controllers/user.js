@@ -645,8 +645,9 @@ async function HandleMeetingdetails(req, res) {
             const audios3Url = await uploadAudioToS3(audioPath, 'riktam-recordings',meetingId);
             console.log(audios3Url)
             const transcriptionJobName = await startTranscriptionJob(audios3Url, bucketName, meetingId);
-            const transcriptUri = await getTranscriptionResult(transcriptionJobName);
+            const transcriptUri = await getTranscriptionResult(transcriptionJobName,meetingId);
             console.log(`Transcript available at: ${transcriptUri}`);
+            console.log(transcriptUri)
             
             // Update the existing meeting record with the new transcript
             const meeting = new Meeting({
