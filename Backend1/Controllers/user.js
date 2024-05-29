@@ -20,6 +20,7 @@ const { startTranscriptionJob, getTranscriptionResult,checkTranscriptionJobExist
 const getAudio = require('..//Connection/getaudio');
 const GetTranscript=require('../Connection/getTranscript.js');
 const checkVideoExists = require('..//Connection/videocheck');
+const { startTranscriptionJob, getTranscriptionResult } = require('..//Connection/awstranscribe');
 const { trusted } = require('mongoose');
 const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
@@ -640,54 +641,19 @@ async function HandleMeetingdetails(req, res) {
             const audioPath = await getAudio(videoPath, audioOutputDir);
             const audios3Url = await uploadAudioToS3(audioPath, 'testing123riktam',meetingId);
             const transcription = await GetTranscript(audioPath);
-            console.log("Transcription",transcription);
-
-            let transcriptionJob=`transcription-job-${meetingId}`
-
-            const transcriptionJobExist = await checkTranscriptionJobExists(transcriptionJob);
-            console.log(transcriptionJobExist);
-                if (transcriptionJobExist) {
-                    // If transcription job already exists, get its result
-                    const transcriptionResult = await getTranscriptionResult(transcriptionJob);
-                    console.log('Transcription result:', transcriptionResult);
-                    const transcriptionData = await getTranscriptionJsonFromS3(bucketName, `transcriptions/${meetingId}.json`)
-                    console.log("Transcription Data", transcriptionData);
-                    // Update the existing meeting record with the new transcript
-                    const meeting = new Meeting({
-                        userEmail: userEmail,
-                        meetingId: meetingId,
-                        videoS3url: videoExists.url,
-                        transcript: transcription,
-                        transcriptionData: transcriptionData
-                    });
-                    await meeting.save();
-                    console.log("Meeting record updated successfully.");
-
-                    const videoaccess_url = await HandleVideoStream(meetingId);
-                    return res.status(200).json({ meeting, videoaccess_url });
-                } else {
-                    // If transcription job doesn't exist, start a new one
-                    const transcriptionJobName = await startTranscriptionJob(audios3Url, bucketName, meetingId);
-
-                    // Polling for transcription result
-                    const transcriptionResult = await getTranscriptionResult(transcriptionJobName);
-                    console.log('Transcription result:', transcriptionResult);
-                    const transcriptionData = await getTranscriptionJsonFromS3(bucketName, `transcriptions/${meetingId}.json`)
-                    console.log("Transcription Data", transcriptionData);
-                    // Update the existing meeting record with the new transcript
-                    const meeting = new Meeting({
-                        userEmail: userEmail,
-                        meetingId: meetingId,
-                        videoS3url: videoExists.url,
-                        transcript: transcription,
-                        transcriptionData: transcriptionData
-                    });
-                    await meeting.save();
-                    console.log("Meeting record updated successfully.");
-
-                    const videoaccess_url = await HandleVideoStream(meetingId);
-                    return res.status(200).json({ meeting, videoaccess_url });
-                }
+            console.log(transcription);
+            // Update the existing meeting record with the new transcript
+            const meeting = new Meeting({
+                userEmail: userEmail,
+                meetingId: meetingId,
+                videoS3url: videoExists.url,
+                transcript:transcription
+            });
+            await meeting.save();
+            console.log("Meeting record updated successfully.");
+    
+            const videoaccess_url = await HandleVideoStream(meetingId);
+            return res.status(200).json({ meeting, videoaccess_url });
 
             }
             else{
