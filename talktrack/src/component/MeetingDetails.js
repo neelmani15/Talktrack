@@ -290,11 +290,11 @@ const MeetingDetails = () => {
           <div>
             <h2 className="text-xl font-semibold mb-2">Transcription</h2>
             <div className="mt-4 mb-4" >
-              <button className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'original' ? 'bg-blue-700' : ''}`} onClick={() => handleTranscriptionTypeChange('original')} >
+              {/* <button className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'original' ? 'bg-blue-700' : ''}`} onClick={() => handleTranscriptionTypeChange('original')} >
                 Whisper Text
-              </button>
+              </button> */}
               <button className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'aws' ? 'bg-blue-700' : ''}`} onClick={() => handleTranscriptionTypeChange('aws')} >
-                AWS Text
+                Text
               </button>
               <button className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'speaker' ? 'bg-blue-700' : ''}`} onClick={() => handleTranscriptionTypeChange('speaker')} >
                 Speaker
