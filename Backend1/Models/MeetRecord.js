@@ -16,6 +16,10 @@ const meetingRecordSchema = new mongoose.Schema({
   transcript: {
     type: String,
     required: true
+  },
+  transcriptionData: {
+    type: JSON,
+    required:true
   }
 });
 
