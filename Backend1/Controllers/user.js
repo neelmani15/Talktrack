@@ -16,6 +16,7 @@ const { executablePath } = require('puppeteer');
 const uploadToS3 = require('../Connection/uploadToS3');
 const downloadvideoFromS3 = require('../Connection/downloadfroms3');
 const uploadAudioToS3  = require('../Connection/uploadaudioToS3');
+const { startTranscriptionJob, getTranscriptionResult,checkTranscriptionJobExists } = require('../Connection/awsTranscribe.js');
 const getAudio = require('..//Connection/getaudio');
 const GetTranscript=require('../Connection/getTranscript.js');
 const checkVideoExists = require('..//Connection/videocheck');
@@ -426,7 +427,7 @@ async function HandleStopRecording(browser, stream, fileStream,meetingId,userEma
         stream.unpipe(fileStream);
         fileStream.end();
         console.log("Recording stopped successfully.");
-        const s3Url = await uploadToS3(fileStream.path, 'riktam-recordings',meetingId);
+        const s3Url = await uploadToS3(fileStream.path, 'testing123riktam',meetingId);
         console.log(s3Url)
         // console.log(userEmail)
 
@@ -628,29 +629,65 @@ async function HandleMeetingdetails(req, res) {
             const videoaccess_url = await HandleVideoStream(meetingId);
             return res.status(200).json({ meeting, videoaccess_url });
         }else {
-            const videoExists = await checkVideoExists('riktam-recordings', meetingId);
+            const videoExists = await checkVideoExists('testing123riktam', meetingId);
             if(videoExists.exists){
-            const bucketName = 'riktam-recordings';
+            const bucketName = 'testing123riktam';
             const downloadDir = './downloadfroms3/video';
             const videoPath = await downloadvideoFromS3(bucketName, meetingId, downloadDir);
             const audioOutputDir = path.dirname(videoPath);
     
             // Extract audio from the video file
             const audioPath = await getAudio(videoPath, audioOutputDir);
+            const audios3Url = await uploadAudioToS3(audioPath, 'testing123riktam',meetingId);
             const transcription = await GetTranscript(audioPath);
-            console.log(transcription);
-            // Update the existing meeting record with the new transcript
-            const meeting = new Meeting({
-                userEmail: userEmail,
-                meetingId: meetingId,
-                videoS3url: videoExists.url,
-                transcript:transcription
-            });
-            await meeting.save();
-            console.log("Meeting record updated successfully.");
-    
-            const videoaccess_url = await HandleVideoStream(meetingId);
-            return res.status(200).json({ meeting, videoaccess_url });
+            console.log("Transcription",transcription);
+
+            let transcriptionJob=`transcription-job-${meetingId}`
+
+            const transcriptionJobExist = await checkTranscriptionJobExists(transcriptionJob);
+            console.log(transcriptionJobExist);
+                if (transcriptionJobExist) {
+                    // If transcription job already exists, get its result
+                    const transcriptionResult = await getTranscriptionResult(transcriptionJob);
+                    console.log('Transcription result:', transcriptionResult);
+                    const transcriptionData = await getTranscriptionJsonFromS3(bucketName, `transcriptions/${meetingId}.json`)
+                    console.log("Transcription Data", transcriptionData);
+                    // Update the existing meeting record with the new transcript
+                    const meeting = new Meeting({
+                        userEmail: userEmail,
+                        meetingId: meetingId,
+                        videoS3url: videoExists.url,
+                        transcript: transcription,
+                        transcriptionData: transcriptionData
+                    });
+                    await meeting.save();
+                    console.log("Meeting record updated successfully.");
+
+                    const videoaccess_url = await HandleVideoStream(meetingId);
+                    return res.status(200).json({ meeting, videoaccess_url });
+                } else {
+                    // If transcription job doesn't exist, start a new one
+                    const transcriptionJobName = await startTranscriptionJob(audios3Url, bucketName, meetingId);
+
+                    // Polling for transcription result
+                    const transcriptionResult = await getTranscriptionResult(transcriptionJobName);
+                    console.log('Transcription result:', transcriptionResult);
+                    const transcriptionData = await getTranscriptionJsonFromS3(bucketName, `transcriptions/${meetingId}.json`)
+                    console.log("Transcription Data", transcriptionData);
+                    // Update the existing meeting record with the new transcript
+                    const meeting = new Meeting({
+                        userEmail: userEmail,
+                        meetingId: meetingId,
+                        videoS3url: videoExists.url,
+                        transcript: transcription,
+                        transcriptionData: transcriptionData
+                    });
+                    await meeting.save();
+                    console.log("Meeting record updated successfully.");
+
+                    const videoaccess_url = await HandleVideoStream(meetingId);
+                    return res.status(200).json({ meeting, videoaccess_url });
+                }
 
             }
             else{
@@ -676,6 +713,39 @@ async function HandleMeetingdetails(req, res) {
       return res.status(500).json({ error: 'An error occurred while fetching meeting details' });
     }
   }
+
+  const AWS = require('aws-sdk');
+  require("aws-sdk/lib/maintenance_mode_message").suppress = true;
+
+  // Set your AWS credentials (either through environment variables or programmatically)
+  AWS.config.update({
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    region: 'us-east-1' // Change the region if necessary
+  });
+  
+  // Create an S3 client
+  const s3 = new AWS.S3();
+  
+  // Function to get transcription JSON from S3 bucket
+  async function getTranscriptionJsonFromS3(bucketName, objectKey) {
+    try {
+      const params = {
+        Bucket: bucketName,
+        Key: objectKey
+      };
+      const response = await s3.getObject(params).promise();
+      const transcriptionJson = JSON.parse(response.Body.toString());
+      console.log(transcriptionJson.results.transcripts[0].transcript);
+      console.log(transcriptionJson.results.items[0]);
+    //   console.log(transcriptionJson.results.speaker_labels.segments[0].items);
+      return transcriptionJson;
+    } catch (err) {
+      console.error('Error fetching transcription JSON from S3:', err);
+      throw err;
+    }
+  }
+  
   
 // const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); 
 // const GetTranscript = async(s3videourl)=>{
@@ -696,6 +766,8 @@ const s3Client = new S3Client({
   region: process.env.AWS_REGION,
   credentials: fromEnv() // Automatically fetch credentials from environment variables
 });
+
+
 
 async function HandleVideoStream(meetingId){
 

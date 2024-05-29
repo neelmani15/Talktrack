@@ -176,7 +176,7 @@
 // export default MeetingDetails;
 
 
-import React from 'react';
+import React,{useState} from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import VideoPlayer from './VideoPlayer';
 import { format } from 'date-fns';
@@ -187,6 +187,87 @@ const MeetingDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { meetingDetails } = location.state;
+  console.log(meetingDetails);
+  const [transcriptionType, setTranscriptionType] = useState('original');
+
+  const handleTranscriptionTypeChange = (type) => {
+    setTranscriptionType(type);
+  };
+  const getTranscription = (type) => {
+    if (type === 'original') {
+      return meetingDetails.meeting.transcript;
+    } else if (type === 'aws') {
+      return meetingDetails.meeting.transcriptionData.results.transcripts[0].transcript;
+    } else if (type === 'speaker'){
+      return renderSpeakerWiseTranscription();
+    }
+    // Add more conditions for other types if needed
+    return '';
+  };
+  const renderSpeakerWiseTranscription = () => {
+    const { speaker_labels } = meetingDetails.meeting.transcriptionData.results;
+    const segments = speaker_labels.segments;
+    const items = meetingDetails.meeting.transcriptionData.results.items;
+
+    let currentSpeaker = null;
+    let currentParagraph = [];
+    const speakerOrder = [];
+
+    segments.forEach(segment => {
+      const speaker = segment.speaker_label;
+      const startTime = parseFloat(segment.start_time);
+      const endTime = parseFloat(segment.end_time);
+
+      const speakerItems = items.filter(item =>
+        parseFloat(item.start_time) >= startTime &&
+        parseFloat(item.end_time) <= endTime &&
+        item.speaker_label === speaker
+      );
+
+      speakerItems.forEach(item => {
+        if (item.speaker_label !== currentSpeaker) {
+          if (currentParagraph.length > 0) {
+            speakerOrder.push({
+              speaker: currentSpeaker,
+              paragraph: currentParagraph.join(' ')
+            });
+            currentParagraph = [];
+          }
+          currentSpeaker = item.speaker_label;
+        }
+        currentParagraph.push(item.alternatives[0].content);
+      });
+    });
+
+    // Push the last paragraph
+    if (currentParagraph.length > 0) {
+      speakerOrder.push({
+        speaker: currentSpeaker,
+        paragraph: currentParagraph.join(' ')
+      });
+    }
+
+    return (
+      <div>
+        {speakerOrder.map(({ speaker, paragraph }, index) => (
+          <div key={index}>
+            <p><strong>Speaker {speaker}:</strong></p>
+            {/* <p><strong>Paragraph {index + 1}:</strong></p> */}
+            <p>{paragraph}</p>
+          </div>
+        ))}
+      </div>
+    );
+  };
+  const TranscriptionDisplay = ({ type }) => {
+    return (
+      <div className="bg-gray-100 p-4 rounded shadow-md overflow-y-auto" style={{ maxHeight: '58vh' }}>
+        {getTranscription(type)}
+      </div>
+    );
+  };
+
+  
 
   const renderMeetingDetails = () => {
     return (
@@ -208,9 +289,21 @@ const MeetingDetails = () => {
           </div>
           <div>
             <h2 className="text-xl font-semibold mb-2">Transcription</h2>
-            <div className="bg-gray-100 p-4 rounded shadow-md overflow-y-auto" style={{ maxHeight: '58vh' }}>
-              {meetingDetails.meeting.transcript}
+            <div className="mt-4 mb-4" >
+              <button className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'original' ? 'bg-blue-700' : ''}`} onClick={() => handleTranscriptionTypeChange('original')} >
+                Whisper Text
+              </button>
+              <button className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'aws' ? 'bg-blue-700' : ''}`} onClick={() => handleTranscriptionTypeChange('aws')} >
+                AWS Text
+              </button>
+              <button className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'speaker' ? 'bg-blue-700' : ''}`} onClick={() => handleTranscriptionTypeChange('speaker')} >
+                Speaker
+              </button>
             </div>
+            <TranscriptionDisplay type={transcriptionType} />
+            {/* <div className="bg-gray-100 p-4 rounded shadow-md overflow-y-auto" style={{ maxHeight: '58vh' }}>
+              {meetingDetails.meeting.transcript}
+            </div> */}
           </div>
         </div>
         <div className="mt-4">
