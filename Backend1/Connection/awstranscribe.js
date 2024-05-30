@@ -2,6 +2,7 @@ require('dotenv').config();
 const { TranscribeClient, StartTranscriptionJobCommand, GetTranscriptionJobCommand,ListTranscriptionJobsCommand} = require('@aws-sdk/client-transcribe');
 const { fromEnv } = require('@aws-sdk/credential-provider-env');
 
+// Configure AWS Transcribe Client
 const transcribeClient = new TranscribeClient({
   region: process.env.AWS_REGION,
   credentials: fromEnv() 
@@ -12,9 +13,9 @@ const startTranscriptionJob = async (audioFileUri, bucketName, meetingId) => {
   
   const params = {
     TranscriptionJobName: jobName,
-    LanguageCode: 'en-US', 
+    LanguageCode: 'en-US', // Adjust based on your audio language
     Media: {
-      MediaFileUri: audioFileUri 
+      MediaFileUri: audioFileUri // S3 URI of the uploaded audio file
     },
     OutputBucketName: process.env.S3_BUCKET_NAME, // The bucket where transcription output will be stored
     OutputKey: `transcriptions/${meetingId}.json`,
