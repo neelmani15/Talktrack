@@ -427,7 +427,7 @@ async function HandleStopRecording(browser, stream, fileStream,meetingId,userEma
         stream.unpipe(fileStream);
         fileStream.end();
         console.log("Recording stopped successfully.");
-        const s3Url = await uploadToS3(fileStream.path, 'testing123riktam',meetingId);
+        const s3Url = await uploadToS3(fileStream.path, process.env.S3_BUCKET_NAME,meetingId);
         console.log(s3Url)
         // console.log(userEmail)
 
@@ -629,16 +629,16 @@ async function HandleMeetingdetails(req, res) {
             const videoaccess_url = await HandleVideoStream(meetingId);
             return res.status(200).json({ meeting, videoaccess_url });
         }else {
-            const videoExists = await checkVideoExists('testing123riktam', meetingId);
+            const videoExists = await checkVideoExists(process.env.S3_BUCKET_NAME, meetingId);
             if(videoExists.exists){
-            const bucketName = 'testing123riktam';
+            const bucketName = process.env.S3_BUCKET_NAME;
             const downloadDir = './downloadfroms3/video';
             const videoPath = await downloadvideoFromS3(bucketName, meetingId, downloadDir);
             const audioOutputDir = path.dirname(videoPath);
     
             // Extract audio from the video file
             const audioPath = await getAudio(videoPath, audioOutputDir);
-            const audios3Url = await uploadAudioToS3(audioPath, 'testing123riktam',meetingId);
+            const audios3Url = await uploadAudioToS3(audioPath, process.env.S3_BUCKET_NAME,meetingId);
             const transcription = await GetTranscript(audioPath);
             console.log(transcription);
 
@@ -690,17 +690,17 @@ async function HandleMeetingdetails(req, res) {
 
 
             // Update the existing meeting record with the new transcript
-            const meeting = new Meeting({
-                userEmail: userEmail,
-                meetingId: meetingId,
-                videoS3url: videoExists.url,
-                transcript:transcription
-            });
-            await meeting.save();
-            console.log("Meeting record updated successfully.");
+            // const meeting = new Meeting({
+            //     userEmail: userEmail,
+            //     meetingId: meetingId,
+            //     videoS3url: videoExists.url,
+            //     transcript:transcription
+            // });
+            // await meeting.save();
+            // console.log("Meeting record updated successfully.");
     
-            const videoaccess_url = await HandleVideoStream(meetingId);
-            return res.status(200).json({ meeting, videoaccess_url });
+            // const videoaccess_url = await HandleVideoStream(meetingId);
+            // return res.status(200).json({ meeting, videoaccess_url });
 
             }
             else{
