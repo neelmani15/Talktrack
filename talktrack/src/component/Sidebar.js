@@ -22,7 +22,7 @@ const Sidebar = ({ onScheduleMeetingClick, onShowAllEventsClick,onShowLiveMeetin
             {isLoading ? 'Loading...' : 'Meetings'}
           </button>
         </li>
-        <li>
+        {/* <li>
           <button
             className="w-full bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
             onClick={onShowLiveMeeting}
@@ -30,7 +30,7 @@ const Sidebar = ({ onScheduleMeetingClick, onShowAllEventsClick,onShowLiveMeetin
           >
             {isLoading ? 'Adding...' : 'Add to Live Meeting'}
           </button>
-        </li>
+        </li> */}
       </ul>
     </div>
   );

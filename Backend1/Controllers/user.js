@@ -690,17 +690,17 @@ async function HandleMeetingdetails(req, res) {
 
 
             // Update the existing meeting record with the new transcript
-            const meeting = new Meeting({
-                userEmail: userEmail,
-                meetingId: meetingId,
-                videoS3url: videoExists.url,
-                transcript:transcription
-            });
-            await meeting.save();
-            console.log("Meeting record updated successfully.");
+            // const meeting = new Meeting({
+            //     userEmail: userEmail,
+            //     meetingId: meetingId,
+            //     videoS3url: videoExists.url,
+            //     transcript:transcription
+            // });
+            // await meeting.save();
+            // console.log("Meeting record updated successfully.");
     
-            const videoaccess_url = await HandleVideoStream(meetingId);
-            return res.status(200).json({ meeting, videoaccess_url });
+            // const videoaccess_url = await HandleVideoStream(meetingId);
+            // return res.status(200).json({ meeting, videoaccess_url });
 
             }
             else{
