@@ -8,7 +8,7 @@ const transcribeClient = new TranscribeClient({
   credentials: fromEnv() 
 });
 
-const startTranscriptionJob = async (audioFileUri, bucketName, meetingId) => {
+const startTranscriptionJob = async (audioFileUri, meetingId) => {
   const jobName = `transcription-job-${meetingId}`;
   
   const params = {

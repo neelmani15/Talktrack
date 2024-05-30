@@ -16,6 +16,8 @@ const { executablePath } = require('puppeteer');
 const uploadToS3 = require('../Connection/uploadToS3');
 const downloadvideoFromS3 = require('../Connection/downloadfroms3');
 const uploadAudioToS3  = require('../Connection/uploadaudioToS3');
+
+const { handleAudioStream, HandleVideoStream } = require('../Connection/avaccessurls');
 const { startTranscriptionJob, getTranscriptionResult,checkTranscriptionJobExists } = require('../Connection/awstranscribe.js');
 const getAudio = require('..//Connection/getaudio');
 const GetTranscript=require('../Connection/getTranscript.js');
@@ -627,7 +629,8 @@ async function HandleMeetingdetails(req, res) {
   
         if (meeting) {
             const videoaccess_url = await HandleVideoStream(meetingId);
-            return res.status(200).json({ meeting, videoaccess_url });
+            const audioaccess_url = await handleAudioStream(meetingId);
+            return res.status(200).json({ meeting, videoaccess_url,audioaccess_url  });
         }else {
             const videoExists = await checkVideoExists(process.env.S3_BUCKET_NAME, meetingId);
             if(videoExists.exists){
@@ -663,10 +666,11 @@ async function HandleMeetingdetails(req, res) {
                     console.log("Meeting record updated successfully.");
 
                     const videoaccess_url = await HandleVideoStream(meetingId);
-                    return res.status(200).json({ meeting, videoaccess_url });
+                    const audioaccess_url = await handleAudioStream(meetingId);
+                    return res.status(200).json({ meeting, videoaccess_url,audioaccess_url });
                 } else {
                     // If transcription job doesn't exist, start a new one
-                    const transcriptionJobName = await startTranscriptionJob(audios3Url, bucketName, meetingId);
+                    const transcriptionJobName = await startTranscriptionJob(audios3Url,meetingId);
 
                     // Polling for transcription result
                     const transcriptionResult = await getTranscriptionResult(transcriptionJobName);
@@ -685,7 +689,8 @@ async function HandleMeetingdetails(req, res) {
                     console.log("Meeting record updated successfully.");
 
                     const videoaccess_url = await HandleVideoStream(meetingId);
-                    return res.status(200).json({ meeting, videoaccess_url });
+                    const audioaccess_url = await handleAudioStream(meetingId);
+                    return res.status(200).json({ meeting, videoaccess_url,audioaccess_url });
                 }
 
 
@@ -782,22 +787,22 @@ const s3Client = new S3Client({
 
 
 
-async function HandleVideoStream(meetingId){
+// async function HandleVideoStream(meetingId){
 
-  const params = {
-    Bucket: process.env.S3_BUCKET_NAME,
-    Key: `videos/recorded_video_MeetingId_${meetingId}.webm`
-  };
-  try {
-    const command = new GetObjectCommand(params);
-    const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour expiration
-    // res.json({ url });
-    return url
-  } catch (error) {
-    console.error("Error generating presigned URL:", error);
-    // res.status(500).json({ error: "Error generating presigned URL" });
-  }
-}
+//   const params = {
+//     Bucket: process.env.S3_BUCKET_NAME,
+//     Key: `videos/recorded_video_MeetingId_${meetingId}.webm`
+//   };
+//   try {
+//     const command = new GetObjectCommand(params);
+//     const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour expiration
+//     // res.json({ url });
+//     return url
+//   } catch (error) {
+//     console.error("Error generating presigned URL:", error);
+//     // res.status(500).json({ error: "Error generating presigned URL" });
+//   }
+// }
 
 module.exports={
     HandleScheduleEvent,
