@@ -429,8 +429,13 @@ async function HandleStopRecording(browser, stream, fileStream,meetingId,userEma
         stream.unpipe(fileStream);
         fileStream.end();
         console.log("Recording stopped successfully.");
-        const s3Url = await uploadToS3(fileStream.path, process.env.S3_BUCKET_NAME,meetingId);
-        console.log(s3Url)
+        // For now I just remove the video to upload on S3
+
+        // const s3Url = await uploadToS3(fileStream.path, process.env.S3_BUCKET_NAME,meetingId);
+        // console.log(s3Url)
+
+
+
         // console.log(userEmail)
 
         // const videoPath = fileStream.path;
@@ -463,9 +468,10 @@ async function HandleStopRecording(browser, stream, fileStream,meetingId,userEma
 
 let gotItClicked = false;
 let isRecordingStopped=false
+let allParticipants = new Set(); 
 async function HandleCheckBotPresence(page, browser, stream, fileStream,meetingId,userEmail) {
     try {
-        const botName = 'riktam.ai NoteTaker'; // Adjust this to match the bot's name
+        const botName = 'riktam.ai NoteTaker';  // Adjust this to match the bot's name
         if (isRecordingStopped) {
             return true;
         } else {
@@ -477,11 +483,20 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream,meetingI
                     const participants = [];
                     const participantElements = document.querySelectorAll('div.dwSJ2e');
                     participantElements.forEach(participant => {
-                        participants.push(participant.innerText);
+                        const participantName = participant.innerText;
+                        participants.push(participantName);
+                        // if (!allParticipants[participantName]) {
+                        //     allParticipants[participantName] = true;
+                        // }
                     })
                     return { participants, leftMeetingText };
                 });
 
+                participants.forEach(participant => {
+                    allParticipants.add(participant); // Add participant to the Set
+                });
+
+                console.log('All Participants:', allParticipants);
                 console.log('Participants:', participants);
                 console.log('Meeting status:', leftMeetingText);
 
@@ -508,8 +523,9 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream,meetingI
             return false;
         }
     } catch (error) {
+        // For now I comment this part
             // await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
-            console.error('Error checking bot presence:', error);
+            console.error('Error checking bot presenceweeee:', error);
             return true;
     }
 }
