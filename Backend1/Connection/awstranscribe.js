@@ -21,7 +21,7 @@ const startTranscriptionJob = async (audioFileUri, meetingId) => {
     OutputKey: `transcriptions/${meetingId}.json`,
     Settings: {
         "ShowSpeakerLabels": true,
-        "MaxSpeakerLabels": 15,  // Max speaker in meeetings
+        "MaxSpeakerLabels": 6,  // Max speaker in meeetings
         "ChannelIdentification": false,
         "ShowAlternatives": false
     }   
