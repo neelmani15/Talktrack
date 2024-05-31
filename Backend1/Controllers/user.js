@@ -16,7 +16,7 @@ const { executablePath } = require('puppeteer');
 const uploadToS3 = require('../Connection/uploadToS3');
 const downloadvideoFromS3 = require('../Connection/downloadfroms3');
 const uploadAudioToS3  = require('../Connection/uploadaudioToS3');
-
+const {generateMultiSpeakerTranscription}=require('../Connection/assemblyai');
 const { handleAudioStream, HandleVideoStream } = require('../Connection/avaccessurls');
 const { startTranscriptionJob, getTranscriptionResult,checkTranscriptionJobExists } = require('../Connection/awstranscribe.js');
 const getAudio = require('..//Connection/getaudio');
@@ -485,13 +485,13 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream,meetingI
                 console.log('Participants:', participants);
                 console.log('Meeting status:', leftMeetingText);
 
-                if (participants.length >= 1) {
-                    if (!gotItClicked) {
-                        await page.click('span[jsname="V67aGc"].mUIrbf-vQzf8d');
-                        console.log('Clicked on "Got it" button');
-                        gotItClicked = true;
-                    }
-                }
+                // if (participants.length >= 1) {
+                //     if (!gotItClicked) {
+                //         await page.click('span[jsname="V67aGc"].mUIrbf-vQzf8d');
+                //         console.log('Clicked on "Got it" button');
+                //         gotItClicked = true;
+                //     }
+                // }
 
                 if (leftMeetingText || participants.length === 1){
                     // await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
@@ -508,7 +508,7 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream,meetingI
             return false;
         }
     } catch (error) {
-            await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
+            // await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
             console.error('Error checking bot presence:', error);
             return true;
     }
@@ -641,6 +641,8 @@ async function HandleMeetingdetails(req, res) {
     
             // Extract audio from the video file
             const audioPath = await getAudio(videoPath, audioOutputDir);
+            const result= await generateMultiSpeakerTranscription(audioPath)
+            console.log(result)
             const audios3Url = await uploadAudioToS3(audioPath, process.env.S3_BUCKET_NAME,meetingId);
             const transcription = await GetTranscript(audioPath);
             console.log(transcription);
@@ -660,7 +662,8 @@ async function HandleMeetingdetails(req, res) {
                         meetingId: meetingId,
                         videoS3url: videoExists.url,
                         transcript: transcription,
-                        transcriptionData: transcriptionData
+                        transcriptionData: transcriptionData,
+                        assemblytranscritps:result
                     });
                     await meeting.save();
                     console.log("Meeting record updated successfully.");
@@ -683,7 +686,8 @@ async function HandleMeetingdetails(req, res) {
                         meetingId: meetingId,
                         videoS3url: videoExists.url,
                         transcript: transcription,
-                        transcriptionData: transcriptionData
+                        transcriptionData: transcriptionData,
+                        assemblytranscritps:result
                     });
                     await meeting.save();
                     console.log("Meeting record updated successfully.");
