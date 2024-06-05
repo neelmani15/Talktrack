@@ -623,7 +623,7 @@ const MeetingDetails = () => {
   const navigate = useNavigate();
   const { meetingDetails } = location.state;
   console.log(meetingDetails);
-  const [transcriptionType, setTranscriptionType] = useState('original');
+  const [transcriptionType, setTranscriptionType] = useState('assemblyspeaker');
 
   const handleTranscriptionTypeChange = (type) => {
     setTranscriptionType(type);
@@ -649,6 +649,14 @@ const MeetingDetails = () => {
     const { speaker_labels } = meetingDetails.meeting.transcriptionData.results;
     const segments = speaker_labels.segments;
     const items = meetingDetails.meeting.transcriptionData.results.items;
+    const { orderedSpeaker } = meetingDetails.meeting;
+
+    const speakerNameMap = {};
+    let index = 0;
+    for (const speakerName in orderedSpeaker) {
+      speakerNameMap[`spk_${index}`] = speakerName;
+      index++;
+    }
 
     let currentSpeaker = null;
     let currentParagraph = [];
@@ -666,7 +674,8 @@ const MeetingDetails = () => {
       );
 
       speakerItems.forEach(item => {
-        if (item.speaker_label !== currentSpeaker) {
+        const mappedSpeaker = speakerNameMap[item.speaker_label] || item.speaker_label;
+        if (mappedSpeaker !== currentSpeaker) {
           if (currentParagraph.length > 0) {
             speakerOrder.push({
               speaker: currentSpeaker,
@@ -674,7 +683,7 @@ const MeetingDetails = () => {
             });
             currentParagraph = [];
           }
-          currentSpeaker = item.speaker_label;
+          currentSpeaker = mappedSpeaker;
         }
         currentParagraph.push(item.alternatives[0].content);
       });
@@ -691,7 +700,7 @@ const MeetingDetails = () => {
       <div>
         {speakerOrder.map(({ speaker, paragraph }, index) => (
           <div key={index}>
-            <p><strong>Speaker {speaker}:</strong></p>
+            <p><strong>{speaker}</strong></p>
             <p>{paragraph}</p>
           </div>
         ))}
@@ -699,21 +708,78 @@ const MeetingDetails = () => {
     );
   };
 
+  // const renderAssemblySpeakerTranscription = () => {
+  //   const { assemblytranscritps } = meetingDetails.meeting;
+  //   const orderedSpeaker = meetingDetails.meeting.orderedSpeaker;
+  //   console.log("Assembly Transcript",assemblytranscritps);
+  //   console.log("Order Speaker",orderedSpeaker);
+
+  //   return (
+  //     <div>
+  //       {assemblytranscritps.map((entry, index) => (
+  //         <div key={index}>
+  //           <p><strong>Speaker {entry.speaker}:</strong></p>
+  //           <p>{entry.text}</p>
+  //         </div>
+  //       ))}
+  //     </div>
+  //   );
+  // };
+  // const renderAssemblySpeakerTranscription = () => {
+  //   const { assemblytranscritps, orderedSpeaker } = meetingDetails.meeting;
+  //   console.log("Assembly Transcript", assemblytranscritps);
+  //   console.log("Order Speaker", orderedSpeaker);
+  
+  //   const orderedNames = Object.keys(orderedSpeaker);
+  //   let nameIndex = 0;
+  
+  //   const getNextSpeakerName = () => {
+  //     const nextName = orderedNames[nameIndex];
+  //     nameIndex = (nameIndex + 1) % orderedNames.length; // Increment index and loop back to start
+  //     return nextName;
+  //   };
+  
+  //   return (
+  //     <div>
+  //       {assemblytranscritps.map((entry, index) => (
+  //         <div key={index}>
+  //           <p><strong>{getNextSpeakerName()}</strong></p>
+  //           <p>{entry.text}</p>
+  //         </div>
+  //       ))}
+  //     </div>
+  //   );
+  // };
+  
+
+  // With correct mapping with Alphabetical order
+
   const renderAssemblySpeakerTranscription = () => {
-    const { assemblytranscritps } = meetingDetails.meeting;
-    console.log(assemblytranscritps)
+    const { assemblytranscritps, orderedSpeaker } = meetingDetails.meeting;
+    console.log("Assembly Transcript", assemblytranscritps);
+    console.log("Order Speaker", orderedSpeaker);
+  
+    const orderedNames = Object.keys(orderedSpeaker);
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"; // You can extend it for more speakers
+
+    const speakerNameMap = {};
+    for (let i = 0; i < orderedNames.length; i++) {
+      speakerNameMap[alphabet[i]] = orderedNames[i];
+    }
 
     return (
       <div>
         {assemblytranscritps.map((entry, index) => (
           <div key={index}>
-            <p><strong>Speaker {entry.speaker}:</strong></p>
+            <p><strong>{speakerNameMap[entry.speaker]}</strong></p>
             <p>{entry.text}</p>
           </div>
         ))}
       </div>
     );
   };
+  
+  
   const renderAssemblySpeakerTextTranscription = () => {
     const { assemblytranscritps } = meetingDetails.meeting;
     const combinedText = assemblytranscritps.map(entry => entry.text).join(' ');
@@ -762,7 +828,7 @@ const MeetingDetails = () => {
           <div>
             <h2 className="text-xl font-semibold mb-2">Transcription</h2>
             <div className="mt-4 mb-4" >
-              <button className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'original' ? 'bg-blue-700' : ''}`} onClick={() => handleTranscriptionTypeChange('original')} >
+              {/* <button className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'original' ? 'bg-blue-700' : ''}`} onClick={() => handleTranscriptionTypeChange('original')} >
                 Whisper
               </button>
               <button className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'aws' ? 'bg-blue-700' : ''}`} onClick={() => handleTranscriptionTypeChange('aws')} >
@@ -770,7 +836,7 @@ const MeetingDetails = () => {
               </button>
               <button className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'speaker' ? 'bg-blue-700' : ''}`} onClick={() => handleTranscriptionTypeChange('speaker')} >
                 Speaker
-              </button>
+              </button> */}
               <button className={`bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'assemblyspeaker' ? 'bg-blue-700' : ''}`} onClick={() => handleTranscriptionTypeChange('assemblyspeaker')} >
                 AssemblySpeaker
               </button>
