@@ -268,24 +268,6 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
                 await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail,orderedSpeaker);
             }
         }, 10000)
-
-        // page.on('framenavigated', async (frame) => {
-        //     const url = frame.url();
-        //     console.log(url);
-        //     if (!url.includes('meet.google.com')) {
-        //         console.log("Meeting Stopped");
-        //         await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
-        //         return
-        //     }
-        // });
-
-        // setInterval(async () => {
-        //    let answer=await HandleCheckBotPresence(page, browser, stream, fileStream,meetingId,userEmail);
-        //    if (answer){
-        //     stop=true
-        //     return
-        //    }
-        // }, 10000);
         return true;
 
         // res.status(200).json({ message: 'Recording started successfully.' });
@@ -304,7 +286,6 @@ async function HandleLiveMeeting(req, res) {
     console.log(userEmail);
     const parts = meetUrl.split('/');
     const meetingId = parts[parts.length - 1];
-    // const file = fs.createWriteStream("./report/test2.mp4");
 
     console.log(meetingId);
 
@@ -315,8 +296,6 @@ async function HandleLiveMeeting(req, res) {
         }
         oauth2Client.setCredentials({
             access_token: user.googleAccessToken,
-            // If you have a refresh token, set it here as well
-            // refresh_token: user.googleRefreshToken,
         });
         const currentDateTime = new Date();
         const oneHourLater = new Date(currentDateTime.getTime() + (60 * 60 * 1000));
@@ -344,8 +323,6 @@ async function HandleLiveMeeting(req, res) {
         });
         const page = (await browser.pages())[0];
 
-        // Define the path for storing the recorded file
-        // const filePath = './report/video/meeting_recording.webm';
         const filePath = `./report/video/meetingId_${meetingId}.webm`;
         console.log(filePath)
         const fileStream = fs.createWriteStream(filePath);
@@ -400,25 +377,6 @@ async function HandleLiveMeeting(req, res) {
             }
         }, 10000)
 
-        // page.on('framenavigated', async (frame) => {
-        //     const url = frame.url();
-        //     console.log(url);
-        //     if (!url.includes('meet.google.com')) {
-        //         console.log("Meeting Stopped");
-        //         await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
-        //         return
-        //     }
-        // });
-
-        // setInterval(async () => {
-        //    let answer=await HandleCheckBotPresence(page, browser, stream, fileStream,meetingId,userEmail);
-        //    if (answer){
-        //     stop=true
-        //     return
-        //    }
-        // }, 10000);
-        // return true;
-
         res.status(200).json({ message: 'Recording started successfully.' });
 
     } catch (error) {
@@ -435,22 +393,10 @@ async function HandleStopRecording(browser, stream, fileStream, meetingId, userE
         fileStream.end();
         console.log("Speaker on HandleStop",orderedSpeaker);
         console.log("Recording stopped successfully.");
-        // const allParticipants=await getOrderParticipants(orderedSpeaker);
-        // console.log("All Partcipants",allParticipants);
 
         const s3Url = await uploadToS3(fileStream.path, process.env.S3_BUCKET_NAME,meetingId);
         console.log(s3Url)
 
-        // console.log(userEmail)
-
-        // const videoPath = fileStream.path;
-        // const audioOutputDir = path.dirname(videoPath);
-
-        // Extract audio from the video file
-        // const audioPath = await getAudio(videoPath, audioOutputDir);
-        // const audios3Url = await uploadAudioToS3(audioPath, 'riktam-recordings',meetingId);
-        // console.log(audios3Url)
-        // const transcription= await GetTranscript(audioPath)
         const meetingRecord = new Meeting({
             userEmail: userEmail,
             meetingId: meetingId,
@@ -473,293 +419,14 @@ async function HandleStopRecording(browser, stream, fileStream, meetingId, userE
     }
 }
 
-// let gotItClicked = false;
-// let isRecordingStopped=false
-// let allParticipants = new Set(); 
-// async function HandleCheckBotPresence(page, browser, stream, fileStream,meetingId,userEmail) {
-//     try {
-//         const botName = 'riktam.ai NoteTaker';  // Adjust this to match the bot's name
-//         if (isRecordingStopped) {
-//             return true;
-//         } else {
-//             const frame = page.mainFrame();
-//             if (!frame.isDetached()) {
-//                 const { participants, leftMeetingText } = await frame.evaluate(() => {
-//                     const leftMeetingElement = document.querySelector('h1[jsname="r4nke"].roSPhc');
-//                     const leftMeetingText = leftMeetingElement ? leftMeetingElement.textContent : null;
-//                     const participants = [];
-//                     const participantElements = document.querySelectorAll('div.dwSJ2e');
-//                     participantElements.forEach(participant => {
-//                         const participantName = participant.innerText;
-//                         participants.push(participantName);
-//                         // if (!allParticipants[participantName]) {
-//                         //     allParticipants[participantName] = true;
-//                         // }
-//                     })
-//                     return { participants, leftMeetingText };
-//                 });
-
-//                 participants.forEach(participant => {
-//                     allParticipants.add(participant); // Add participant to the Set
-//                 });
-
-//                 console.log('All Participants:', allParticipants);
-//                 console.log('Participants:', participants);
-//                 console.log('Meeting status:', leftMeetingText);
-
-//                 if (participants.length >= 1) {
-//                     if (!gotItClicked) {
-//                         await page.click('span[jsname="V67aGc"].mUIrbf-vQzf8d');
-//                         console.log('Clicked on "Got it" button');
-//                         gotItClicked = true;
-//                     }
-//                 }
-
-//                 if (leftMeetingText || participants.length === 1){
-//                     // await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
-//                     return true;
-//                 }
-
-
-//                 // if (participants.length === 1) {
-//                 //     gotItClicked = false;
-//                 //     await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
-//                 //     return;
-//                 // }
-//             }
-//             return false;
-//         }
-//     } catch (error) {
-//         // For now I comment this part
-//             // await HandleStopRecording(browser, stream, fileStream,meetingId,userEmail);
-//             console.error('Error checking bot presenceweeee:', error);
-//             return true;
-//     }
-// }
-
 let allParticipants = new Set();
 let speakingOrder = new Map();
 let speakingCounter = 1;
 let gotItClicked = false;
 let isRecordingStopped = false;
 
-// async function HandleCheckBotPresence(page, browser, stream, fileStream, meetingId, userEmail) {
-//     try {
-//         const botName = 'riktam.ai NoteTaker';  // Adjust this to match the bot's name
-//         if (isRecordingStopped) {
-//             return true;
-//         } else {
-//             const frame = page.mainFrame();
-//             if (!frame.isDetached()) {
-//                 const { participants, leftMeetingText, speakers } = await frame.evaluate(() => {
-//                     const leftMeetingElement = document.querySelector('h1[jsname="r4nke"].roSPhc');
-//                     const leftMeetingText = leftMeetingElement ? leftMeetingElement.textContent : null;
-//                     const participants = [];
-//                     const speakers = [];
-//                     const participantElements = document.querySelectorAll('div.dwSJ2e');
-//                     const participantsBox = document.querySelectorAll('div.tTdl5d');
-//                     console.log("Paticipant box",participantsBox);
-//                     participantElements.forEach(participant => {
-//                         const participantName = participant.innerText;
-//                         participants.push(participantName);
-//                     });
-//                     if (participantsBox) {
-//                         const speakerElements1 = participantsBox.querySelectorAll('div.lisKdb.GF8M7d.gig47c.KUNJSe.YFyDbd');
-//                         const speakerElements2 = participantsBox.querySelectorAll('div.SUtDBe.a7Zbzb');
-
-//                         speakerElements1.forEach(speakerElement => {
-//                             const speakerName = speakerElement.closest('div.dwSJ2e').innerText;
-//                             if (speakerName) {
-//                                 speakers.push(speakerName);
-//                             }
-//                         });
-
-//                         speakerElements2.forEach(speakerElement => {
-//                             const speakerName = speakerElement.closest('div.dwSJ2e').innerText;
-//                             if (speakerName) {
-//                                 speakers.push(speakerName);
-//                             }
-//                         });
-//                     }
-//                     return { participants, leftMeetingText, speakers };
-//                 });
-
-//                 participants.forEach(participant => {
-//                     allParticipants.add(participant); // Add participant to the Set
-//                 });
-
-//                 // Update speaking order
-//                 speakers.forEach(speaker => {
-//                     if (!speakingOrder.has(speaker)) {
-//                         speakingOrder.set(speaker, speakingCounter++);
-//                     }
-//                 });
-//                 console.log('All Participants:', allParticipants);
-//                 console.log('Participants:', participants);
-//                 console.log('Meeting status:', leftMeetingText);
-//                 console.log('Speaking Order:', speakingOrder);
-
-//                 if (participants.length >= 1) {
-//                     if (!gotItClicked) {
-//                         await page.click('span[jsname="V67aGc"].mUIrbf-vQzf8d');
-//                         console.log('Clicked on "Got it" button');
-//                         gotItClicked = true;
-//                     }
-//                 }
-
-//                 if (leftMeetingText || participants.length === 1) {
-//                     // await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail);
-//                     return true;
-//                 }
-
-//                 // if (participants.length === allParticipants.size) {
-//                 //     // Optionally stop recording or perform another action
-//                 //     // await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail);
-//                 //     return true;
-//                 // }
-//             }
-//             return false;
-//         }
-//     } catch (error) {
-//         // For now I comment this part
-//         // await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail);
-//         console.error('Error checking bot presence:', error);
-//         return true;
-//     }
-// }
-
-// async function identifyAndStoreSpeakers(frame) {
-//     const result = await frame.evaluate(() => {
-//         const participantsBoxes = document.querySelectorAll('div.tTdl5d');
-//         const speakers = new Map();
-//         const logs = [];
-
-//         participantsBoxes.forEach((participantsBox, boxIndex) => {
-//             logs.push(`Checking participantsBox ${boxIndex}`);
-
-//             // Log the HTML structure of participantsBox
-//             // logs.push(`participantsBox HTML: ${participantsBox.outerHTML}`);
-
-//             const participantElements = participantsBox.querySelectorAll('div.dwSJ2e');
-//             const notSpeakingElements1 = participantsBox.querySelectorAll('div.lisKdb.GF8M7d.gig47c.KUNJSe.YFyDbd');
-//             const notSpeakingElements2 = participantsBox.querySelectorAll('div.SUtDBe.a7Zbzb');
-
-//             logs.push(`Found ${participantElements.length} participant elements in participantsBox ${boxIndex}`);
-//             logs.push(`Found ${notSpeakingElements1.length} notSpeakingElements1 in participantsBox ${boxIndex}`);
-//             logs.push(`Found ${notSpeakingElements2.length} notSpeakingElements2 in participantsBox ${boxIndex}`);
-
-//             const notSpeakingNames = new Set();
-
-//             // Collect names of participants who are not speaking
-//             notSpeakingElements1.forEach(element => {
-//                 const closestParticipant = element.closest('div.dwSJ2e');
-//                 if (closestParticipant) {
-//                     const participantName = closestParticipant.innerText;
-//                     notSpeakingNames.add(participantName);
-//                     logs.push(`Added ${participantName} to notSpeakingNames from notSpeakingElements1`);
-//                 }
-//             });
-
-//             notSpeakingElements2.forEach(element => {
-//                 const closestParticipant = element.closest('div.dwSJ2e');
-//                 if (closestParticipant) {
-//                     const participantName = closestParticipant.innerText;
-//                     notSpeakingNames.add(participantName);
-//                     logs.push(`Added ${participantName} to notSpeakingNames from notSpeakingElements2`);
-//                 }
-//             });
-
-//             // Iterate over all participants and add those who are not in the notSpeakingNames set
-//             participantElements.forEach((participant, index) => {
-//                 const participantName = participant.innerText;
-//                 if (!notSpeakingNames.has(participantName)) {
-//                     speakers.set(participantName, index + 1); // Store speaking order, starting from 1
-//                     logs.push(`Added ${participantName} to speakers with order ${index + 1}`);
-//                 } else {
-//                     logs.push(`${participantName} is not speaking`);
-//                 }
-//             });
-//         });
-//         logs.push(`Speakers: ${Array.from(speakers.entries()).toString()}`);
-
-//         return { speakers: Array.from(speakers.entries()), logs }; // Return as an array of entries along with logs
-//     });
-
-//     // Log the debug information
-//     result.logs.forEach(log => console.log(log));
-
-//     return result.speakers;
-// }
-
-// let initialSpeak = false;
-// async function extractMicDetails(page) {
-//     try {
-//         // XPath to target the main div with the specified class
-//         const mainDivXPath = '//div[contains(@class, "AE8xFb OrqRRb GvcuGe goTdfd")]';
-
-//         // Execute the evaluation in the page context
-//         const details = await page.evaluate((mainDivXPath) => {
-//             const details = {};
-
-//             // Evaluate XPath to get the main div elements
-//             const mainDivNodes = document.evaluate(mainDivXPath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-
-//             for (let i = 0; i < mainDivNodes.snapshotLength; i++) {
-//                 const mainDiv = mainDivNodes.snapshotItem(i);
-
-//                 // Extract the text from all span elements within the main div
-//                 const spanXPath = './/span[contains(@class, "zWGUib")]';
-//                 const spanNodes = document.evaluate(spanXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-
-//                 // Extract the class attribute value from all div elements with jscontroller within the main div
-//                 const jsControllerDivXPath = './/div[@jscontroller="ES310d"]';
-//                 const jsControllerDivNodes = document.evaluate(jsControllerDivXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-
-//                 let participantDetails = [];
-
-//                 // Ensure the number of span nodes and jsControllerDivNodes are the same
-//                 if (spanNodes.snapshotLength === jsControllerDivNodes.snapshotLength) {
-//                     for (let j = 0; j < spanNodes.snapshotLength; j++) {
-//                         const spanNode = spanNodes.snapshotItem(j);
-//                         const spanText = spanNode ? spanNode.textContent : '';
-
-//                         const jsControllerDivNode = jsControllerDivNodes.snapshotItem(j);
-//                         const classValue = jsControllerDivNode ? jsControllerDivNode.getAttribute('class') : '';
-
-//                         if (spanText && classValue) {
-//                             const speakTime = new Date().toISOString(); // Get the current timestamp
-//                             if(classValue != 'IisKdb GF8M7d gjg47c KUNJSe x9nQ6' && classValue!= 'IisKdb GF8M7d gjg47c MNVeFb kT2pkb' && !initialSpeak){
-//                                 participantDetails.push({
-//                                     participantname: spanText,
-//                                     mic_id: classValue,
-//                                     speak_time: speakTime
-//                                 });
-//                                 initialSpeak = true;
-//                             }else{
-//                                 initialSpeak=false;
-//                             }
-//                         }
-//                     }
-//                 }
-
-//                 if (participantDetails.length > 0) {
-//                     details[`mainDiv${i}`] = participantDetails;
-//                 }
-//             }
-
-//             return details;
-//         }, mainDivXPath);
-
-//         console.log('Extracted Details:', details);
-//         return details;
-//     } catch (error) {
-//         console.error('Error extracting details:', error);
-//         return {};
-//     }
-// }
-
 let initialSpeak = false;
-const seenParticipants = new Map(); // To keep track of already stored participants and their speak time
+const seenParticipants = new Map(); 
 let isParticipantsButtonClicked = false;
 let checkInterval = null;
 
@@ -911,257 +578,10 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream, meeting
     }
 }
 
-
-// let initialSpeak = false;
-// const seenParticipants = new Map(); // To keep track of already stored participants and their speak time
-
-// async function extractMicDetails(page) {
-//     try {
-//         // XPath to target the main div with the specified class
-//         const mainDivXPath = '//div[contains(@class, "AE8xFb OrqRRb GvcuGe goTdfd")]';
-
-//         // Execute the evaluation in the page context
-//         const { details, updatedInitialSpeak, newSeenParticipants } = await page.evaluate((mainDivXPath, initialSpeak, seenParticipants) => {
-//             const details = {};
-
-//             // Deserialize the map
-//             const seenParticipantsMap = new Map(JSON.parse(seenParticipants));
-
-//             // Evaluate XPath to get the main div elements
-//             const mainDivNodes = document.evaluate(mainDivXPath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-
-//             for (let i = 0; i < mainDivNodes.snapshotLength; i++) {
-//                 const mainDiv = mainDivNodes.snapshotItem(i);
-
-//                 // Extract the text from all span elements within the main div
-//                 const spanXPath = './/span[contains(@class, "zWGUib")]';
-//                 const spanNodes = document.evaluate(spanXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-
-//                 // Extract the class attribute value from all div elements with jscontroller within the main div
-//                 const jsControllerDivXPath = './/div[@jscontroller="ES310d"]';
-//                 const jsControllerDivNodes = document.evaluate(jsControllerDivXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-
-//                 let participantDetails = [];
-
-//                 // Ensure the number of span nodes and jsControllerDivNodes are the same
-//                 if (spanNodes.snapshotLength === jsControllerDivNodes.snapshotLength) {
-//                     for (let j = 0; j < spanNodes.snapshotLength; j++) {
-//                         const spanNode = spanNodes.snapshotItem(j);
-//                         const spanText = spanNode ? spanNode.textContent : '';
-
-//                         const jsControllerDivNode = jsControllerDivNodes.snapshotItem(j);
-//                         const classValue = jsControllerDivNode ? jsControllerDivNode.getAttribute('class') : '';
-
-//                         if (spanText && classValue && !seenParticipantsMap.has(spanText)) {
-//                             const speakTime = new Date().toISOString(); // Get the current timestamp
-//                             if (classValue != 'IisKdb GF8M7d gjg47c KUNJSe x9nQ6' && classValue != 'IisKdb GF8M7d gjg47c MNVeFb kT2pkb' && !initialSpeak) {
-//                                 participantDetails.push({
-//                                     participantname: spanText,
-//                                     mic_id: classValue,
-//                                     speak_time: speakTime
-//                                 });
-//                                 seenParticipantsMap.set(spanText, speakTime); // Add participant to the seen map with speak time
-//                                 initialSpeak = true;
-//                             } else {
-//                                 initialSpeak = false;
-//                             }
-//                         }
-//                     }
-//                 }
-
-//                 if (participantDetails.length > 0) {
-//                     details[`mainDiv${i}`] = participantDetails;
-//                 }
-//             }
-
-//             return {
-//                 details,
-//                 updatedInitialSpeak: initialSpeak,
-//                 newSeenParticipants: JSON.stringify(Array.from(seenParticipantsMap.entries()))
-//             };
-//         }, mainDivXPath, initialSpeak, JSON.stringify(Array.from(seenParticipants.entries())));
-
-//         initialSpeak = updatedInitialSpeak; // Update initialSpeak status
-//         console.log('Seen Participants',seenParticipants);
-//         seenParticipants.clear();
-//         new Map(JSON.parse(newSeenParticipants)).forEach((value, key) => seenParticipants.set(key, value)); // Update seenParticipants map
-
-//         console.log('Extracted Details:', details);
-//         return details;
-//     } catch (error) {
-//         console.error('Error extracting details:', error);
-//         return {};
-//     }
-// }
-
-
-// // let isParticipantsButtonClicked = false;
-// let isParticipantsButtonClicked = false;
-// async function HandleCheckBotPresence(page, browser, stream, fileStream, meetingId, userEmail) {
-//     try {
-//         const botName = 'riktam.ai NoteTaker';  
-//         if (isRecordingStopped) {
-//             return true;
-//         } else {
-//             if (!isParticipantsButtonClicked) {
-//                 // const buttonXPath = '//button[contains(@class, "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ JsuyRc boDUxc")]';
-//                 const buttonXPath = '(//button[contains(@class, "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ JsuyRc boDUxc")])[2]';
-
-//                 const buttonClicked = await page.evaluate((xpath) => {
-//                     const button = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-//                     if (button) {
-//                         button.click();
-//                         return true;
-//                     }
-//                     return false; 
-//                 }, buttonXPath);
-
-//                 if (buttonClicked) {
-//                     console.log('Button clicked!');
-//                     isParticipantsButtonClicked = true; 
-//                 } else {
-//                     console.log('Button not found, skipping click operation.');
-//                 }
-//             }
-//             setInterval(async () => {
-//                 if (isParticipantsButtonClicked) {
-//                     let micdetails = await extractMicDetails(page);
-//                     console.log(micdetails);
-//                 }
-//             }, 1000);
-//             // if(isParticipantsButtonClicked){
-//             //    let micdetails=await extractMicDetails(page);
-//             //    console.log(micdetails);
-//             // }
-//             const frame = page.mainFrame();
-
-//             if (!frame.isDetached()) {
-//                 const { participants, leftMeetingText } = await frame.evaluate(() => {
-//                     const leftMeetingElement = document.querySelector('h1[jsname="r4nke"].roSPhc');
-//                     const leftMeetingText = leftMeetingElement ? leftMeetingElement.textContent : null;
-//                     const participants = [];
-//                     const participantElements = document.querySelectorAll('div.dwSJ2e');
-//                     participantElements.forEach(participant => {
-//                         const participantName = participant.innerText;
-//                         participants.push(participantName);
-//                     });
-//                     return { participants, leftMeetingText };
-//                 });
-
-//                 participants.forEach(participant => {
-//                     allParticipants.add(participant); // Add participant to the Set
-//                 });
-
-//                 console.log('All Participants:', allParticipants);
-//                 console.log('Participants:', participants);
-//                 console.log('Meeting status:', leftMeetingText);
-
-//                 if (leftMeetingText || participants.length === 1) {
-//                     return true;
-//                 }
-//             }
-//             return false;
-//         }
-//     } catch (error) {
-//         console.error('Error checking bot presence:', error);
-//         return true;
-//     }
-// }
-
-// async function HandleCheckBotPresence(page, browser, stream, fileStream, meetingId, userEmail) {
-//     try {
-//         const botName = 'riktam.ai NoteTaker';  // Adjust this to match the bot's name
-//         if (isRecordingStopped) {
-//             return true;
-//         } else {
-//             const frame = page.mainFrame();
-//             if (!frame.isDetached()) {
-//                 const { participants, leftMeetingText, participantBoxExists } = await frame.evaluate(() => {
-//                     const leftMeetingElement = document.querySelector('h1[jsname="r4nke"].roSPhc');
-//                     const leftMeetingText = leftMeetingElement ? leftMeetingElement.textContent : null;
-//                     const participants = [];
-//                     const participantElements = document.querySelectorAll('div.dwSJ2e');
-//                     const participantsBox = document.querySelector('div.tTdl5d');
-
-//                     const participantBoxExists = !!participantsBox;
-
-//                     participantElements.forEach(participant => {
-//                         const participantName = participant.innerText;
-//                         participants.push(participantName);
-//                     });
-
-//                     return { participants, leftMeetingText, participantBoxExists };
-//                 });
-
-//                 console.log('Participants Box Exists:', participantBoxExists);
-
-//                 if (!participantBoxExists) {
-//                     console.error('Participants box not found');
-//                 }
-
-//                 participants.forEach(participant => {
-//                     allParticipants.add(participant); // Add participant to the Set
-//                 });
-
-//                 // Call the separate function to identify and store speakers
-//                 const speakerEntries = await identifyAndStoreSpeakers(frame);
-//                 console.log("hghytf",speakerEntries);
-//                 speakerEntries.forEach(([speaker, order]) => {
-//                     if (!speakingOrder.has(speaker)) {
-//                         speakingOrder.set(speaker, order);
-//                     }
-//                 });
-
-//                 console.log('All Participants:', allParticipants);
-//                 console.log('Participants:', participants);
-//                 console.log('Meeting status:', leftMeetingText);
-//                 console.log('Speaking Order:', speakingOrder);
-
-//                 if (participants.length >= 1) {
-//                     if (!gotItClicked) {
-//                         await page.click('span[jsname="V67aGc"].mUIrbf-vQzf8d');
-//                         console.log('Clicked on "Got it" button');
-//                         gotItClicked = true;
-//                     }
-//                 }
-
-//                 if (leftMeetingText || participants.length === 1) {
-//                     // await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail);
-//                     return true;
-//                 }
-
-//                 // if (participants.length === allParticipants.size) {
-//                 //     // Optionally stop recording or perform another action
-//                 //     // await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail);
-//                 //     return true;
-//                 // }
-//             }
-//             return false;
-//         }
-//     } catch (error) {
-//         // For now I comment this part
-//         // await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail);
-//         console.error('Error checking bot presence:', error);
-//         return true;
-//     }
-// }
-
 async function HandelEventList(req, res) {
     try {
-        // const { data } = await axios.get('https://www.googleapis.com/oauth2/v2/userinfo', {
-        //     headers: {
-        //         Authorization: `Bearer ${oauth2Client.credentials.access_token}`
-        //     }
-        // });
-
         const { userEmail } = req.body
-        const user = await User.findOne({ email: userEmail });
-        // oauth2Client.setCredentials({
-        //     access_token:  user.googleAccessToken, 
-        // });
-
-        // const user = await User.findOne({ googleId: data.id });
-
+        const user = await User.findOne({ email: userEmail })
         // // Check if user exists and has events
 
         if (user) {
@@ -1183,106 +603,11 @@ async function HandelEventList(req, res) {
     }
 }
 
-// async function HandleMeetingdetails(req, res){
-//     try {
-//     const { meetingId,userEmail } = req.body;
-
-//     const meeting = await Meeting.findOne({ meetingId });
-//     console.log(meeting)
-//     //   if(meeting ){
-//     //     var videoaccess_url = await HandleVideoStream(meetingId)
-//     //   }
-//     if (!meeting) {
-//         const user = await User.findOne({  email: userEmail});
-//         if (user.events.length > 0) {
-//             // If user exists and has events, send the list of events
-//             const alleventslist = user.events.map(event => event);
-//             console.log(alleventslist)
-//             res.status(200).json({ message: 'All Events are listed', alleventslist });
-//         }
-
-//         return res.status(404).json({ message: 'Meeting not found' });
-//     }
-//     //   res.status(200).json(meeting,videoaccess_url);
-//     const videoaccess_url = await HandleVideoStream(meetingId);
-//     // const transcript=await GetTranscript(meeting.videoS3url)
-//     res.status(200).json({ meeting, videoaccess_url});
-//     } catch (error) {
-//     console.error('Error fetching meeting details:', error);
-//     res.status(500).json({ error: 'An error occurred while fetching meeting details' });
-//     }
-//  }
-
-// async function HandleMeetingdetails(req, res) {
-//     try {
-//       const { meetingId, userEmail } = req.body;
-
-//       // Check if the meeting exists
-//       const meeting = await Meeting.findOne({ meetingId });
-//       console.log(meeting);
-
-//       // If meeting doesn't exist
-//       if (!meeting) {
-//         // Find the user by email
-//         const user = await User.findOne({ email: userEmail });
-
-//         // If user exists and has events
-//         if (user && user.events.length > 0) {
-//           // Search for the event with the matching meetingId
-//           const event = user.events.find(event => event.MeetingId === meetingId);
-
-//           // If event is found, send the event
-//           if (event) {
-//             return res.status(200).json({ message: 'Event found', event });
-//           }
-
-//           // If event is not found in user's events
-//           return res.status(404).json({ message: 'Event not found in user\'s events' });
-//         }
-
-//         // If user has no events
-//         return res.status(404).json({ message: 'User has no events' });
-//       }
-
-//       // If meeting exists
-//       const videoaccess_url = await HandleVideoStream(meetingId);
-//       return res.status(200).json({ meeting, videoaccess_url });
-//     } catch (error) {
-//       console.error('Error fetching meeting details:', error);
-//       return res.status(500).json({ error: 'An error occurred while fetching meeting details' });
-//     }
-//   }
-
-const updateMeeting = async ( meetingId, transcription, transcriptionData, result) => {
-    try {
-        await Meeting.findOneAndUpdate(
-            { meetingId: meetingId },
-            {
-                $set: {
-                    transcript: transcription,
-                    transcriptionData: transcriptionData,
-                    assemblytranscritps: result
-                }
-            },
-            { new: true } // This option returns the updated document
-        );
-        console.log('Meeting updated successfully.');
-    } catch (error) {
-        console.error('Error updating meeting:', error);
-    }
-};
-
 async function HandleMeetingdetails(req, res) {
     try {
         const { meetingId, userEmail } = req.body;
         let meeting = await Meeting.findOne({ meetingId });
         console.log(meeting);
-
-        // const allParticipants=await getOrderParticipants(orderedSpeaker);
-        // console.log("Meeting all Participants",allParticipants);
-
-        // const orderedSpeaker = await HandleCheckBotPresence(page, browser, stream, fileStream, meetingId, userEmail);
-        // console.log(orderedSpeaker.orderedParticipants);
 
         if (meeting.assemblytranscritps != {}) {
             const videoaccess_url = await HandleVideoStream(meetingId);
@@ -1308,78 +633,6 @@ async function HandleMeetingdetails(req, res) {
                 const videoaccess_url = await HandleVideoStream(meetingId);
                 const audioaccess_url = await handleAudioStream(meetingId);
                 return res.status(200).json({ meeting, videoaccess_url, audioaccess_url });
-
-                // const transcription = await GetTranscript(audioPath);
-                // console.log(transcription);
-
-                // let transcriptionJob = `transcription-job-${meetingId}`
-
-                // const transcriptionJobExist = await checkTranscriptionJobExists(transcriptionJob);
-                // if (transcriptionJobExist) {
-                //     // If transcription job already exists, get its result
-                //     const transcriptionResult = await getTranscriptionResult(transcriptionJob);
-                //     console.log('Transcription result:', transcriptionResult);
-                //     const transcriptionData = await getTranscriptionJsonFromS3(bucketName, `transcriptions/${meetingId}.json`)
-                //     console.log("Transcription Data", transcriptionData);
-                //     // Update the existing meeting record with the new transcript
-                //     // const meeting = new Meeting({
-                //     //     userEmail: userEmail,
-                //     //     meetingId: meetingId,
-                //     //     videoS3url: videoExists.url,
-                //     //     transcript: transcription,
-                //     //     transcriptionData: transcriptionData,
-                //     //     assemblytranscritps: result
-                //     // });
-                //     // await meeting.save();
-                //     await updateMeeting(meetingId, transcription, transcriptionData, result);
-                //     console.log("Meeting record updated successfully.");
-
-                //     const videoaccess_url = await HandleVideoStream(meetingId);
-                //     const audioaccess_url = await handleAudioStream(meetingId);
-                //     return res.status(200).json({ meeting, videoaccess_url, audioaccess_url });
-                // } else {
-                //     // If transcription job doesn't exist, start a new one
-                //     const transcriptionJobName = await startTranscriptionJob(audios3Url, meetingId);
-
-                //     // Polling for transcription result
-                //     const transcriptionResult = await getTranscriptionResult(transcriptionJobName);
-                //     console.log('Transcription result:', transcriptionResult);
-                //     const transcriptionData = await getTranscriptionJsonFromS3(bucketName, `transcriptions/${meetingId}.json`)
-                //     console.log("Transcription Data", transcriptionData);
-                //     // Update the existing meeting record with the new transcript
-                //     // const meeting = new Meeting({
-                //     //     userEmail: userEmail,
-                //     //     meetingId: meetingId,
-                //     //     videoS3url: videoExists.url,
-                //     //     transcript: transcription,
-                //     //     transcriptionData: transcriptionData,
-                //     //     assemblytranscritps: result
-                //     // });
-                    
-                //     // await meeting.save();
-                //     await updateMeeting(meetingId, transcription, transcriptionData, result);
-                //     console.log("Meeting record updated successfully.");
-                //     // console.log("Meeting record updated successfully.");
-
-                //     const videoaccess_url = await HandleVideoStream(meetingId);
-                //     const audioaccess_url = await handleAudioStream(meetingId);
-                //     return res.status(200).json({ meeting, videoaccess_url, audioaccess_url });
-                // }
-
-
-                // Update the existing meeting record with the new transcript
-                // const meeting = new Meeting({
-                //     userEmail: userEmail,
-                //     meetingId: meetingId,
-                //     videoS3url: videoExists.url,
-                //     transcript:transcription
-                // });
-                // await meeting.save();
-                // console.log("Meeting record updated successfully.");
-
-                // const videoaccess_url = await HandleVideoStream(meetingId);
-                // return res.status(200).json({ meeting, videoaccess_url });
-
             }
             else {
                 const user = await User.findOne({ email: userEmail });
@@ -1438,45 +691,10 @@ async function getTranscriptionJsonFromS3(bucketName, objectKey) {
     }
 }
 
-
-// const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY }); 
-// const GetTranscript = async(s3videourl)=>{
-//     const transcription = await openai.audio.transcriptions.create({
-//         // file:fs.createReadStream("./audio/audio.mp3"),
-//         // file:fs.createReadStream("./report/test6.mp4"),
-//         // file:fs.createReadStream("./report/test4.mp4"),
-//         file:fs.createReadStream(s3videourl),
-//         // file:fs.createReadStream('https://riktam-recordings.s3.ap-south-1.amazonaws.com/recorded_video_MeetingId_bqu-ehua-ttt.webm'),
-//         model:"whisper-1",
-//         language: "en"
-//     })
-//     console.log(transcription);
-//     return transcription.text
-// }
-
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
     credentials: fromEnv() // Automatically fetch credentials from environment variables
 });
-
-
-
-// async function HandleVideoStream(meetingId){
-
-//   const params = {
-//     Bucket: process.env.S3_BUCKET_NAME,
-//     Key: `videos/recorded_video_MeetingId_${meetingId}.webm`
-//   };
-//   try {
-//     const command = new GetObjectCommand(params);
-//     const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // 1 hour expiration
-//     // res.json({ url });
-//     return url
-//   } catch (error) {
-//     console.error("Error generating presigned URL:", error);
-//     // res.status(500).json({ error: "Error generating presigned URL" });
-//   }
-// }
 
 module.exports = {
     HandleScheduleEvent,
