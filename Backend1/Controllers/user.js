@@ -401,7 +401,7 @@ async function HandleStopRecording(browser, stream, fileStream, meetingId, userE
             userEmail: userEmail,
             meetingId: meetingId,
             videoS3url: s3Url,
-            transcript:'',
+            assemblytranscritps:'',
             orderedSpeaker:orderedSpeaker
         });
 
@@ -608,50 +608,52 @@ async function HandleMeetingdetails(req, res) {
         const { meetingId, userEmail } = req.body;
         let meeting = await Meeting.findOne({ meetingId });
         console.log(meeting);
-
-        if (meeting.assemblytranscritps != {}) {
-            const videoaccess_url = await HandleVideoStream(meetingId);
-            const audioaccess_url = await handleAudioStream(meetingId);
-            return res.status(200).json({ meeting, videoaccess_url, audioaccess_url });
-        } else {
-            const videoExists = await checkVideoExists(process.env.S3_BUCKET_NAME, meetingId);
-            if (videoExists.exists) {
-                const bucketName = process.env.S3_BUCKET_NAME;
-                const downloadDir = './downloadfroms3/video';
-                const videoPath = await downloadvideoFromS3(bucketName, meetingId, downloadDir);
-                const audioOutputDir = path.dirname(videoPath);
-
-                // Extract audio from the video file
-                const audioPath = await getAudio(videoPath, audioOutputDir);
-                const result = await generateMultiSpeakerTranscription(audioPath)
-                console.log(result)
         
-                meeting.assemblytranscritps=result;
-                const audios3Url = await uploadAudioToS3(audioPath, process.env.S3_BUCKET_NAME, meetingId);
-
-                await meeting.save();
+        if(meeting){
+            if (meeting.transcript!='') {
+                console.log("iam executed")
                 const videoaccess_url = await HandleVideoStream(meetingId);
                 const audioaccess_url = await handleAudioStream(meetingId);
                 return res.status(200).json({ meeting, videoaccess_url, audioaccess_url });
+            } else {
+                // const videoExists = await checkVideoExists(process.env.S3_BUCKET_NAME, meetingId);
+                    const bucketName = process.env.S3_BUCKET_NAME;
+                    const downloadDir = './downloadfroms3/video';
+                    const videoPath = await downloadvideoFromS3(bucketName, meetingId, downloadDir);
+                    const audioOutputDir = path.dirname(videoPath);
+    
+                    // Extract audio from the video file
+                    const audioPath = await getAudio(videoPath, audioOutputDir);
+                    const result = await generateMultiSpeakerTranscription(audioPath)
+                    console.log(result)
+            
+                    meeting.assemblytranscritps=result;
+                    const audios3Url = await uploadAudioToS3(audioPath, process.env.S3_BUCKET_NAME, meetingId);
+    
+                    await meeting.save();
+                    const videoaccess_url = await HandleVideoStream(meetingId);
+                    const audioaccess_url = await handleAudioStream(meetingId);
+                    return res.status(200).json({ meeting, videoaccess_url, audioaccess_url });
+    
             }
-            else {
-                const user = await User.findOne({ email: userEmail });
-                // If user exists and has events
-                if (user && user.events.length > 0) {
-                    // Search for the event with the matching meetingId
-                    const event = user.events.find(event => event.MeetingId === meetingId);
-                    // If event is found, send the event
-                    if (event) {
-                        return res.status(200).json({ message: 'Event found', event });
-                    }
-                    // If event is not found in user's events
-                    return res.status(404).json({ message: 'Event not found in user\'s events' });
-                }
-                return res.status(404).json({ message: 'User has no events' });
 
+        }else{
+            const user = await User.findOne({ email: userEmail });
+            // If user exists and has events
+            if (user && user.events.length > 0) {
+                // Search for the event with the matching meetingId
+                const event = user.events.find(event => event.MeetingId === meetingId);
+                // If event is found, send the event
+                if (event) {
+                    return res.status(200).json({ message: 'Event found', event });
+                }
+                // If event is not found in user's events
+                return res.status(404).json({ message: 'Event not found in user\'s events' });
             }
+            return res.status(404).json({ message: 'User has no events' });
 
         }
+       
     } catch (error) {
         console.error('Error fetching meeting details:', error);
         return res.status(500).json({ error: 'An error occurred while fetching meeting details' });
