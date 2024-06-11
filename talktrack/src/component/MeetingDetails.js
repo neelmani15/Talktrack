@@ -1566,10 +1566,81 @@ console.log("Formatted Ordered Speaker", formattedOrderedSpeaker);
 //       </div>
 //     );
 // };
+
+// const renderAssemblySpeakerTranscription = () => {
+//   const { assemblytranscritps, orderedSpeaker } = meetingDetails.meeting;
+//   console.log("Assembly Transcript", assemblytranscritps);
+//   console.log("Ordered Speaker", orderedSpeaker);
+
+//   // Create a mapping of speaker letters to indices
+//   const speakerLetters = ['A', 'B', 'C', 'D', 'E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+//   const speakers = {};
+
+//   // Loop through each dialogue and assign the incrementing value to each speaker
+//   assemblytranscritps.transcriptionData.forEach((dialogue) => {
+//       if (!(dialogue.speaker in speakers)) {
+//           speakers[dialogue.speaker] = speakerLetters[Object.keys(speakers).length];
+//       }
+//   });
+
+//   console.log("Speakers", speakers);
+//   const speakersKeys = Object.keys(speakers);
+
+//   const speakerNameMap = {};
+//   let anonymousCount = 1;
+
+//   // Map the orderedSpeaker names to the speaker letters
+//   Object.keys(orderedSpeaker).forEach((key, index) => {
+//       speakerNameMap[speakersKeys[index]] = key;
+//   });
+
+//   // Assign Anonymous labels for any additional speakers not in orderedSpeaker
+//   speakersKeys.forEach((letter, index) => {
+//       if (!(letter in speakerNameMap)) {
+//           speakerNameMap[letter] = `Anonymous ${anonymousCount++}`;
+//       }
+//   });
+
+//   console.log("Speaker Name Map", speakerNameMap);
+//   const formatTime = (milliseconds) => {
+//     let totalSeconds = Math.floor(milliseconds / 1000);
+//     let hours = Math.floor(totalSeconds / 3600);
+//     let minutes = Math.floor((totalSeconds % 3600) / 60);
+//     let seconds = totalSeconds % 60;
+
+//     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+// };
+
+// const convertToTimeFormat = (isoString) => {
+//   const date = new Date(isoString);
+//   const hours = String(date.getUTCHours()).padStart(2, '0');
+//   const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+//   const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+//   return `${hours}:${minutes}:${seconds}`;
+// };
+
+//   return (
+//     <div>
+//       {assemblytranscritps.transcriptionData.map((entry, index) => (
+//         <div key={index}>
+//           <p>
+//             <strong>{speakerNameMap[speakers[entry.speaker]]}</strong>
+//             <span> ({formatTime(entry.start)})</span>
+//           </p>
+//           <p>{entry.text}</p>
+//         </div>
+//       ))}
+//     </div>
+//   );
+// };
+
+
+
 const renderAssemblySpeakerTranscription = () => {
-  const { assemblytranscritps, orderedSpeaker } = meetingDetails.meeting;
+  const { assemblytranscritps, orderedSpeaker,orderSpeakerTimeBasis } = meetingDetails.meeting;
   console.log("Assembly Transcript", assemblytranscritps);
   console.log("Ordered Speaker", orderedSpeaker);
+  console.log("Speakers Order Time Basis",orderSpeakerTimeBasis);
 
   // Create a mapping of speaker letters to indices
   const speakerLetters = ['A', 'B', 'C', 'D', 'E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
@@ -1577,9 +1648,9 @@ const renderAssemblySpeakerTranscription = () => {
 
   // Loop through each dialogue and assign the incrementing value to each speaker
   assemblytranscritps.transcriptionData.forEach((dialogue) => {
-      if (!(dialogue.speaker in speakers)) {
-          speakers[dialogue.speaker] = speakerLetters[Object.keys(speakers).length];
-      }
+    if (!(dialogue.speaker in speakers)) {
+      speakers[dialogue.speaker] = speakerLetters[Object.keys(speakers).length];
+    }
   });
 
   console.log("Speakers", speakers);
@@ -1588,19 +1659,22 @@ const renderAssemblySpeakerTranscription = () => {
   const speakerNameMap = {};
   let anonymousCount = 1;
 
-  // Map the orderedSpeaker names to the speaker letters
-  Object.keys(orderedSpeaker).forEach((key, index) => {
-      speakerNameMap[speakersKeys[index]] = key;
+  // Map the orderedSpeaker array names to the speaker letters
+  orderedSpeaker.forEach((name, index) => {
+    if (speakersKeys[index]) {
+      speakerNameMap[speakersKeys[index]] = name;
+    }
   });
 
   // Assign Anonymous labels for any additional speakers not in orderedSpeaker
   speakersKeys.forEach((letter, index) => {
-      if (!(letter in speakerNameMap)) {
-          speakerNameMap[letter] = `Anonymous ${anonymousCount++}`;
-      }
+    if (!(letter in speakerNameMap)) {
+      speakerNameMap[letter] = `Anonymous ${anonymousCount++}`;
+    }
   });
 
   console.log("Speaker Name Map", speakerNameMap);
+  
   const formatTime = (milliseconds) => {
     let totalSeconds = Math.floor(milliseconds / 1000);
     let hours = Math.floor(totalSeconds / 3600);
@@ -1608,15 +1682,15 @@ const renderAssemblySpeakerTranscription = () => {
     let seconds = totalSeconds % 60;
 
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-};
+  };
 
-const convertToTimeFormat = (isoString) => {
-  const date = new Date(isoString);
-  const hours = String(date.getUTCHours()).padStart(2, '0');
-  const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-  const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-  return `${hours}:${minutes}:${seconds}`;
-};
+  const convertToTimeFormat = (isoString) => {
+    const date = new Date(isoString);
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+    return `${hours}:${minutes}:${seconds}`;
+  };
 
   return (
     <div>
@@ -1632,6 +1706,8 @@ const convertToTimeFormat = (isoString) => {
     </div>
   );
 };
+
+
 
   const renderAssemblySpeakerTextTranscription = () => {
     const { assemblytranscritps } = meetingDetails.meeting;

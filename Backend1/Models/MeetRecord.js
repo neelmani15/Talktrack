@@ -10,7 +10,7 @@ const meetingRecordSchema = new mongoose.Schema({
     required: true
   },
   orderedSpeaker:{
-    type:Map,
+    type:Array,
     required:true
   },
   videoS3url: {
@@ -32,6 +32,14 @@ const meetingRecordSchema = new mongoose.Schema({
     required:true,
     default:{}
   },
+  orderSpeakerTimeBasis:{
+    type:Array,
+    required:true
+  },
+  meetingStartTime:{
+    type:Date,
+    required:true
+  }
 });
 
 const Meeting = mongoose.model('Meeting', meetingRecordSchema);

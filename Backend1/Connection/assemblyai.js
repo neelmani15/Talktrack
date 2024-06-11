@@ -95,6 +95,7 @@
 const axios = require('axios');
 const fs = require('fs');
 const FormData = require('form-data');
+const { log } = require('console');
 
 async function uploadAudio(filePath) {
     const form = new FormData();
@@ -110,11 +111,12 @@ async function uploadAudio(filePath) {
     return response.data.upload_url;
 }
 
-async function transcribeAudio(audioUrl) {
+async function transcribeAudio(audioUrl,speakerLength) {
+    console.log("Transcribe Audio Speaker Length",speakerLength);
     const response = await axios.post('https://api.assemblyai.com/v2/transcript', {
         audio_url: audioUrl,
         speaker_labels: true,
-        speakers_expected: 4
+        speakers_expected: speakerLength
     }, {
         headers: {
             'authorization': process.env.assembly_api_key,
@@ -149,14 +151,14 @@ async function getTranscriptionResult(transcriptionId) {
     }
 }
 
-async function generateMultiSpeakerTranscription(audioPath) {
+async function generateMultiSpeakerTranscription(audioPath,speakerLength) {
     try {
         console.log('Uploading audio...');
         const audioUrl = await uploadAudio(audioPath);
         console.log('Audio uploaded. URL:', audioUrl);
 
         console.log('Requesting transcription...');
-        const transcriptionId = await transcribeAudio(audioUrl);
+        const transcriptionId = await transcribeAudio(audioUrl,speakerLength);
         console.log('Transcription requested. ID:', transcriptionId);
 
         console.log('Waiting for transcription to complete...');
