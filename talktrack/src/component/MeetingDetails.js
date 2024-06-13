@@ -1690,8 +1690,9 @@ const renderAssemblySpeakerTranscription = () => {
     return `${hours}:${minutes}:${seconds}`;
   };
 
-  // Map the transcription entries to the speaker order time basis
-  const mappedTranscripts = assemblytranscritps.transcriptionData.map((entry, index) => {
+  // Ensure mapping only uses available entries in both arrays
+  const minLength = Math.min(assemblytranscritps.transcriptionData.length, orderSpeakerTimeBasis.length);
+  const mappedTranscripts = assemblytranscritps.transcriptionData.slice(0, minLength).map((entry, index) => {
     const timeBasis = orderSpeakerTimeBasis[index];
     const previousSpeaker = timeBasis.previous;
 
@@ -1701,7 +1702,7 @@ const renderAssemblySpeakerTranscription = () => {
     };
   });
 
-  console.log("Mapped Transcript Speaker",mappedTranscripts);
+  console.log("Mapped Transcript Speaker", mappedTranscripts);
 
   return (
     <div>
@@ -1717,6 +1718,7 @@ const renderAssemblySpeakerTranscription = () => {
     </div>
   );
 };
+
 
 
 // const renderAssemblySpeakerTranscription = () => {
