@@ -41,7 +41,7 @@
 
 import React from 'react';
 
-const Sidebar = ({ onScheduleMeetingClick, onShowAllEventsClick, isLoading }) => {
+const Sidebar = ({ onScheduleMeetingClick, onShowAllEventsClick,onShowLiveMeeting, isLoading }) => {
   return (
     <div className="bg-gray-200 text-white w-64 h-full p-4">
       <ul>
@@ -63,6 +63,15 @@ const Sidebar = ({ onScheduleMeetingClick, onShowAllEventsClick, isLoading }) =>
             {isLoading ? 'Loading...' : 'Meetings'}
           </button>
         </li>
+       <li>
+                 <button
+           className="w-full bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
+           onClick={onShowLiveMeeting}
+            disabled={isLoading}
+         >
+           {isLoading ? 'Adding...' : 'Add to Live Meeting'}
+        </button>
+        </li> 
       </ul>
     </div>
   );

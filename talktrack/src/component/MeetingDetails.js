@@ -1690,17 +1690,28 @@ const renderAssemblySpeakerTranscription = () => {
     return `${hours}:${minutes}:${seconds}`;
   };
 
-  // Ensure mapping only uses available entries in both arrays
-  const minLength = Math.min(assemblytranscritps.transcriptionData.length, orderSpeakerTimeBasis.length);
-  const mappedTranscripts = assemblytranscritps.transcriptionData.slice(0, minLength).map((entry, index) => {
-    const timeBasis = orderSpeakerTimeBasis[index];
-    const previousSpeaker = timeBasis.previous;
+  let mappedTranscripts;
 
-    return {
-      ...entry,
-      speakerName: previousSpeaker
-    };
-  });
+  if (orderSpeakerTimeBasis.length > 0) {
+    const minLength = Math.min(assemblytranscritps.transcriptionData.length, orderSpeakerTimeBasis.length);
+    mappedTranscripts = assemblytranscritps.transcriptionData.slice(0, minLength).map((entry, index) => {
+      const timeBasis = orderSpeakerTimeBasis[index];
+      const previousSpeaker = timeBasis.previous;
+      return {
+        ...entry,
+        speakerName: previousSpeaker
+      };
+    });
+  } else {
+    mappedTranscripts = assemblytranscritps.transcriptionData.map((entry, index) => {
+      const speakerIndex = index % orderedSpeaker.length;
+      const speakerName = orderedSpeaker[speakerIndex];
+      return {
+        ...entry,
+        speakerName
+      };
+    });
+  }
 
   console.log("Mapped Transcript Speaker", mappedTranscripts);
 
@@ -1718,6 +1729,7 @@ const renderAssemblySpeakerTranscription = () => {
     </div>
   );
 };
+
 
 
 

@@ -956,7 +956,7 @@ const Home = () => {
                   <tr key={index}>
                     <td
                       className="px-2 py-2 whitespace-nowrap"
-                      onClick={() => handleMeetingDetails(event.url)}
+                      onClick={() => handleMeetingDetails(event.MeetingId)}
                       style={{ cursor: 'pointer' }}
                     >
                       {event.summary}
