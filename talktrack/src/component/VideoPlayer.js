@@ -28,7 +28,7 @@ import ReactPlayer from 'react-player';
 
 const VideoPlayer = ({ videoUrl }) => {
   return (
-    <div className="bg-gray-800 p-4 rounded shadow-md" >
+    <div className="bg-gray-800 p-4 rounded shadow-md mt-5" >
       <ReactPlayer url={videoUrl} controls width="100%" height="auto" />
     </div>
   );

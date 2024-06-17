@@ -9,20 +9,35 @@ const meetingRecordSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  orderedSpeaker:{
+    type:Array,
+    required:true
+  },
   videoS3url: {
     type: String,
-    required: true
+    required:true,
+    default:''
   },
   transcript: {
     type: String,
-    required: true
+    default:''
   },
   transcriptionData: {
     type: JSON,
-    required:true
+    required:true,
+    default:{}
   },
   assemblytranscritps: {
     type: JSON,
+    required:true,
+    default:{}
+  },
+  orderSpeakerTimeBasis:{
+    type:Array,
+    required:true
+  },
+  meetingStartTime:{
+    type:Date,
     required:true
   }
 });
