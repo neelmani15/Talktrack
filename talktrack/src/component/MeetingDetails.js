@@ -1371,31 +1371,1553 @@
 // export default MeetingDetails;
 
 
-import React, { useState } from 'react';
+// import React, { useState,useEffect } from 'react';
+// import { useLocation, useNavigate } from 'react-router-dom';
+// import VideoPlayer from './VideoPlayer';
+// import CustomAudioPlayer from './AudioPlayer'; // Import the CustomAudioPlayer component
+// import { format } from 'date-fns';
+// import { FaClock } from 'react-icons/fa';
+// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+// import Sidebar from './Sidebar';
+// import SpeakerModal from './spaekereditmodal';
+// import axios from 'axios'
+// const MeetingDetails = () => {
+//   const location = useLocation();
+//   const navigate = useNavigate();
+//   const { meetingDetails } = location.state;
+//   const [transcriptionType, setTranscriptionType] = useState('assemblyspeaker');
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+//   const [selectedSpeaker, setSelectedSpeaker] = useState(''); 
+//   const [selectedSpeakerTimestamp, setSelectedSpeakerTimestamp] = useState('');
+//   const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
+//   const [mappedTranscripts, setMappedTranscripts] = useState([]);
+//   const handleTranscriptionTypeChange = (type) => {
+//     setTranscriptionType(type);
+//   };
+
+
+//   const handleOpenModal = (event, speaker,timestamp) => {
+//     const rect = event.target.getBoundingClientRect();
+//     setModalPosition({ top: rect.bottom + window.scrollY+40, left: rect.left + window.scrollX });
+//     setSelectedSpeaker(speaker);
+//     setSelectedSpeakerTimestamp(timestamp)
+//     setIsModalOpen(true);
+//   };
+
+
+//   const handleCloseModal = () => {
+//     setIsModalOpen(false);
+//     setSelectedSpeaker('');
+//   };
+
+
+//   const getTranscription = (type) => {
+//     if (type === 'original') {
+//       return meetingDetails.meeting.transcript;
+//     } else if (type === 'aws') {
+//       return meetingDetails.meeting.transcriptionData.results.transcripts[0].transcript;
+//     } else if (type === 'speaker') {
+//       return renderSpeakerWiseTranscription();
+//     } else if (type === 'assemblyspeaker') {
+//       return renderAssemblySpeakerTranscription();
+//     } else if (type === 'assemblytext') {
+//       return renderAssemblySpeakerTextTranscription();
+//     }
+//     return '';
+//   };
+      
+//   const { orderedSpeaker } = meetingDetails.meeting;
+//   const convertToTimeFormat = (isoString) => {
+//     const date = new Date(isoString);
+//     const hours = String(date.getUTCHours()).padStart(2, '0');
+//     const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+//     const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+//     return `${hours}:${minutes}:${seconds}`;
+// };
+
+// const formattedOrderedSpeaker = {};
+// Object.keys(orderedSpeaker).forEach((key) => {
+//     formattedOrderedSpeaker[key] = convertToTimeFormat(orderedSpeaker[key]);
+// });
+
+// console.log("Formatted Ordered Speaker", formattedOrderedSpeaker);
+
+//   const renderSpeakerWiseTranscription = () => {
+//     const { speaker_labels } = meetingDetails.meeting.transcriptionData.results;
+//     const segments = speaker_labels.segments;
+//     const items = meetingDetails.meeting.transcriptionData.results.items;
+//     const { orderedSpeaker } = meetingDetails.meeting;
+
+//       console.log("hey ia m excuted ")
+     
+
+//     const speakerNameMap = {};
+//     let index = 0;
+//     for (const speakerName in orderedSpeaker) {
+//       console.log(speakerName)
+//       speakerNameMap[`spk_${index}`] = speakerName;
+//       index++;
+//     }
+
+//     let currentSpeaker = null;
+//     let currentParagraph = [];
+//     const speakerOrder = [];
+
+//     segments.forEach((segment) => {
+//       const speaker = segment.speaker_label;
+//       const startTime = parseFloat(segment.start_time);
+//       const endTime = parseFloat(segment.end_time);
+
+//       const speakerItems = items.filter(
+//         (item) =>
+//           parseFloat(item.start_time) >= startTime &&
+//           parseFloat(item.end_time) <= endTime &&
+//           item.speaker_label === speaker
+//       );
+
+//       speakerItems.forEach((item) => {
+//         const mappedSpeaker = speakerNameMap[item.speaker_label] || item.speaker_label;
+//         if (mappedSpeaker !== currentSpeaker) {
+//           if (currentParagraph.length > 0) {
+//             speakerOrder.push({
+//               speaker: currentSpeaker,
+//               paragraph: currentParagraph.join(' '),
+//             });
+//             currentParagraph = [];
+//           }
+//           currentSpeaker = mappedSpeaker;
+//         }
+//         currentParagraph.push(item.alternatives[0].content);
+//       });
+//     });
+
+//     if (currentParagraph.length > 0) {
+//       speakerOrder.push({
+//         speaker: currentSpeaker,
+//         paragraph: currentParagraph.join(' '),
+//       });
+//     }
+
+//     return (
+//       <div>
+//         {speakerOrder.map(({ speaker, paragraph }, index) => (
+//           <div key={index}>
+//             <p>
+//               <strong>{speaker}</strong>
+//             </p>
+//             <p>{paragraph}</p>
+//           </div>
+//         ))}
+//       </div>
+//     );
+//   };
+
+
+//   const handleApplyToCurrentSpeaker = (speakerName,timestamp) => {
+//      console.log(speakerName)
+//      console.log(timestamp)
+//     handleCloseModal();
+//   };
+
+
+
+
+// const renderAssemblySpeakerTranscription = () => {
+//   const { assemblytranscritps, orderedSpeaker, orderSpeakerTimeBasis } = meetingDetails.meeting;
+//   console.log("Assembly Transcript", assemblytranscritps);
+//   console.log("Ordered Speaker", orderedSpeaker);
+//   console.log("Speakers Order Time Basis", orderSpeakerTimeBasis);
+
+//   // Create a mapping of speaker letters to indices
+//   const speakerLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+//   const speakers = {};
+
+//   // Loop through each dialogue and assign the incrementing value to each speaker
+//   assemblytranscritps.transcriptionData.forEach((dialogue) => {
+//     if (!(dialogue.speaker in speakers)) {
+//       speakers[dialogue.speaker] = speakerLetters[Object.keys(speakers).length];
+//     }
+//   });
+
+//   console.log("Speakers", speakers);
+//   const speakersKeys = Object.keys(speakers);
+
+//   const speakerNameMap = {};
+//   let anonymousCount = 1;
+
+//   // Map the orderedSpeaker array names to the speaker letters
+//   orderedSpeaker.forEach((name, index) => {
+//     if (speakersKeys[index]) {
+//       speakerNameMap[speakersKeys[index]] = name;
+//     }
+//   });
+
+//   // Assign Anonymous labels for any additional speakers not in orderedSpeaker
+//   speakersKeys.forEach((letter, index) => {
+//     if (!(letter in speakerNameMap)) {
+//       speakerNameMap[letter] = `Anonymous ${anonymousCount++}`;
+//     }
+//   });
+
+//   console.log("Speaker Name Map", speakerNameMap);
+
+//   const formatTime = (milliseconds) => {
+//     let totalSeconds = Math.floor(milliseconds / 1000);
+//     let hours = Math.floor(totalSeconds / 3600);
+//     let minutes = Math.floor((totalSeconds % 3600) / 60);
+//     let seconds = totalSeconds % 60;
+
+//     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+//   };
+
+//   const convertToTimeFormat = (isoString) => {
+//     const date = new Date(isoString);
+//     const hours = String(date.getUTCHours()).padStart(2, '0');
+//     const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+//     const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+//     return `${hours}:${minutes}:${seconds}`;
+//   };
+
+//   const minLength = Math.min(assemblytranscritps.transcriptionData.length, orderSpeakerTimeBasis.length);
+//   const mappedTranscripts = assemblytranscritps.transcriptionData.slice(0, minLength).map((entry, index) => {
+//     const timeBasis = orderSpeakerTimeBasis[index];
+//     const previousSpeaker = timeBasis.previous;
+
+//     return {
+//       ...entry,
+//       speakerName: previousSpeaker
+//     };
+//   });
+    
+//   // setMappedTranscripts(mappedTranscripts);
+
+
+//   console.log("Mapped Transcript Speaker", mappedTranscripts);
+
+//   return (
+//     <div>
+//       {mappedTranscripts.map((entry, index) => (
+//         <div key={index}>
+//           <p>
+//             <strong>{entry.speakerName}</strong>
+//             <button onClick={(event) => handleOpenModal(event, entry.speakerName,formatTime(entry.start))} className="text-blue-500 underline ml-2">
+//               Edit
+//             </button>
+//             <span> ({formatTime(entry.start)})</span>
+//           </p>
+//           <p>{entry.text}</p>
+//         </div>
+//       ))}
+//     </div>
+//   );
+// };
+
+
+
+//   const renderAssemblySpeakerTextTranscription = () => {
+//     const { assemblytranscritps } = meetingDetails.meeting;
+//     // const combinedText = assemblytranscritps.plainTextTranscription.map((entry) => entry.text).join(' ');
+//     const combinedText = assemblytranscritps.plainTextTranscription;
+//     return <div>{combinedText}</div>;
+//   };
+
+//   const TranscriptionDisplay = ({ type }) => {
+//     return (
+//       <div className="bg-gray-100 p-4  overflow-y-auto max-h-80">
+//         {getTranscription(type)}
+//       </div>
+//     );
+//   };
+
+//   const renderMeetingDetails = () => {
+//     return (
+//       <>
+//         <div className="flex justify-center mb-10 pr-4">
+//           <div className="mt-2 pr-4">
+//             <strong>Meeting ID:</strong> {meetingDetails.meeting.meetingId}
+//           </div>
+//           <div className="mt-2">
+//             <strong>User Email:</strong> {meetingDetails.meeting.userEmail}
+//           </div>
+//         </div>
+//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//           <div>
+//             <h2 className="text-xl font-semibold mb-2">Video</h2>
+//             {meetingDetails.videoaccess_url && <VideoPlayer videoUrl={meetingDetails.videoaccess_url} />}
+//           </div>
+//           <div>
+//             <h2 className="text-xl font-semibold mb-2">Transcript</h2>
+//             <div className="mt-4 mb-4">
+//               <div className="bg-gray-100 border-b-4">
+//                 <button
+//                   className={`font-bold py-2 px-4 mr-2 rounded  ${
+//                     transcriptionType === 'assemblyspeaker' ? 'text-blue-700 border-b-4 border-blue-700' : 'text-white-200'
+//                   }`}
+//                   onClick={() => handleTranscriptionTypeChange('assemblyspeaker')}
+//                 >
+//                   Speaker
+//                 </button>
+//                 <button
+//                   className={`font-bold py-2 px-4 mr-2 rounded ${
+//                     transcriptionType === 'assemblytext' ? 'text-blue-700 border-b-4 border-blue-700' : 'text-white-200'
+//                   }`}
+//                   onClick={() => handleTranscriptionTypeChange('assemblytext')}
+//                 >
+//                   Text
+//                 </button>
+//               </div>
+//               <TranscriptionDisplay type={transcriptionType} />
+//             </div>
+//           </div>
+//         </div>
+
+//         <div className="mt-21">
+//           <h2 className="text-xl font-semibold mb-1">Audio</h2>
+//           {meetingDetails.audioaccess_url && <CustomAudioPlayer audioUrl={meetingDetails.audioaccess_url} />}
+//         </div>
+//       </>
+//     );
+//   };
+
+//   const renderEventDetails = () => {
+//     const { event } = meetingDetails;
+
+    
+//     return (
+//       <>
+//         <strong>
+//           <h1 className="text-center font-bold">This event not happened yet</h1>
+//         </strong>
+//         <div className="flex flex-col">
+//           <div className="flex flex-row items-center mt-8">
+//             <div className="mr-8">
+//               <strong>MeetingId:</strong> {event.MeetingId}
+//             </div>
+//             <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-500 mr-1" />
+//             {format(new Date(event.start), 'EEE, MMM do')}
+//             <FaClock className="inline-block ml-2 mr-1" />
+//             {format(new Date(event.start), 'h:mm a')}
+//             <div className="mr-8 ml-4">
+//               <strong>Meeting URL:</strong>
+//               <a href={event.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+//                 {event.url}
+//               </a>
+//             </div>
+//           </div>
+//           <div className="flex flex-row items-center mt-8">
+//             <div className="mr-8">
+//               <strong>Event Summary:</strong> {event.summary}
+//             </div>
+//           </div>
+//         </div>
+//       </>
+//     );
+//   };
+
+//   const sendMappedTranscripts = async () => {
+//     try {
+//       // Make a POST request to your backend endpoint
+//       const response = await axios.post('http://localhost:5001/user/update-mapped-transcript', {
+//         meetingId: meetingDetails.meeting.meetingId,
+//         mappedTranscript: mappedTranscripts
+//       });
+
+//       console.log('Updated meeting:', response.data);
+//       // Handle success or navigate to another page
+//     } catch (error) {
+//       console.error('Error updating mapped transcript:', error);
+//       // Handle error
+//     }
+//   };
+
+
+//   return (
+//     <div className="flex h-screen">
+//       <Sidebar
+//         onScheduleMeetingClick={() => navigate('/schedule-meeting')}
+//         onShowAllEventsClick={() => navigate('/meetings')}
+//         onShowLiveMeeting={() => navigate('/live-meeting')}
+//         isLoading={false}
+//       />
+//       <div className="flex-1 p-6 overflow-y-auto">
+//         {meetingDetails.meeting ? renderMeetingDetails() : renderEventDetails()}
+//       </div>
+//       <SpeakerModal
+//         isOpen={isModalOpen}
+//         onRequestClose={handleCloseModal}
+//         speakerName={selectedSpeaker}
+//         orderedSpeaker={meetingDetails.meeting.orderedSpeaker}
+//         position={modalPosition}
+//         onApplyToCurrentSpeaker={handleApplyToCurrentSpeaker}
+//         timestamp={selectedSpeakerTimestamp}
+//       />
+
+//     </div>
+//   );
+// };
+
+// export default MeetingDetails;
+
+
+// import React, { useState, useEffect } from 'react';
+// import { useLocation, useNavigate } from 'react-router-dom';
+// import VideoPlayer from './VideoPlayer';
+// import CustomAudioPlayer from './AudioPlayer'; // Import the CustomAudioPlayer component
+// import { format } from 'date-fns';
+// import { FaClock } from 'react-icons/fa';
+// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+// import Sidebar from './Sidebar';
+// import SpeakerModal from './spaekereditmodal';
+// import axios from 'axios';
+
+// const MeetingDetails = () => {
+//   const location = useLocation();
+//   const navigate = useNavigate();
+//   const { meetingDetails } = location.state;
+//   const [transcriptionType, setTranscriptionType] = useState('assemblyspeaker');
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+//   const [selectedSpeaker, setSelectedSpeaker] = useState('');
+//   const [selectedSpeakerTimestamp, setSelectedSpeakerTimestamp] = useState('');
+//   const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
+//   const [mappedTranscripts, setMappedTranscripts] = useState([]);
+
+//   useEffect(() => {
+//     if (meetingDetails && meetingDetails.meeting && meetingDetails.meeting.assemblytranscritps) {
+//       const { assemblytranscritps, orderedSpeaker, orderSpeakerTimeBasis } = meetingDetails.meeting;
+
+//       const minLength = Math.min(assemblytranscritps.transcriptionData.length, orderSpeakerTimeBasis.length);
+//       const mappedTranscripts = assemblytranscritps.transcriptionData.slice(0, minLength).map((entry, index) => {
+//         const timeBasis = orderSpeakerTimeBasis[index];
+//         const previousSpeaker = timeBasis.previous;
+
+//         return {
+//           ...entry,
+//           speakerName: previousSpeaker
+//         };
+//       });
+
+//       setMappedTranscripts(mappedTranscripts);
+//     }
+//   }, [meetingDetails]);
+
+//   useEffect(() => {
+//     const sendMappedTranscripts = async () => {
+//       try {
+//         const response = await axios.post('http://localhost:5001/user/update-mapped-transcript', {
+//           meetingId: meetingDetails.meeting.meetingId,
+//           mappedTranscript: mappedTranscripts
+//         });
+
+//         console.log('Updated meeting:', response.data);
+//       } catch (error) {
+//         console.error('Error updating mapped transcript:', error);
+//       }
+//     };
+
+//     if (mappedTranscripts.length > 0) {
+//       sendMappedTranscripts();
+//     }
+//   }, [mappedTranscripts, meetingDetails.meeting.meetingId]);
+
+//   const handleTranscriptionTypeChange = (type) => {
+//     setTranscriptionType(type);
+//   };
+
+//   const handleOpenModal = (event, speaker, timestamp) => {
+//     const rect = event.target.getBoundingClientRect();
+//     setModalPosition({ top: rect.bottom + window.scrollY + 40, left: rect.left + window.scrollX });
+//     setSelectedSpeaker(speaker);
+//     setSelectedSpeakerTimestamp(timestamp);
+//     setIsModalOpen(true);
+//   };
+
+//   const handleCloseModal = () => {
+//     setIsModalOpen(false);
+//     setSelectedSpeaker('');
+//   };
+
+//   const getTranscription = (type) => {
+//     if (type === 'original') {
+//       return meetingDetails.meeting.transcript;
+//     } else if (type === 'aws') {
+//       return meetingDetails.meeting.transcriptionData.results.transcripts[0].transcript;
+//     } else if (type === 'speaker') {
+//       return renderSpeakerWiseTranscription();
+//     } else if (type === 'assemblyspeaker') {
+//       return renderAssemblySpeakerTranscription();
+//     } else if (type === 'assemblytext') {
+//       return renderAssemblySpeakerTextTranscription();
+//     }
+//     return '';
+//   };
+
+//   const renderSpeakerWiseTranscription = () => {
+//     const { speaker_labels } = meetingDetails.meeting.transcriptionData.results;
+//     const segments = speaker_labels.segments;
+//     const items = meetingDetails.meeting.transcriptionData.results.items;
+//     const { orderedSpeaker } = meetingDetails.meeting;
+
+//     const speakerNameMap = {};
+//     let index = 0;
+//     for (const speakerName in orderedSpeaker) {
+//       speakerNameMap[`spk_${index}`] = speakerName;
+//       index++;
+//     }
+
+//     let currentSpeaker = null;
+//     let currentParagraph = [];
+//     const speakerOrder = [];
+
+//     segments.forEach((segment) => {
+//       const speaker = segment.speaker_label;
+//       const startTime = parseFloat(segment.start_time);
+//       const endTime = parseFloat(segment.end_time);
+
+//       const speakerItems = items.filter(
+//         (item) =>
+//           parseFloat(item.start_time) >= startTime &&
+//           parseFloat(item.end_time) <= endTime &&
+//           item.speaker_label === speaker
+//       );
+
+//       speakerItems.forEach((item) => {
+//         const mappedSpeaker = speakerNameMap[item.speaker_label] || item.speaker_label;
+//         if (mappedSpeaker !== currentSpeaker) {
+//           if (currentParagraph.length > 0) {
+//             speakerOrder.push({
+//               speaker: currentSpeaker,
+//               paragraph: currentParagraph.join(' '),
+//             });
+//             currentParagraph = [];
+//           }
+//           currentSpeaker = mappedSpeaker;
+//         }
+//         currentParagraph.push(item.alternatives[0].content);
+//       });
+//     });
+
+//     if (currentParagraph.length > 0) {
+//       speakerOrder.push({
+//         speaker: currentSpeaker,
+//         paragraph: currentParagraph.join(' '),
+//       });
+//     }
+
+//     return (
+//       <div>
+//         {speakerOrder.map(({ speaker, paragraph }, index) => (
+//           <div key={index}>
+//             <p>
+//               <strong>{speaker}</strong>
+//             </p>
+//             <p>{paragraph}</p>
+//           </div>
+//         ))}
+//       </div>
+//     );
+//   };
+
+//   // const handleApplyToCurrentSpeaker = async(speakerName, timestamp) => {
+//   //   console.log(speakerName);
+//   //   console.log(timestamp);
+//   //   try {
+//   //     const response = await axios.post('http://localhost:5001/user/update-mapped-transcript', {
+//   //       meetingId: meetingDetails.meeting.meetingId,
+//   //       mappedTranscript: mappedTranscripts
+//   //     });
+
+//   //     console.log('Updated meeting:', response.data);
+//   //   } catch (error) {
+//   //     console.error('Error updating mapped transcript:', error);
+//   //   }
+//   //   handleCloseModal();
+//   // };
+//   const handleApplyToCurrentSpeaker = async (speakerName, timestamp) => {
+//     console.log(speakerName);
+//     console.log(timestamp);
+  
+//     // Update the speaker name in the mappedTranscripts
+//     const updatedTranscripts = mappedTranscripts.map(entry => {
+//       const entryTime = formatTime(entry.start); // Ensure this is in the same format as timestamp
+  
+//       if (entryTime === timestamp) {
+//         return { ...entry, speakerName: speakerName };
+//       }
+//       return entry;
+//     });
+  
+//     setMappedTranscripts(updatedTranscripts); // Update state with the new transcripts
+  
+//     // Send updated mappedTranscripts to the backend
+//     try {
+//       const response = await axios.post('http://localhost:5001/user/update-mapped-transcript', {
+//         meetingId: meetingDetails.meeting.meetingId,
+//         mappedTranscript: updatedTranscripts
+//       });
+  
+//       console.log('Updated meeting:', response.data);
+//     } catch (error) {
+//       console.error('Error updating mapped transcript:', error);
+//     }
+  
+//     handleCloseModal();
+//   };
+  
+//   const formatTime = (milliseconds) => {
+//     let totalSeconds = Math.floor(milliseconds / 1000);
+//     let hours = Math.floor(totalSeconds / 3600);
+//     let minutes = Math.floor((totalSeconds % 3600) / 60);
+//     let seconds = totalSeconds % 60;
+  
+//     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+//   };
+  
+//   const renderAssemblySpeakerTranscription = () => {
+//     const { assemblytranscritps } = meetingDetails.meeting;
+
+//     const formatTime = (milliseconds) => {
+//       let totalSeconds = Math.floor(milliseconds / 1000);
+//       let hours = Math.floor(totalSeconds / 3600);
+//       let minutes = Math.floor((totalSeconds % 3600) / 60);
+//       let seconds = totalSeconds % 60;
+
+//       return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+//     };
+
+//     return (
+//       <div>
+//         {mappedTranscripts.map((entry, index) => (
+//           <div key={index}>
+//             <p>
+//               <strong>{entry.speakerName}</strong>
+//               <button onClick={(event) => handleOpenModal(event, entry.speakerName, formatTime(entry.start))} className="text-blue-500 underline ml-2">
+//                 Edit
+//               </button>
+//               <span> ({formatTime(entry.start)})</span>
+//             </p>
+//             <p>{entry.text}</p>
+//           </div>
+//         ))}
+//       </div>
+//     );
+//   };
+
+//   const renderAssemblySpeakerTextTranscription = () => {
+//     const { assemblytranscritps } = meetingDetails.meeting;
+//     const combinedText = assemblytranscritps.plainTextTranscription;
+//     return <div>{combinedText}</div>;
+//   };
+
+//   const TranscriptionDisplay = ({ type }) => {
+//     return (
+//       <div className="bg-gray-100 p-4 overflow-y-auto max-h-80">
+//         {getTranscription(type)}
+//       </div>
+//     );
+//   };
+
+//   const renderMeetingDetails = () => {
+//     return (
+//       <>
+//         <div className="flex justify-center mb-10 pr-4">
+//           <div className="mt-2 pr-4">
+//             <strong>Meeting ID:</strong> {meetingDetails.meeting.meetingId}
+//           </div>
+//           <div className="mt-2">
+//             <strong>User Email:</strong> {meetingDetails.meeting.userEmail}
+//           </div>
+//         </div>
+//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//           <div>
+//             <h2 className="text-xl font-semibold mb-2">Video</h2>
+//             {meetingDetails.videoaccess_url && <VideoPlayer videoUrl={meetingDetails.videoaccess_url} />}
+//           </div>
+//           <div>
+//             <h2 className="text-xl font-semibold mb-2">Transcript</h2>
+//             <div className="mt-4 mb-4">
+//               <div className="bg-gray-100 border-b-4">
+//                 <button
+//                   className={`font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'assemblyspeaker' ? 'text-blue-700 border-b-4 border-blue-700' : 'text-white-200'}`}
+//                   onClick={() => handleTranscriptionTypeChange('assemblyspeaker')}
+//                 >
+//                   Speaker
+//                 </button>
+//                 <button
+//                   className={`font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'assemblytext' ? 'text-blue-700 border-b-4 border-blue-700' : 'text-white-200'}`}
+//                   onClick={() => handleTranscriptionTypeChange('assemblytext')}
+//                 >
+//                   Text
+//                 </button>
+//               </div>
+//               <TranscriptionDisplay type={transcriptionType} />
+//             </div>
+//           </div>
+//         </div>
+
+//         <div className="mt-21">
+//           <h2 className="text-xl font-semibold mb-1">Audio</h2>
+//           {meetingDetails.audioaccess_url && <CustomAudioPlayer audioUrl={meetingDetails.audioaccess_url} />}
+//         </div>
+//       </>
+//     );
+//   };
+
+//   const renderEventDetails = () => {
+//     const { event } = meetingDetails;
+
+//     return (
+//       <>
+//         <strong>
+//           <h1 className="text-center font-bold">This event not happened yet</h1>
+//         </strong>
+//         <div className="flex flex-col">
+//           <div className="flex flex-row items-center mt-8">
+//             <div className="mr-8">
+//               <strong>MeetingId:</strong> {event.MeetingId}
+//             </div>
+//             <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-500 mr-1" />
+//             {format(new Date(event.start), 'EEE, MMM do')}
+//             <FaClock className="inline-block ml-2 mr-1" />
+//             {format(new Date(event.start), 'h:mm a')}
+//             <div className="mr-8 ml-4">
+//               <strong>Meeting URL:</strong>
+//               <a href={event.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+//                 {event.url}
+//               </a>
+//             </div>
+//           </div>
+//           <div className="flex flex-row items-center mt-8">
+//             <div className="mr-8">
+//               <strong>Event Summary:</strong> {event.summary}
+//             </div>
+//           </div>
+//         </div>
+//       </>
+//     );
+//   };
+
+//   return (
+//     <div className="flex h-screen">
+//       <Sidebar
+//         onScheduleMeetingClick={() => navigate('/schedule-meeting')}
+//         onShowAllEventsClick={() => navigate('/meetings')}
+//         onShowLiveMeeting={() => navigate('/live-meeting')}
+//         isLoading={false}
+//       />
+//       <div className="flex-1 p-6 overflow-y-auto">
+//         {meetingDetails.meeting ? renderMeetingDetails() : renderEventDetails()}
+//       </div>
+//       <SpeakerModal
+//         isOpen={isModalOpen}
+//         onRequestClose={handleCloseModal}
+//         speakerName={selectedSpeaker}
+//         orderedSpeaker={meetingDetails.meeting.orderedSpeaker}
+//         position={modalPosition}
+//         onApplyToCurrentSpeaker={handleApplyToCurrentSpeaker}
+//         timestamp={selectedSpeakerTimestamp}
+//       />
+//     </div>
+//   );
+// };
+
+// export default MeetingDetails;
+
+// import React, { useState, useEffect } from 'react';
+// import { useLocation, useNavigate } from 'react-router-dom';
+// import VideoPlayer from './VideoPlayer';
+// import CustomAudioPlayer from './AudioPlayer'; // Import the CustomAudioPlayer component
+// import { format } from 'date-fns';
+// import { FaClock } from 'react-icons/fa';
+// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+// import Sidebar from './Sidebar';
+// import SpeakerModal from './spaekereditmodal';
+// import axios from 'axios';
+
+// const MeetingDetails = () => {
+//   const location = useLocation();
+//   const navigate = useNavigate();
+//   const { meetingDetails } = location.state;
+//   const [transcriptionType, setTranscriptionType] = useState('assemblyspeaker');
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+//   const [selectedSpeaker, setSelectedSpeaker] = useState('');
+//   const [selectedSpeakerTimestamp, setSelectedSpeakerTimestamp] = useState('');
+//   const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
+//   const [mappedTranscripts, setMappedTranscripts] = useState([]);
+//   const [isTranscriptsUpdated, setIsTranscriptsUpdated] = useState(false); // Track if transcripts have been updated
+
+//   useEffect(() => {
+//     if (meetingDetails && meetingDetails.meeting && meetingDetails.meeting.assemblytranscritps) {
+//       const { assemblytranscritps, orderedSpeaker, orderSpeakerTimeBasis, mappedTranscript } = meetingDetails.meeting;
+  
+//       if (mappedTranscript && mappedTranscript.length > 0) {
+//         setMappedTranscripts(mappedTranscript);
+//       } else {
+//         const minLength = Math.min(assemblytranscritps.transcriptionData.length, orderSpeakerTimeBasis.length);
+//         const initialMappedTranscripts = assemblytranscritps.transcriptionData.slice(0, minLength).map((entry, index) => {
+//           const timeBasis = orderSpeakerTimeBasis[index];
+//           const previousSpeaker = timeBasis.previous;
+  
+//           return {
+//             ...entry,
+//             speakerName: previousSpeaker
+//           };
+//         });
+  
+//         setMappedTranscripts(initialMappedTranscripts);
+//       }
+//     }
+//   }, [meetingDetails]);
+  
+
+//   useEffect(() => {
+//     const sendMappedTranscripts = async () => {
+//       if (!isTranscriptsUpdated) return; // Only send request if transcripts have been updated
+
+//       try {
+//         const response = await axios.post('http://localhost:5001/user/update-mapped-transcript', {
+//           meetingId: meetingDetails.meeting.meetingId,
+//           mappedTranscript: mappedTranscripts
+//         });
+//         setMappedTranscripts(response.mappedTranscript);
+//         console.log('Updated meeting:', response.data);
+//       } catch (error) {
+//         console.error('Error updating mapped transcript:', error);
+//       }
+//     };
+
+//     if (mappedTranscripts.length > 0) {
+//       sendMappedTranscripts();
+//     }
+//   }, [mappedTranscripts, meetingDetails.meeting.meetingId, isTranscriptsUpdated]);
+
+//   const handleTranscriptionTypeChange = (type) => {
+//     setTranscriptionType(type);
+//   };
+
+//   const handleOpenModal = (event, speaker, timestamp) => {
+//     const rect = event.target.getBoundingClientRect();
+//     setModalPosition({ top: rect.bottom + window.scrollY + 40, left: rect.left + window.scrollX });
+//     setSelectedSpeaker(speaker);
+//     setSelectedSpeakerTimestamp(timestamp);
+//     setIsModalOpen(true);
+//   };
+
+//   const handleCloseModal = () => {
+//     setIsModalOpen(false);
+//     setSelectedSpeaker('');
+//   };
+
+//   const getTranscription = (type) => {
+//     if (type === 'original') {
+//       return meetingDetails.meeting.transcript;
+//     } else if (type === 'aws') {
+//       return meetingDetails.meeting.transcriptionData.results.transcripts[0].transcript;
+//     } else if (type === 'speaker') {
+//       return renderSpeakerWiseTranscription();
+//     } else if (type === 'assemblyspeaker') {
+//       return renderAssemblySpeakerTranscription();
+//     } else if (type === 'assemblytext') {
+//       return renderAssemblySpeakerTextTranscription();
+//     }
+//     return '';
+//   };
+
+//   const renderSpeakerWiseTranscription = () => {
+//     const { speaker_labels } = meetingDetails.meeting.transcriptionData.results;
+//     const segments = speaker_labels.segments;
+//     const items = meetingDetails.meeting.transcriptionData.results.items;
+//     const { orderedSpeaker } = meetingDetails.meeting;
+
+//     const speakerNameMap = {};
+//     let index = 0;
+//     for (const speakerName in orderedSpeaker) {
+//       speakerNameMap[`spk_${index}`] = speakerName;
+//       index++;
+//     }
+
+//     let currentSpeaker = null;
+//     let currentParagraph = [];
+//     const speakerOrder = [];
+
+//     segments.forEach((segment) => {
+//       const speaker = segment.speaker_label;
+//       const startTime = parseFloat(segment.start_time);
+//       const endTime = parseFloat(segment.end_time);
+
+//       const speakerItems = items.filter(
+//         (item) =>
+//           parseFloat(item.start_time) >= startTime &&
+//           parseFloat(item.end_time) <= endTime &&
+//           item.speaker_label === speaker
+//       );
+
+//       speakerItems.forEach((item) => {
+//         const mappedSpeaker = speakerNameMap[item.speaker_label] || item.speaker_label;
+//         if (mappedSpeaker !== currentSpeaker) {
+//           if (currentParagraph.length > 0) {
+//             speakerOrder.push({
+//               speaker: currentSpeaker,
+//               paragraph: currentParagraph.join(' '),
+//             });
+//             currentParagraph = [];
+//           }
+//           currentSpeaker = mappedSpeaker;
+//         }
+//         currentParagraph.push(item.alternatives[0].content);
+//       });
+//     });
+
+//     if (currentParagraph.length > 0) {
+//       speakerOrder.push({
+//         speaker: currentSpeaker,
+//         paragraph: currentParagraph.join(' '),
+//       });
+//     }
+
+//     return (
+//       <div>
+//         {speakerOrder.map(({ speaker, paragraph }, index) => (
+//           <div key={index}>
+//             <p>
+//               <strong>{speaker}</strong>
+//             </p>
+//             <p>{paragraph}</p>
+//           </div>
+//         ))}
+//       </div>
+//     );
+//   };
+
+//   const handleApplyToCurrentSpeaker = async (speakerName, timestamp) => {
+//     console.log(speakerName);
+//     console.log(timestamp);
+
+//     // Update the speaker name in the mappedTranscripts
+//     const updatedTranscripts = mappedTranscripts.map(entry => {
+//       const entryTime = formatTime(entry.start); // Ensure this is in the same format as timestamp
+
+//       if (entryTime === timestamp) {
+//         return { ...entry, speakerName: speakerName };
+//       }
+//       return entry;
+//     });
+
+//     setMappedTranscripts(updatedTranscripts); // Update state with the new transcripts
+//     setIsTranscriptsUpdated(true); // Mark transcripts as updated
+
+//     handleCloseModal();
+//   };
+
+//   const formatTime = (milliseconds) => {
+//     let totalSeconds = Math.floor(milliseconds / 1000);
+//     let hours = Math.floor(totalSeconds / 3600);
+//     let minutes = Math.floor((totalSeconds % 3600) / 60);
+//     let seconds = totalSeconds % 60;
+
+//     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+//   };
+
+//   const renderAssemblySpeakerTranscription = () => {
+//     const { assemblytranscritps } = meetingDetails.meeting;
+//     console.log(mappedTranscripts)
+//     return (
+//       <div>
+//         {mappedTranscripts.map((entry, index) => (
+//           <div key={index}>
+//             <p>
+//               <strong>{entry.speakerName}</strong>
+//               <button onClick={(event) => handleOpenModal(event, entry.speakerName, formatTime(entry.start))} className="text-blue-500 underline ml-2">
+//                 Edit
+//               </button>
+//               <span> ({formatTime(entry.start)})</span>
+//             </p>
+//             <p>{entry.text}</p>
+//           </div>
+//         ))}
+//       </div>
+//     );
+//   };
+
+//   const renderAssemblySpeakerTextTranscription = () => {
+//     const { assemblytranscritps } = meetingDetails.meeting;
+//     const combinedText = assemblytranscritps.plainTextTranscription;
+//     return <div>{combinedText}</div>;
+//   };
+
+//   const TranscriptionDisplay = ({ type }) => {
+//     return (
+//       <div className="bg-gray-100 p-4 overflow-y-auto max-h-80">
+//         {getTranscription(type)}
+//       </div>
+//     );
+//   };
+
+//   const renderMeetingDetails = () => {
+//     return (
+//       <>
+//         <div className="flex justify-center mb-10 pr-4">
+//           <div className="mt-2 pr-4">
+//             <strong>Meeting ID:</strong> {meetingDetails.meeting.meetingId}
+//           </div>
+//           <div className="mt-2">
+//             <strong>User Email:</strong> {meetingDetails.meeting.userEmail}
+//           </div>
+//         </div>
+//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//           <div>
+//             <h2 className="text-xl font-semibold mb-2">Video</h2>
+//             {meetingDetails.videoaccess_url && <VideoPlayer videoUrl={meetingDetails.videoaccess_url} />}
+//           </div>
+//           <div>
+//             <h2 className="text-xl font-semibold mb-2">Transcript</h2>
+//             <div className="mt-4 mb-4">
+//               <div className="bg-gray-100 border-b-4">
+//                 <button
+//                   className={`font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'assemblyspeaker' ? 'text-blue-700 border-b-4 border-blue-700' : 'text-white-200'}`}
+//                   onClick={() => handleTranscriptionTypeChange('assemblyspeaker')}
+//                 >
+//                   Speaker
+//                 </button>
+//                 <button
+//                   className={`font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'assemblytext' ? 'text-blue-700 border-b-4 border-blue-700' : 'text-white-200'}`}
+//                   onClick={() => handleTranscriptionTypeChange('assemblytext')}
+//                 >
+//                   Text
+//                 </button>
+//               </div>
+//               <TranscriptionDisplay type={transcriptionType} />
+//             </div>
+//           </div>
+//         </div>
+
+//         <div className="mt-21">
+//           <h2 className="text-xl font-semibold mb-1">Audio</h2>
+//           {meetingDetails.audioaccess_url && <CustomAudioPlayer audioUrl={meetingDetails.audioaccess_url} />}
+//         </div>
+//       </>
+//     );
+//   };
+
+//   const renderEventDetails = () => {
+//     const { event } = meetingDetails;
+
+//     return (
+//       <>
+//         <strong>
+//           <h1 className="text-center font-bold">This event not happened yet</h1>
+//         </strong>
+//         <div className="flex flex-col">
+//           <div className="flex flex-row items-center mt-8">
+//             <div className="mr-8">
+//               <strong>MeetingId:</strong> {event.MeetingId}
+//             </div>
+//             <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-500 mr-1" />
+//             {format(new Date(event.start), 'EEE, MMM do')}
+//             <FaClock className="inline-block ml-2 mr-1" />
+//             {format(new Date(event.start), 'h:mm a')}
+//             <div className="mr-8 ml-4">
+//               <strong>Meeting URL:</strong>
+//               <a href={event.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+//                 {event.url}
+//               </a>
+//             </div>
+//           </div>
+//           <div className="flex flex-row items-center mt-8">
+//             <div className="mr-8">
+//               <strong>Event Summary:</strong> {event.summary}
+//             </div>
+//           </div>
+//         </div>
+//       </>
+//     );
+//   };
+
+//   return (
+//     <div className="flex h-screen">
+//       <Sidebar
+//         onScheduleMeetingClick={() => navigate('/schedule-meeting')}
+//         onShowAllEventsClick={() => navigate('/meetings')}
+//         onShowLiveMeeting={() => navigate('/live-meeting')}
+//         isLoading={false}
+//       />
+//       <div className="flex-1 p-6 overflow-y-auto">
+//         {meetingDetails.meeting ? renderMeetingDetails() : renderEventDetails()}
+//       </div>
+//       <SpeakerModal
+//         isOpen={isModalOpen}
+//         onRequestClose={handleCloseModal}
+//         speakerName={selectedSpeaker}
+//         orderedSpeaker={meetingDetails.meeting.orderedSpeaker}
+//         position={modalPosition}
+//         onApplyToCurrentSpeaker={handleApplyToCurrentSpeaker}
+//         timestamp={selectedSpeakerTimestamp}
+//       />
+//     </div>
+//   );
+// };
+
+// export default MeetingDetails;
+
+
+// import React, { useState, useEffect } from 'react';
+// import { useLocation, useNavigate } from 'react-router-dom';
+// import VideoPlayer from './VideoPlayer';
+// import CustomAudioPlayer from './AudioPlayer'; // Import the CustomAudioPlayer component
+// import { format } from 'date-fns';
+// import { FaClock } from 'react-icons/fa';
+// import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+// import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
+// import Sidebar from './Sidebar';
+// import SpeakerModal from './spaekereditmodal';
+// import axios from 'axios';
+
+// const MeetingDetails = () => {
+//   const location = useLocation();
+//   const navigate = useNavigate();
+//   const { meetingDetails } = location.state || {}; // Use default value if undefined
+//   const [transcriptionType, setTranscriptionType] = useState('assemblyspeaker');
+//   const [isModalOpen, setIsModalOpen] = useState(false);
+//   const [selectedSpeaker, setSelectedSpeaker] = useState('');
+//   const [selectedSpeakerTimestamp, setSelectedSpeakerTimestamp] = useState('');
+//   const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
+//   const [mappedTranscripts, setMappedTranscripts] = useState([]);
+//   const [isTranscriptsUpdated, setIsTranscriptsUpdated] = useState(false); // Track if transcripts have been updated
+
+//   useEffect(() => {
+//     if (meetingDetails && meetingDetails.meeting && meetingDetails.meeting.assemblytranscritps) {
+//       const { assemblytranscritps, orderedSpeaker, orderSpeakerTimeBasis, mappedTranscript } = meetingDetails.meeting;
+
+//       if (mappedTranscript && mappedTranscript.length > 0) {
+//         setMappedTranscripts(mappedTranscript);
+//       } else {
+//         const minLength = Math.min(assemblytranscritps.transcriptionData.length, orderSpeakerTimeBasis.length);
+//         const initialMappedTranscripts = assemblytranscritps.transcriptionData.slice(0, minLength).map((entry, index) => {
+//           const timeBasis = orderSpeakerTimeBasis[index];
+//           const previousSpeaker = timeBasis.previous;
+
+//           return {
+//             ...entry,
+//             speakerName: previousSpeaker
+//           };
+//         });
+
+//         setMappedTranscripts(initialMappedTranscripts);
+//       }
+//     }
+//   }, [meetingDetails]);
+
+//   useEffect(() => {
+//     const sendMappedTranscripts = async () => {
+//       if (!isTranscriptsUpdated) return; // Only send request if transcripts have been updated
+
+//       try {
+//         const response = await axios.post('http://localhost:5001/user/update-mapped-transcript', {
+//           meetingId: meetingDetails.meeting.meetingId,
+//           mappedTranscript: mappedTranscripts
+//         });
+//         setMappedTranscripts(response.data.mappedTranscript); // Ensure proper data access
+//         console.log('Updated meeting:', response.data);
+//       } catch (error) {
+//         console.error('Error updating mapped transcript:', error);
+//       }
+//     };
+
+//     if (mappedTranscripts.length > 0) {
+//       sendMappedTranscripts();
+//     }
+//   }, [mappedTranscripts, meetingDetails?.meeting?.meetingId, isTranscriptsUpdated]);
+
+//   const handleTranscriptionTypeChange = (type) => {
+//     setTranscriptionType(type);
+//   };
+
+//   const handleOpenModal = (event, speaker, timestamp) => {
+//     const rect = event.target.getBoundingClientRect();
+//     setModalPosition({ top: rect.bottom + window.scrollY + 40, left: rect.left + window.scrollX });
+//     setSelectedSpeaker(speaker);
+//     setSelectedSpeakerTimestamp(timestamp);
+//     setIsModalOpen(true);
+//   };
+
+//   const handleCloseModal = () => {
+//     setIsModalOpen(false);
+//     setSelectedSpeaker('');
+//   };
+
+//   const getTranscription = (type) => {
+//     if (type === 'original') {
+//       return meetingDetails?.meeting?.transcript;
+//     } else if (type === 'aws') {
+//       return meetingDetails?.meeting?.transcriptionData?.results?.transcripts[0]?.transcript;
+//     } else if (type === 'speaker') {
+//       return renderSpeakerWiseTranscription();
+//     } else if (type === 'assemblyspeaker') {
+//       return renderAssemblySpeakerTranscription();
+//     } else if (type === 'assemblytext') {
+//       return renderAssemblySpeakerTextTranscription();
+//     }
+//     return '';
+//   };
+
+//   const renderSpeakerWiseTranscription = () => {
+//     const speakerLabels = meetingDetails?.meeting?.transcriptionData?.results?.speaker_labels;
+//     const segments = speakerLabels?.segments;
+//     const items = meetingDetails?.meeting?.transcriptionData?.results?.items;
+//     const orderedSpeaker = meetingDetails?.meeting?.orderedSpeaker;
+
+//     if (!segments || !items || !orderedSpeaker) return null; // Add safety checks
+
+//     const speakerNameMap = {};
+//     let index = 0;
+//     for (const speakerName in orderedSpeaker) {
+//       speakerNameMap[`spk_${index}`] = speakerName;
+//       index++;
+//     }
+
+//     let currentSpeaker = null;
+//     let currentParagraph = [];
+//     const speakerOrder = [];
+
+//     segments.forEach((segment) => {
+//       const speaker = segment.speaker_label;
+//       const startTime = parseFloat(segment.start_time);
+//       const endTime = parseFloat(segment.end_time);
+
+//       const speakerItems = items.filter(
+//         (item) =>
+//           parseFloat(item.start_time) >= startTime &&
+//           parseFloat(item.end_time) <= endTime &&
+//           item.speaker_label === speaker
+//       );
+
+//       speakerItems.forEach((item) => {
+//         const mappedSpeaker = speakerNameMap[item.speaker_label] || item.speaker_label;
+//         if (mappedSpeaker !== currentSpeaker) {
+//           if (currentParagraph.length > 0) {
+//             speakerOrder.push({
+//               speaker: currentSpeaker,
+//               paragraph: currentParagraph.join(' '),
+//             });
+//             currentParagraph = [];
+//           }
+//           currentSpeaker = mappedSpeaker;
+//         }
+//         currentParagraph.push(item.alternatives[0].content);
+//       });
+//     });
+
+//     if (currentParagraph.length > 0) {
+//       speakerOrder.push({
+//         speaker: currentSpeaker,
+//         paragraph: currentParagraph.join(' '),
+//       });
+//     }
+
+//     return (
+//       <div>
+//         {speakerOrder.map(({ speaker, paragraph }, index) => (
+//           <div key={index}>
+//             <p>
+//               <strong>{speaker}</strong>
+//             </p>
+//             <p>{paragraph}</p>
+//           </div>
+//         ))}
+//       </div>
+//     );
+//   };
+
+//   const handleApplyToCurrentSpeaker = async (speakerName, timestamp) => {
+//     console.log(speakerName);
+//     console.log(timestamp);
+
+//     // Update the speaker name in the mappedTranscripts
+//     const updatedTranscripts = mappedTranscripts.map(entry => {
+//       const entryTime = formatTime(entry.start); // Ensure this is in the same format as timestamp
+
+//       if (entryTime === timestamp) {
+//         return { ...entry, speakerName: speakerName };
+//       }
+//       return entry;
+//     });
+
+//     setMappedTranscripts(updatedTranscripts); // Update state with the new transcripts
+//     setIsTranscriptsUpdated(true); // Mark transcripts as updated
+
+//     handleCloseModal();
+//   };
+
+//   const formatTime = (milliseconds) => {
+//     let totalSeconds = Math.floor(milliseconds / 1000);
+//     let hours = Math.floor(totalSeconds / 3600);
+//     let minutes = Math.floor((totalSeconds % 3600) / 60);
+//     let seconds = totalSeconds % 60;
+
+//     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+//   };
+
+//   const renderAssemblySpeakerTranscription = () => {
+//     if (!mappedTranscripts) return null; // Add safety check
+
+//     return (
+//       <div>
+//         {mappedTranscripts.length > 0 ? (
+//           mappedTranscripts.map((entry, index) => (
+//             <div key={index}>
+//               <p>
+//                 <strong>{entry.speakerName}</strong>
+//                 <button onClick={(event) => handleOpenModal(event, entry.speakerName, formatTime(entry.start))} className="text-blue-500 underline ml-2">
+//                   Edit
+//                 </button>
+//                 <span> ({formatTime(entry.start)})</span>
+//               </p>
+//               <p>{entry.text}</p>
+//             </div>
+//           ))
+//         ) : (
+//           <p>No transcripts available.</p>
+//         )}
+//       </div>
+//     );
+//   };
+
+//   const renderAssemblySpeakerTextTranscription = () => {
+//     const combinedText = meetingDetails?.meeting?.assemblytranscritps?.plainTextTranscription;
+//     return <div>{combinedText}</div>;
+//   };
+
+//   const TranscriptionDisplay = ({ type }) => {
+//     return (
+//       <div className="bg-gray-100 p-4 overflow-y-auto max-h-80">
+//         {getTranscription(type)}
+//       </div>
+//     );
+//   };
+
+//   const renderMeetingDetails = () => {
+//     if (!meetingDetails?.meeting) return null; // Add safety check
+
+//     return (
+//       <>
+//         <div className="flex justify-center mb-10 pr-4">
+//           <div className="mt-2 pr-4">
+//             <strong>Meeting ID:</strong> {meetingDetails.meeting.meetingId}
+//           </div>
+//           <div className="mt-2">
+//             <strong>User Email:</strong> {meetingDetails.meeting.userEmail}
+//           </div>
+//         </div>
+//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+//           <div>
+//             <h2 className="text-xl font-semibold mb-2">Video</h2>
+//             {meetingDetails.videoaccess_url && <VideoPlayer videoUrl={meetingDetails.videoaccess_url} />}
+//           </div>
+//           <div>
+//             <h2 className="text-xl font-semibold mb-2">Transcript</h2>
+//             <div className="mt-4 mb-4">
+//               <div className="bg-gray-100 border-b-4">
+//                 <button
+//                   className={`font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'assemblyspeaker' ? 'text-blue-700 border-b-4 border-blue-700' : 'text-white-200'}`}
+//                   onClick={() => handleTranscriptionTypeChange('assemblyspeaker')}
+//                 >
+//                   Speaker
+//                 </button>
+//                 <button
+//                   className={`font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'assemblytext' ? 'text-blue-700 border-b-4 border-blue-700' : 'text-white-200'}`}
+//                   onClick={() => handleTranscriptionTypeChange('assemblytext')}
+//                 >
+//                   Text
+//                 </button>
+//               </div>
+//               <TranscriptionDisplay type={transcriptionType} />
+//             </div>
+//           </div>
+//         </div>
+
+//         <div className="mt-21">
+//           <h2 className="text-xl font-semibold mb-1">Audio</h2>
+//           {meetingDetails.audioaccess_url && <CustomAudioPlayer audioUrl={meetingDetails.audioaccess_url} />}
+//         </div>
+//       </>
+//     );
+//   };
+
+//   const renderEventDetails = () => {
+//     const { event } = meetingDetails;
+
+//     return (
+//       <>
+//         <strong>
+//           <h1 className="text-center font-bold">This event not happened yet</h1>
+//         </strong>
+//         <div className="flex flex-col">
+//           <div className="flex flex-row items-center mt-8">
+//             <div className="mr-8">
+//               <strong>MeetingId:</strong> {event.MeetingId}
+//             </div>
+//             <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-500 mr-1" />
+//             {format(new Date(event.start), 'EEE, MMM do')}
+//             <FaClock className="inline-block ml-2 mr-1" />
+//             {format(new Date(event.start), 'h:mm a')}
+//             <div className="mr-8 ml-4">
+//               <strong>Meeting URL:</strong>
+//               <a href={event.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline">
+//                 {event.url}
+//               </a>
+//             </div>
+//           </div>
+//           <div className="flex flex-row items-center mt-8">
+//             <div className="mr-8">
+//               <strong>Event Summary:</strong> {event.summary}
+//             </div>
+//           </div>
+//         </div>
+//       </>
+//     );
+//   };
+
+//   return (
+//     <div className="flex h-screen">
+//       <Sidebar
+//         onScheduleMeetingClick={() => navigate('/schedule-meeting')}
+//         onShowAllEventsClick={() => navigate('/meetings')}
+//         onShowLiveMeeting={() => navigate('/live-meeting')}
+//         isLoading={false}
+//       />
+//       <div className="flex-1 p-6 overflow-y-auto">
+//         {meetingDetails?.meeting ? renderMeetingDetails() : renderEventDetails()}
+//       </div>
+//       <SpeakerModal
+//         isOpen={isModalOpen}
+//         onRequestClose={handleCloseModal}
+//         speakerName={selectedSpeaker}
+//         orderedSpeaker={meetingDetails?.meeting?.orderedSpeaker}
+//         position={modalPosition}
+//         onApplyToCurrentSpeaker={handleApplyToCurrentSpeaker}
+//         timestamp={selectedSpeakerTimestamp}
+//       />
+//     </div>
+//   );
+// };
+
+// export default MeetingDetails;
+
+
+
+import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import Sidebar from './Sidebar';
+import SpeakerModal from './spaekereditmodal';
 import VideoPlayer from './VideoPlayer';
-import CustomAudioPlayer from './AudioPlayer'; // Import the CustomAudioPlayer component
+import CustomAudioPlayer from './AudioPlayer'; 
 import { format } from 'date-fns';
-import { FaClock } from 'react-icons/fa';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import Sidebar from './Sidebar';
+import { FaClock } from 'react-icons/fa';
 
 const MeetingDetails = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { meetingDetails } = location.state;
+  const [meetingDetails, setMeetingDetails] = useState(location.state?.meetingDetails || {});
   const [transcriptionType, setTranscriptionType] = useState('assemblyspeaker');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedSpeaker, setSelectedSpeaker] = useState('');
+  const [selectedSpeakerTimestamp, setSelectedSpeakerTimestamp] = useState('');
+  const [modalPosition, setModalPosition] = useState({ top: 0, left: 0 });
+  const [isTranscriptsUpdated, setIsTranscriptsUpdated] = useState(false);
+
+  useEffect(()=>{
+
+    const fetchMeetingDetails=async ()=>{
+
+      // const response = await axios.post('http://localhost:5001/user/meetingdetails', { meetingId,userEmail });
+
+
+    }
+
+  },[])
+
+  useEffect(() => {
+    if (meetingDetails.meeting && meetingDetails.meeting.assemblytranscritps) {
+      const { assemblytranscritps, orderedSpeaker, orderSpeakerTimeBasis, mappedTranscript } = meetingDetails.meeting;
+
+      if (!mappedTranscript || mappedTranscript.length === 0) {
+        const minLength = Math.min(assemblytranscritps.transcriptionData.length, orderSpeakerTimeBasis.length);
+        const initialMappedTranscripts = assemblytranscritps.transcriptionData.slice(0, minLength).map((entry, index) => {
+          const timeBasis = orderSpeakerTimeBasis[index];
+          const previousSpeaker = timeBasis.previous;
+
+          return {
+            ...entry,
+            speakerName: previousSpeaker
+          };
+        });
+
+        setMeetingDetails(prevDetails => ({
+          ...prevDetails,
+          meeting: {
+            ...prevDetails.meeting,
+            mappedTranscript: initialMappedTranscripts,
+          }
+        }));
+      }
+    }
+  }, [meetingDetails.meeting]);
+
+  useEffect(() => {
+    const sendMappedTranscripts = async () => {
+      try {
+        const response = await axios.post('http://localhost:5001/user/update-mapped-transcript', {
+          meetingId: meetingDetails.meeting.meetingId,
+          mappedTranscript: meetingDetails.meeting.mappedTranscript
+        });
+
+        setMeetingDetails(prevDetails => ({
+          ...prevDetails,
+          meeting: {
+            ...prevDetails.meeting,
+            mappedTranscript: response.data.mappedTranscript,
+          }
+        }));
+        console.log('Updated meeting:', response.data);
+      } catch (error) {
+        console.error('Error updating mapped transcript:', error);
+      } finally {
+        setIsTranscriptsUpdated(false);
+      }
+    };
+
+    if (isTranscriptsUpdated) {
+      sendMappedTranscripts();
+    }
+  }, [isTranscriptsUpdated]);
 
   const handleTranscriptionTypeChange = (type) => {
     setTranscriptionType(type);
   };
 
+  const handleOpenModal = (event, speaker, timestamp) => {
+    const rect = event.target.getBoundingClientRect();
+    setModalPosition({ top: rect.bottom + window.scrollY + 40, left: rect.left + window.scrollX });
+    setSelectedSpeaker(speaker,"form the openmodal");
+    setSelectedSpeakerTimestamp(timestamp);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedSpeaker('');
+  };
+
   const getTranscription = (type) => {
     if (type === 'original') {
-      return meetingDetails.meeting.transcript;
+      return meetingDetails?.meeting?.transcript;
     } else if (type === 'aws') {
-      return meetingDetails.meeting.transcriptionData.results.transcripts[0].transcript;
+      return meetingDetails?.meeting?.transcriptionData?.results?.transcripts[0]?.transcript;
     } else if (type === 'speaker') {
       return renderSpeakerWiseTranscription();
     } else if (type === 'assemblyspeaker') {
@@ -1405,37 +2927,18 @@ const MeetingDetails = () => {
     }
     return '';
   };
-      
-  const { orderedSpeaker } = meetingDetails.meeting;
-  const convertToTimeFormat = (isoString) => {
-    const date = new Date(isoString);
-    const hours = String(date.getUTCHours()).padStart(2, '0');
-    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-    return `${hours}:${minutes}:${seconds}`;
-};
-
-// Convert each ISO 8601 date string in orderedSpeaker to HH:MM:SS format
-const formattedOrderedSpeaker = {};
-Object.keys(orderedSpeaker).forEach((key) => {
-    formattedOrderedSpeaker[key] = convertToTimeFormat(orderedSpeaker[key]);
-});
-
-console.log("Formatted Ordered Speaker", formattedOrderedSpeaker);
 
   const renderSpeakerWiseTranscription = () => {
-    const { speaker_labels } = meetingDetails.meeting.transcriptionData.results;
-    const segments = speaker_labels.segments;
-    const items = meetingDetails.meeting.transcriptionData.results.items;
-    const { orderedSpeaker } = meetingDetails.meeting;
+    const speakerLabels = meetingDetails?.meeting?.transcriptionData?.results?.speaker_labels;
+    const segments = speakerLabels?.segments;
+    const items = meetingDetails?.meeting?.transcriptionData?.results?.items;
+    const orderedSpeaker = meetingDetails?.meeting?.orderedSpeaker;
 
-      console.log("hey ia m excuted ")
-     
+    if (!segments || !items || !orderedSpeaker) return null;
 
     const speakerNameMap = {};
     let index = 0;
     for (const speakerName in orderedSpeaker) {
-      console.log(speakerName)
       speakerNameMap[`spk_${index}`] = speakerName;
       index++;
     }
@@ -1493,185 +2996,54 @@ console.log("Formatted Ordered Speaker", formattedOrderedSpeaker);
     );
   };
 
-  // const renderAssemblySpeakerTranscription = () => {
-  //   const { assemblytranscritps, orderedSpeaker } = meetingDetails.meeting;
-  //   const orderedNames = Object.keys(orderedSpeaker);
-  //   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; // You can extend it for more speakers
+  const handleApplyToCurrentSpeaker = async (speakerName, timestamp) => {
+    console.log(speakerName);
+    console.log(timestamp);
 
-  //   const speakerNameMap = {};
-  //   for (let i = 0; i < orderedNames.length; i++) {
-  //     speakerNameMap[alphabet[i]] = orderedNames[i];
-  //   }
+    const updatedTranscripts = meetingDetails.meeting.mappedTranscript.map(entry => {
+      const entryTime = formatTime(entry.start);
 
-  //   return (
-  //     <div>
-  //       {assemblytranscritps.map((entry, index) => (
-  //         <div key={index}>
-  //           <p>
-  //             <strong>{speakerNameMap[entry.speaker]}</strong>
-  //           </p>
-  //           <p>{entry.text}</p>
-  //         </div>
-  //       ))}
-  //     </div>
-  //   );
-  // };
+      if (entryTime === timestamp) {
+        return { ...entry, speakerName: speakerName };
+      }
+      return entry;
+    });
 
+    setMeetingDetails(prevDetails => ({
+      ...prevDetails,
+      meeting: {
+        ...prevDetails.meeting,
+        mappedTranscript: updatedTranscripts,
+      }
+    }));
+    setIsTranscriptsUpdated(true);
+    handleCloseModal();
+  };
 
-  //now time 11:30
-//   const renderAssemblySpeakerTranscription = () => {
-//     const { assemblytranscritps, orderedSpeaker } = meetingDetails.meeting;
-//     console.log("Assembly Transcript", assemblytranscritps);
-//     console.log("Ordered Speaker", orderedSpeaker);
+  const handleApplyToAllSpeaker = async (updatedname, timestamp) => {
+    console.log("i aexcuted form all speakers")
+    console.log(updatedname);
+    console.log(timestamp);
 
-//     // Create a mapping of speaker letters to indices
-//     const speakerLetters = ['A', 'B', 'C', 'D', 'E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
-//     const speakers = {};
+    const updatedTranscripts = meetingDetails.meeting.mappedTranscript.map(entry => {
+      if (entry.speakerName ===selectedSpeaker) {
+        console.log(selectedSpeaker)
+        console.log(updatedname)
+        return { ...entry, speakerName: updatedname };
+      }
+      return entry;
+    });
 
-//     // Loop through each dialogue and assign the incrementing value to each speaker
-//     assemblytranscritps.transcriptionData.forEach((dialogue) => {
-//         if (!(dialogue.speaker in speakers)) {
-//             speakers[dialogue.speaker] = speakerLetters[Object.keys(speakers).length];
-//         }
-//     });
-
-//     console.log("Speakers", speakers);
-//     const speakersKeys = Object.keys(speakers);
-
-//     const speakerNameMap = {};
-//     let anonymousCount = 1;
-
-//     // Map the orderedSpeaker names to the speaker letters
-//     Object.keys(orderedSpeaker).forEach((key, index) => {
-//         speakerNameMap[speakersKeys[index]] = key;
-//     });
-
-//     // Assign Anonymous labels for any additional speakers not in orderedSpeaker
-//     speakersKeys.forEach((letter, index) => {
-//         if (!(letter in speakerNameMap)) {
-//             speakerNameMap[letter] = `Anonymous ${anonymousCount++}`;
-//         }
-//     });
-
-//     console.log("Speaker Name Map", speakerNameMap);
-
-//     return (
-//       <div>
-//         {assemblytranscritps.transcriptionData.map((entry, index) => (
-//           <div key={index}>
-//             <p><strong>{speakerNameMap[speakers[entry.speaker]]}</strong></p>
-//             <p>{entry.text}</p>
-//           </div>
-//         ))}
-//       </div>
-//     );
-// };
-
-// const renderAssemblySpeakerTranscription = () => {
-//   const { assemblytranscritps, orderedSpeaker } = meetingDetails.meeting;
-//   console.log("Assembly Transcript", assemblytranscritps);
-//   console.log("Ordered Speaker", orderedSpeaker);
-
-//   // Create a mapping of speaker letters to indices
-//   const speakerLetters = ['A', 'B', 'C', 'D', 'E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
-//   const speakers = {};
-
-//   // Loop through each dialogue and assign the incrementing value to each speaker
-//   assemblytranscritps.transcriptionData.forEach((dialogue) => {
-//       if (!(dialogue.speaker in speakers)) {
-//           speakers[dialogue.speaker] = speakerLetters[Object.keys(speakers).length];
-//       }
-//   });
-
-//   console.log("Speakers", speakers);
-//   const speakersKeys = Object.keys(speakers);
-
-//   const speakerNameMap = {};
-//   let anonymousCount = 1;
-
-//   // Map the orderedSpeaker names to the speaker letters
-//   Object.keys(orderedSpeaker).forEach((key, index) => {
-//       speakerNameMap[speakersKeys[index]] = key;
-//   });
-
-//   // Assign Anonymous labels for any additional speakers not in orderedSpeaker
-//   speakersKeys.forEach((letter, index) => {
-//       if (!(letter in speakerNameMap)) {
-//           speakerNameMap[letter] = `Anonymous ${anonymousCount++}`;
-//       }
-//   });
-
-//   console.log("Speaker Name Map", speakerNameMap);
-//   const formatTime = (milliseconds) => {
-//     let totalSeconds = Math.floor(milliseconds / 1000);
-//     let hours = Math.floor(totalSeconds / 3600);
-//     let minutes = Math.floor((totalSeconds % 3600) / 60);
-//     let seconds = totalSeconds % 60;
-
-//     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-// };
-
-// const convertToTimeFormat = (isoString) => {
-//   const date = new Date(isoString);
-//   const hours = String(date.getUTCHours()).padStart(2, '0');
-//   const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-//   const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-//   return `${hours}:${minutes}:${seconds}`;
-// };
-
-//   return (
-//     <div>
-//       {assemblytranscritps.transcriptionData.map((entry, index) => (
-//         <div key={index}>
-//           <p>
-//             <strong>{speakerNameMap[speakers[entry.speaker]]}</strong>
-//             <span> ({formatTime(entry.start)})</span>
-//           </p>
-//           <p>{entry.text}</p>
-//         </div>
-//       ))}
-//     </div>
-//   );
-// };
-
-const renderAssemblySpeakerTranscription = () => {
-  const { assemblytranscritps, orderedSpeaker, orderSpeakerTimeBasis } = meetingDetails.meeting;
-  console.log("Assembly Transcript", assemblytranscritps);
-  console.log("Ordered Speaker", orderedSpeaker);
-  console.log("Speakers Order Time Basis", orderSpeakerTimeBasis);
-
-  // Create a mapping of speaker letters to indices
-  const speakerLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-  const speakers = {};
-
-  // Loop through each dialogue and assign the incrementing value to each speaker
-  assemblytranscritps.transcriptionData.forEach((dialogue) => {
-    if (!(dialogue.speaker in speakers)) {
-      speakers[dialogue.speaker] = speakerLetters[Object.keys(speakers).length];
-    }
-  });
-
-  console.log("Speakers", speakers);
-  const speakersKeys = Object.keys(speakers);
-
-  const speakerNameMap = {};
-  let anonymousCount = 1;
-
-  // Map the orderedSpeaker array names to the speaker letters
-  orderedSpeaker.forEach((name, index) => {
-    if (speakersKeys[index]) {
-      speakerNameMap[speakersKeys[index]] = name;
-    }
-  });
-
-  // Assign Anonymous labels for any additional speakers not in orderedSpeaker
-  speakersKeys.forEach((letter, index) => {
-    if (!(letter in speakerNameMap)) {
-      speakerNameMap[letter] = `Anonymous ${anonymousCount++}`;
-    }
-  });
-
-  console.log("Speaker Name Map", speakerNameMap);
+    setMeetingDetails(prevDetails => ({
+      ...prevDetails,
+      meeting: {
+        ...prevDetails.meeting,
+        mappedTranscript: updatedTranscripts,
+      }
+    }));
+    setIsTranscriptsUpdated(true);
+    handleCloseModal();
+  };
 
   const formatTime = (milliseconds) => {
     let totalSeconds = Math.floor(milliseconds / 1000);
@@ -1682,134 +3054,47 @@ const renderAssemblySpeakerTranscription = () => {
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
   };
 
-  const convertToTimeFormat = (isoString) => {
-    const date = new Date(isoString);
-    const hours = String(date.getUTCHours()).padStart(2, '0');
-    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-    return `${hours}:${minutes}:${seconds}`;
+  const renderAssemblySpeakerTranscription = () => {
+    if (!meetingDetails.meeting.mappedTranscript) return null;
+
+    return (
+      <div>
+        {meetingDetails.meeting.mappedTranscript.length > 0 ? (
+          meetingDetails.meeting.mappedTranscript.map((entry, index) => (
+            <div key={index}>
+              <p>
+                <strong>{entry.speakerName}</strong>
+                <button onClick={(event) => handleOpenModal(event, entry.speakerName, formatTime(entry.start))} className="text-blue-500 underline ml-2">
+                  Edit
+                </button>
+                <span> ({formatTime(entry.start)})</span>
+              </p>
+              <p>{entry.text}</p>
+            </div>
+          ))
+        ) : (
+          <p>No transcripts available.</p>
+        )}
+      </div>
+    );
   };
 
-  // Ensure mapping only uses available entries in both arrays
-  const minLength = Math.min(assemblytranscritps.transcriptionData.length, orderSpeakerTimeBasis.length);
-  const mappedTranscripts = assemblytranscritps.transcriptionData.slice(0, minLength).map((entry, index) => {
-    const timeBasis = orderSpeakerTimeBasis[index];
-    const previousSpeaker = timeBasis.previous;
-
-    return {
-      ...entry,
-      speakerName: previousSpeaker
-    };
-  });
-
-  console.log("Mapped Transcript Speaker", mappedTranscripts);
-
-  return (
-    <div>
-      {mappedTranscripts.map((entry, index) => (
-        <div key={index}>
-          <p>
-            <strong>{entry.speakerName}</strong>
-            <span> ({formatTime(entry.start)})</span>
-          </p>
-          <p>{entry.text}</p>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-
-
-// const renderAssemblySpeakerTranscription = () => {
-//   const { assemblytranscritps, orderedSpeaker,orderSpeakerTimeBasis } = meetingDetails.meeting;
-//   console.log("Assembly Transcript", assemblytranscritps);
-//   console.log("Ordered Speaker", orderedSpeaker);
-//   console.log("Speakers Order Time Basis",orderSpeakerTimeBasis);
-
-//   // Create a mapping of speaker letters to indices
-//   const speakerLetters = ['A', 'B', 'C', 'D', 'E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
-//   const speakers = {};
-
-//   // Loop through each dialogue and assign the incrementing value to each speaker
-//   assemblytranscritps.transcriptionData.forEach((dialogue) => {
-//     if (!(dialogue.speaker in speakers)) {
-//       speakers[dialogue.speaker] = speakerLetters[Object.keys(speakers).length];
-//     }
-//   });
-
-//   console.log("Speakers", speakers);
-//   const speakersKeys = Object.keys(speakers);
-
-//   const speakerNameMap = {};
-//   let anonymousCount = 1;
-
-//   // Map the orderedSpeaker array names to the speaker letters
-//   orderedSpeaker.forEach((name, index) => {
-//     if (speakersKeys[index]) {
-//       speakerNameMap[speakersKeys[index]] = name;
-//     }
-//   });
-
-//   // Assign Anonymous labels for any additional speakers not in orderedSpeaker
-//   speakersKeys.forEach((letter, index) => {
-//     if (!(letter in speakerNameMap)) {
-//       speakerNameMap[letter] = `Anonymous ${anonymousCount++}`;
-//     }
-//   });
-
-//   console.log("Speaker Name Map", speakerNameMap);
-  
-//   const formatTime = (milliseconds) => {
-//     let totalSeconds = Math.floor(milliseconds / 1000);
-//     let hours = Math.floor(totalSeconds / 3600);
-//     let minutes = Math.floor((totalSeconds % 3600) / 60);
-//     let seconds = totalSeconds % 60;
-
-//     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-//   };
-
-//   const convertToTimeFormat = (isoString) => {
-//     const date = new Date(isoString);
-//     const hours = String(date.getUTCHours()).padStart(2, '0');
-//     const minutes = String(date.getUTCMinutes()).padStart(2, '0');
-//     const seconds = String(date.getUTCSeconds()).padStart(2, '0');
-//     return `${hours}:${minutes}:${seconds}`;
-//   };
-
-//   return (
-//     <div>
-//       {assemblytranscritps.transcriptionData.map((entry, index) => (
-//         <div key={index}>
-//           <p>
-//             <strong>{speakerNameMap[speakers[entry.speaker]]}</strong>
-//             <span> ({formatTime(entry.start)})</span>
-//           </p>
-//           <p>{entry.text}</p>
-//         </div>
-//       ))}
-//     </div>
-//   );
-// };
-
-
-
   const renderAssemblySpeakerTextTranscription = () => {
-    const { assemblytranscritps } = meetingDetails.meeting;
-    // const combinedText = assemblytranscritps.plainTextTranscription.map((entry) => entry.text).join(' ');
-    const combinedText = assemblytranscritps.plainTextTranscription;
+    const combinedText = meetingDetails?.meeting?.assemblytranscritps?.plainTextTranscription;
     return <div>{combinedText}</div>;
   };
 
   const TranscriptionDisplay = ({ type }) => {
     return (
-      <div className="bg-gray-100 p-4  overflow-y-auto max-h-80">
+      <div className="bg-gray-100 p-4 overflow-y-auto max-h-80">
         {getTranscription(type)}
       </div>
     );
   };
 
   const renderMeetingDetails = () => {
+    if (!meetingDetails?.meeting) return null;
+
     return (
       <>
         <div className="flex justify-center mb-10 pr-4">
@@ -1830,17 +3115,13 @@ const renderAssemblySpeakerTranscription = () => {
             <div className="mt-4 mb-4">
               <div className="bg-gray-100 border-b-4">
                 <button
-                  className={`font-bold py-2 px-4 mr-2 rounded  ${
-                    transcriptionType === 'assemblyspeaker' ? 'text-blue-700 border-b-4 border-blue-700' : 'text-white-200'
-                  }`}
+                  className={`font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'assemblyspeaker' ? 'text-blue-700 border-b-4 border-blue-700' : 'text-white-200'}`}
                   onClick={() => handleTranscriptionTypeChange('assemblyspeaker')}
                 >
                   Speaker
                 </button>
                 <button
-                  className={`font-bold py-2 px-4 mr-2 rounded ${
-                    transcriptionType === 'assemblytext' ? 'text-blue-700 border-b-4 border-blue-700' : 'text-white-200'
-                  }`}
+                  className={`font-bold py-2 px-4 mr-2 rounded ${transcriptionType === 'assemblytext' ? 'text-blue-700 border-b-4 border-blue-700' : 'text-white-200'}`}
                   onClick={() => handleTranscriptionTypeChange('assemblytext')}
                 >
                   Text
@@ -1861,6 +3142,7 @@ const renderAssemblySpeakerTranscription = () => {
 
   const renderEventDetails = () => {
     const { event } = meetingDetails;
+
     return (
       <>
         <strong>
@@ -1901,8 +3183,18 @@ const renderAssemblySpeakerTranscription = () => {
         isLoading={false}
       />
       <div className="flex-1 p-6 overflow-y-auto">
-        {meetingDetails.meeting ? renderMeetingDetails() : renderEventDetails()}
+        {meetingDetails?.meeting ? renderMeetingDetails() : renderEventDetails()}
       </div>
+      <SpeakerModal
+        isOpen={isModalOpen}
+        onRequestClose={handleCloseModal}
+        speakerName={selectedSpeaker}
+        orderedSpeaker={meetingDetails?.meeting?.orderedSpeaker}
+        position={modalPosition}
+        onApplyToCurrentSpeaker={handleApplyToCurrentSpeaker}
+        onApplyToAllSpeaker={handleApplyToAllSpeaker}
+        timestamp={selectedSpeakerTimestamp}
+      />
     </div>
   );
 };

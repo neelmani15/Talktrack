@@ -908,10 +908,44 @@ const s3Client = new S3Client({
     credentials: fromEnv() // Automatically fetch credentials from environment variables
 });
 
+
+
+
+async function HandleUpdateMappedTranscripts(req, res ){
+    const { meetingId, mappedTranscript } = req.body;
+
+    console.log('Received request to update mappedTranscript:', req.body);
+  
+    try {
+      // Find the meeting by meetingId and update mappedTranscript
+      const updatedMeeting = await Meeting.findOneAndUpdate(
+        { meetingId: meetingId },
+        { $set: { mappedTranscript: mappedTranscript } },
+        { new: true } // Return the updated meeting document
+      );
+  
+      if (!updatedMeeting) {
+        console.log('Meeting not found');
+        return res.status(404).json({ error: 'Meeting not found' });
+      }
+  
+      console.log('Updated meeting:', updatedMeeting);
+      // Respond with the updated meeting
+      res.json(updatedMeeting);
+    } catch (error) {
+      console.error('Error updating mapped transcript:', error);
+      res.status(500).json({ error: 'Server error' });
+    }
+}
+
+
+
+
 module.exports = {
     HandleScheduleEvent,
     HandelEventList,
     HandleMeetingdetails,
     HandleVideoStream,
-    HandleLiveMeeting
+    HandleLiveMeeting,
+    HandleUpdateMappedTranscripts
 }
