@@ -7,7 +7,8 @@ const {
         HandleScheduleEvent,
         HandleMeetingdetails,
         HandleVideoStream,
-        HandleLiveMeeting
+        HandleLiveMeeting,
+        HandleUpdateMappedTranscripts
         } = require("../Controllers/user");
 
 
@@ -23,5 +24,6 @@ router.post('/allevents',HandelEventList)
 
 router.post('/meetingdetails',HandleMeetingdetails)
 router.get('/video',HandleVideoStream)
+router.post('/update-mapped-transcript',HandleUpdateMappedTranscripts)
 
 module.exports=router

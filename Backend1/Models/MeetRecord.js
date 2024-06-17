@@ -39,6 +39,10 @@ const meetingRecordSchema = new mongoose.Schema({
   meetingStartTime:{
     type:Date,
     required:true
+  },
+  UpdatedMappedTranscript:{
+    type: Array,
+    required: true
   }
 });
 
