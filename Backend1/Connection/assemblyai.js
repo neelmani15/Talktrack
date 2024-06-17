@@ -116,7 +116,8 @@ async function transcribeAudio(audioUrl,speakerLength) {
     const response = await axios.post('https://api.assemblyai.com/v2/transcript', {
         audio_url: audioUrl,
         speaker_labels: true,
-        speakers_expected: speakerLength
+        speakers_expected: speakerLength,
+        auto_chapters: true
     }, {
         headers: {
             'authorization': process.env.assembly_api_key,
@@ -151,14 +152,50 @@ async function getTranscriptionResult(transcriptionId) {
     }
 }
 
-async function generateMultiSpeakerTranscription(audioPath,speakerLength) {
+// async function generateMultiSpeakerTranscription(audioPath,speakerLength) {
+//     try {
+//         console.log('Uploading audio...');
+//         const audioUrl = await uploadAudio(audioPath);
+//         console.log('Audio uploaded. URL:', audioUrl);
+
+//         console.log('Requesting transcription...');
+//         const transcriptionId = await transcribeAudio(audioUrl,speakerLength);
+//         console.log('Transcription requested. ID:', transcriptionId);
+
+//         console.log('Waiting for transcription to complete...');
+//         const transcriptionResult = await getTranscriptionResult(transcriptionId);
+//         console.log('Transcription completed.');
+
+//         // Format the transcription result to include timestamps
+//         const formattedTranscription = transcriptionResult.utterances.map(utterance => ({
+//             speaker: utterance.speaker,
+//             text: utterance.text,
+//             confidence: utterance.confidence,
+//             start: utterance.start,
+//             end: utterance.end
+//         }));
+
+//         // Generate plain text transcription
+//         const plainTextTranscription = formattedTranscription.map(u => u.text).join(' ');
+
+//         return {
+//             plainTextTranscription,
+//             transcriptionData: formattedTranscription
+//         };
+//     } catch (error) {
+//         console.error('Error generating transcription:', error.message);
+//         throw error;
+//     }
+// }
+
+async function generateMultiSpeakerTranscription(audioPath, speakerLength) {
     try {
         console.log('Uploading audio...');
         const audioUrl = await uploadAudio(audioPath);
         console.log('Audio uploaded. URL:', audioUrl);
 
         console.log('Requesting transcription...');
-        const transcriptionId = await transcribeAudio(audioUrl,speakerLength);
+        const transcriptionId = await transcribeAudio(audioUrl, speakerLength);
         console.log('Transcription requested. ID:', transcriptionId);
 
         console.log('Waiting for transcription to complete...');
@@ -177,15 +214,25 @@ async function generateMultiSpeakerTranscription(audioPath,speakerLength) {
         // Generate plain text transcription
         const plainTextTranscription = formattedTranscription.map(u => u.text).join(' ');
 
+        // Extract summary (auto_chapters) if available
+        const summary = transcriptionResult.chapters.map(chapter => ({
+            headline: chapter.headline,
+            summary: chapter.summary,
+            start: chapter.start,
+            end: chapter.end
+        }));
+
         return {
             plainTextTranscription,
-            transcriptionData: formattedTranscription
+            transcriptionData: formattedTranscription,
+            summary
         };
     } catch (error) {
         console.error('Error generating transcription:', error.message);
         throw error;
     }
 }
+
 
 module.exports = {
     generateMultiSpeakerTranscription
