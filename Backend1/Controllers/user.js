@@ -283,120 +283,6 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
     }
 }
 
-let meetingstartTime1;
-// async function HandleLiveMeeting(req, res) {
-//     console.log("Joining Meet");
-//     const { meetUrl, userEmail } = req.body;
-//     console.log(meetUrl);
-//     console.log(userEmail);
-//     const parts = meetUrl.split('/');
-//     const meetingId = parts[parts.length - 1];
-
-//     console.log(meetingId);
-
-//     try {
-//         const user = await User.findOne({ email: userEmail });
-//         if (!user) {
-//             return res.status(404).json({ message: 'User not found' });
-//         }
-//         oauth2Client.setCredentials({
-//             access_token: user.googleAccessToken,
-//         });
-//         const currentDateTime = new Date();
-//         const oneHourLater = new Date(currentDateTime.getTime() + (60 * 60 * 1000));
-//         const alldata = {
-//             summary: `Live ${meetingId}`,
-//             description: "Some Topic",
-//             start: currentDateTime,
-//             end: oneHourLater,
-//             url: meetUrl,
-//             MeetingId: meetingId
-//             // attendees: attendees
-//         };
-//         console.log(alldata)
-//         user.events.push(alldata);
-//         await user.save();
-//         puppeteer.use(StealthPlugin());
-//         const browser = await launch(puppeteer, {
-//             defaultViewport: null,
-//             headless: true,
-//             devtools: false,
-//             args: [
-//                 "--autoplay-policy=no-user-gesture-required",
-//             ],
-//             executablePath: executablePath(),
-//         });
-//         const page = (await browser.pages())[0];
-
-//         const filePath = `./report/video/meetingId_${meetingId}.webm`;
-//         console.log(filePath)
-//         const fileStream = fs.createWriteStream(filePath);
-
-//         // Get the media stream
-//         const stream = await getStream(page, { audio: true, video: true });
-//         stream.pipe(fileStream);
-//         // stream.pipe(file);
-
-//         const navigationPromise = page.waitForNavigation();
-//         const context = browser.defaultBrowserContext();
-//         await context.overridePermissions("https://meet.google.com/", ["microphone", "camera", "notifications"]);
-
-//         await page.goto(meetUrl, { waitUntil: "networkidle0", timeout: 120000 });
-//         await navigationPromise;
-
-//         await page.waitForSelector('input[aria-label="Your name"]', { visible: true, timeout: 50000 });
-//         console.log('Name input found');
-//         await page.type('input[aria-label="Your name"]', 'riktam.ai NoteTaker');
-
-//         try {
-//             const cameraButtonSelector = '[aria-label*="Turn off camera"]';
-//             const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
-
-//             await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 60000 });
-//             console.log('Camera button found');
-//             await page.click(cameraButtonSelector);
-//             console.log('Camera turned off');
-
-//             await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 60000 });
-//             console.log('Microphone button found');
-//             await page.click(microphoneButtonSelector);
-//             console.log('Microphone turned off');
-
-//         } catch (err) {
-//             console.error('Error turning off camera/microphone:', err);
-//         }
-
-//         const askToJoinButtonSelector = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 jEvJdc QJgqC"]';
-//         await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 50000 });
-//         console.log('Ask to join button found');
-//         await page.click(askToJoinButtonSelector);
-//         console.log('Clicked on Ask to join button');
-
-//         meetingstartTime= Date.now();
-
-//         console.log("MeetingStartTime",meetingstartTime);
-
-//         const participantCheckInterval = setInterval(async () => {
-//             const botPresence = await HandleCheckBotPresence(page, browser, meetingId, userEmail);
-//             const botPresence1=botPresence.status;
-//             const orderedSpeaker = botPresence.orderedParticipants;
-//             console.log("Getting",botPresence1);
-//             if (botPresence1 || isRecordingStopped) {
-//                 clearInterval(participantCheckInterval);
-//                 await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail,orderedSpeaker,meetingstartTime);
-//             }
-//         }, 10000);
-//         // return true;
-
-//         res.status(200).json({ message: 'Recording started successfully.' });
-
-//     } catch (error) {
-//         console.error('Error starting recording:', error);
-//         // return false;
-//         res.status(500).json({ error: 'An error occurred while starting recording.' });
-//     }
-// }
-
 async function HandleLiveMeeting(req, res) {
     console.log("Joining Meet");
     const { meetUrl, userEmail } = req.body;
@@ -574,6 +460,69 @@ async function HandleStopRecording(browser, stream, fileStream, meetingId, userE
 // let isParticipantsButtonClicked = false;
 // let checkInterval = null;
 
+// async function extractMicDetails(page, initialSpeak, seenParticipants) {
+//     try {
+//         const mainDivXPath = '//div[contains(@class, "AE8xFb OrqRRb GvcuGe goTdfd")]';
+
+//         const { details, updatedInitialSpeak, newSeenParticipants } = await page.evaluate((mainDivXPath, initialSpeak, seenParticipants) => {
+//             const details = [];
+//             const seenParticipantsMap = new Map(JSON.parse(seenParticipants));
+//             const mainDivNodes = document.evaluate(mainDivXPath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+
+//             for (let i = 0; i < mainDivNodes.snapshotLength; i++) {
+//                 const mainDiv = mainDivNodes.snapshotItem(i);
+//                 const spanXPath = './/span[contains(@class, "zWGUib")]';
+//                 const spanNodes = document.evaluate(spanXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+//                 const jsControllerDivXPath = './/div[@jscontroller="ES310d"]';
+//                 const jsControllerDivNodes = document.evaluate(jsControllerDivXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+
+//                 if (spanNodes.snapshotLength === jsControllerDivNodes.snapshotLength) {
+//                     for (let j = 0; j < spanNodes.snapshotLength; j++) {
+//                         const spanNode = spanNodes.snapshotItem(j);
+//                         const spanText = spanNode ? spanNode.textContent : '';
+//                         const jsControllerDivNode = jsControllerDivNodes.snapshotItem(j);
+//                         const classValue = jsControllerDivNode ? jsControllerDivNode.getAttribute('class') : '';
+
+//                         // Detect actual speaking events based on class names indicating speaking
+//                         const isSpeaking = classValue.includes('IisKdb GF8M7d gjg47c KUNJSe x9nQ6') || classValue.includes('IisKdb GF8M7d gjg47c MNVeFb kT2pkb'); // Adjust these conditions based on the actual class names
+
+//                         if (spanText && !isSpeaking) {
+//                             const speakTime = new Date().toISOString();
+//                             if (!seenParticipantsMap.has(spanText)) {
+//                                 seenParticipantsMap.set(spanText, []);
+//                             }
+//                             if (!initialSpeak) {
+//                                 seenParticipantsMap.get(spanText).push(speakTime);
+//                                 initialSpeak = true;
+//                             } else {
+//                                 initialSpeak = false;
+//                             }
+//                             details.push({ speak_time: speakTime, participantname: spanText });
+//                         }
+//                     }
+//                 }
+//             }
+
+//             return {
+//                 details,
+//                 updatedInitialSpeak: initialSpeak,
+//                 newSeenParticipants: JSON.stringify(Array.from(seenParticipantsMap.entries()))
+//             };
+//         }, mainDivXPath, initialSpeak, JSON.stringify(Array.from(seenParticipants.entries())));
+
+//         initialSpeak = updatedInitialSpeak;
+//         seenParticipants.clear();
+//         new Map(JSON.parse(newSeenParticipants)).forEach((value, key) => seenParticipants.set(key, value));
+
+//         console.log('Extracted Details:', details);
+//         console.log("Seen Participants", seenParticipants);
+//         return { details, seenParticipants };
+//     } catch (error) {
+//         console.error('Error extracting details:', error);
+//         return { details: [], seenParticipants };
+//     }
+// }
+
 async function extractMicDetails(page, initialSpeak, seenParticipants) {
     try {
         const mainDivXPath = '//div[contains(@class, "AE8xFb OrqRRb GvcuGe goTdfd")]';
@@ -591,6 +540,9 @@ async function extractMicDetails(page, initialSpeak, seenParticipants) {
                 const jsControllerDivNodes = document.evaluate(jsControllerDivXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 
                 if (spanNodes.snapshotLength === jsControllerDivNodes.snapshotLength) {
+                    let speakingParticipants = 0;
+                    let currentSpeaker = '';
+
                     for (let j = 0; j < spanNodes.snapshotLength; j++) {
                         const spanNode = spanNodes.snapshotItem(j);
                         const spanText = spanNode ? spanNode.textContent : '';
@@ -600,19 +552,24 @@ async function extractMicDetails(page, initialSpeak, seenParticipants) {
                         // Detect actual speaking events based on class names indicating speaking
                         const isSpeaking = classValue.includes('IisKdb GF8M7d gjg47c KUNJSe x9nQ6') || classValue.includes('IisKdb GF8M7d gjg47c MNVeFb kT2pkb'); // Adjust these conditions based on the actual class names
 
-                        if (spanText && !isSpeaking) {
-                            const speakTime = new Date().toISOString();
-                            if (!seenParticipantsMap.has(spanText)) {
-                                seenParticipantsMap.set(spanText, []);
-                            }
-                            if (!initialSpeak) {
-                                seenParticipantsMap.get(spanText).push(speakTime);
-                                initialSpeak = true;
-                            } else {
-                                initialSpeak = false;
-                            }
-                            details.push({ speak_time: speakTime, participantname: spanText });
+                        if (!isSpeaking) {
+                            speakingParticipants++;
+                            currentSpeaker = spanText;
                         }
+                    }
+
+                    if (speakingParticipants === 1 && currentSpeaker) {
+                        const speakTime = new Date().toISOString();
+                        if (!seenParticipantsMap.has(currentSpeaker)) {
+                            seenParticipantsMap.set(currentSpeaker, []);
+                        }
+                        if (!initialSpeak) {
+                            seenParticipantsMap.get(currentSpeaker).push(speakTime);
+                            initialSpeak = true;
+                        } else {
+                            initialSpeak = false;
+                        }
+                        details.push({ speak_time: speakTime, participantname: currentSpeaker });
                     }
                 }
             }
@@ -636,6 +593,8 @@ async function extractMicDetails(page, initialSpeak, seenParticipants) {
         return { details: [], seenParticipants };
     }
 }
+
+
 
 let orderedParticipants = [];
 let allParticipants = new Set();
@@ -763,156 +722,6 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream, meeting
         return { orderedParticipants: orderedParticipants || [], status: true };
     }
 }
-
-
-
-// async function extractMicDetails(page) {
-//     try {
-//         const mainDivXPath = '//div[contains(@class, "AE8xFb OrqRRb GvcuGe goTdfd")]';
-
-//         const { details, updatedInitialSpeak, newSeenParticipants } = await page.evaluate((mainDivXPath, initialSpeak, seenParticipants) => {
-//             const details = {};
-//             const seenParticipantsMap = new Map(JSON.parse(seenParticipants));
-//             const mainDivNodes = document.evaluate(mainDivXPath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-
-//             for (let i = 0; i < mainDivNodes.snapshotLength; i++) {
-//                 const mainDiv = mainDivNodes.snapshotItem(i);
-//                 const spanXPath = './/span[contains(@class, "zWGUib")]';
-//                 const spanNodes = document.evaluate(spanXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-//                 const jsControllerDivXPath = './/div[@jscontroller="ES310d"]';
-//                 const jsControllerDivNodes = document.evaluate(jsControllerDivXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-
-//                 let participantDetails = [];
-
-//                 if (spanNodes.snapshotLength === jsControllerDivNodes.snapshotLength) {
-//                     for (let j = 0; j < spanNodes.snapshotLength; j++) {
-//                         const spanNode = spanNodes.snapshotItem(j);
-//                         const spanText = spanNode ? spanNode.textContent : '';
-//                         const jsControllerDivNode = jsControllerDivNodes.snapshotItem(j);
-//                         const classValue = jsControllerDivNode ? jsControllerDivNode.getAttribute('class') : '';
-
-//                         if (spanText && classValue && !seenParticipantsMap.has(spanText)) {
-//                             const speakTime = new Date().toISOString();
-//                             if (classValue != 'IisKdb GF8M7d gjg47c KUNJSe x9nQ6' && classValue != 'IisKdb GF8M7d gjg47c MNVeFb kT2pkb' && !initialSpeak) {
-//                                 participantDetails.push({
-//                                     participantname: spanText,
-//                                     mic_id: classValue,
-//                                     speak_time: speakTime
-//                                 });
-//                                 seenParticipantsMap.set(spanText, speakTime);
-//                                 initialSpeak = true;
-//                             } else {
-//                                 initialSpeak = false;
-//                             }
-//                         }
-//                     }
-//                 }
-
-//                 if (participantDetails.length > 0) {
-//                     details[`mainDiv${i}`] = participantDetails;
-//                 }
-//             }
-
-//             return {
-//                 details,
-//                 updatedInitialSpeak: initialSpeak,
-//                 newSeenParticipants: JSON.stringify(Array.from(seenParticipantsMap.entries()))
-//             };
-//         }, mainDivXPath, initialSpeak, JSON.stringify(Array.from(seenParticipants.entries())));
-
-//         initialSpeak = updatedInitialSpeak;
-//         seenParticipants.clear();
-//         new Map(JSON.parse(newSeenParticipants)).forEach((value, key) => seenParticipants.set(key, value));
-
-//         console.log('Extracted Details:', details);
-//         console.log("seen participants", seenParticipants);
-//         return seenParticipants;
-//     } catch (error) {
-//         console.error('Error extracting details:', error);
-//         return {};
-//     }
-// }
-
-// let orderedParticipants;
-// async function HandleCheckBotPresence(page, browser, stream, fileStream, meetingId, userEmail) {
-//     try {
-//         const botName = 'riktam.ai NoteTaker';
-//         if (isRecordingStopped) {
-//             clearInterval(checkInterval);
-//             return { orderedParticipants: orderedParticipants || [], status: true };
-//         } else {
-//             if (!isParticipantsButtonClicked) {
-//                 const buttonXPath = '(//button[contains(@class, "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ JsuyRc boDUxc")])[2]';
-
-//                 const buttonClicked = await page.evaluate((xpath) => {
-//                     const button = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-//                     if (button) {
-//                         button.click();
-//                         return true;
-//                     }
-//                     return false;
-//                 }, buttonXPath);
-
-//                 if (buttonClicked) {
-//                     console.log('Button clicked!');
-//                     isParticipantsButtonClicked = true;
-//                 } else {
-//                     console.log('Button not found, skipping click operation.');
-//                 }
-//             }
-
-//             if (!checkInterval) {
-//                 checkInterval = setInterval(async () => {
-//                     if (isParticipantsButtonClicked) {
-//                         if (!page.mainFrame().isDetached()) {
-//                             let micdetails = await extractMicDetails(page);
-//                             orderedParticipants = micdetails
-//                             console.log(micdetails);
-//                         } else {
-//                             console.log('Frame is detached, stopping interval.');
-//                             clearInterval(checkInterval);
-//                         }
-//                     }
-//                 }, 3000);
-//             }
-
-//             console.log("Order Participants",orderedParticipants);
-
-//             const frame = page.mainFrame();
-//             if (!frame.isDetached()) {
-//                 const { participants, leftMeetingText } = await frame.evaluate(() => {
-//                     const leftMeetingElement = document.querySelector('h1[jsname="r4nke"].roSPhc');
-//                     const leftMeetingText = leftMeetingElement ? leftMeetingElement.textContent : null;
-//                     const participants = [];
-//                     const participantElements = document.querySelectorAll('div.dwSJ2e');
-//                     participantElements.forEach(participant => {
-//                         const participantName = participant.innerText;
-//                         participants.push(participantName);
-//                     });
-//                     return { participants, leftMeetingText };
-//                 });
-
-//                 participants.forEach(participant => {
-//                     allParticipants.add(participant);
-//                 });
-
-//                 console.log('All Participants:', allParticipants);
-//                 console.log('Participants:', participants);
-//                 console.log('Meeting status:', leftMeetingText);
-
-//                 if (leftMeetingText || participants.length === 1) {
-//                     clearInterval(checkInterval);
-//                     return { orderedParticipants: orderedParticipants || [], status: true };
-//                 }
-//             }
-//             return { orderedParticipants: orderedParticipants || [], status: false };
-//         }
-//     } catch (error) {
-//         console.error('Error checking bot presence:', error);
-//         clearInterval(checkInterval);
-//         return { orderedParticipants: orderedParticipants || [], status: true };
-//     }
-// }
 
 async function HandelEventList(req, res) {
     try {
