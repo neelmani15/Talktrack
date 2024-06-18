@@ -17,7 +17,22 @@ const userSchema = new mongoose.Schema({
         type:String,
         required:true
     },
-    events: [{
+    scheduleEvents: [{
+        summary: String,
+        description: String,
+        start:Date,
+        end:Date,
+        // start: {
+        //     dateTime: { type: String, required: true }
+        // },
+        // end: {
+        //     dateTime: { type: String, required: true }
+        // },
+        url: String,
+        MeetingId:String,
+        // attendees: [String]
+    }],
+    liveEvents: [{
         summary: String,
         description: String,
         start:Date,

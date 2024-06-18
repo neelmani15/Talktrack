@@ -636,7 +636,7 @@ import Modal from './Modal';
 const Home = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { userEmail,userPicture,userName, meetings, setMeetings } = useUser();
+  const { userEmail,userPicture,userName, ScheduleMeetings, setScheduleMeetings,LiveMeetings,setLiveMeetings  } = useUser();
   const [isNoEvents, setIsNoEvents] = useState(false);
   const [formData, setFormData] = useState({
     summary: '',
@@ -649,6 +649,7 @@ const Home = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLiveMeetingModalOpen, setIsLiveMeetingModalOpen] = useState(false);
   const [meetingUrl, setMeetingUrl] = useState('');
+  const [status,setStatus]=useState('');
 
   const startRecording = async (meetUrl) => {
     try {
@@ -695,24 +696,49 @@ const Home = () => {
       setIsLoading(false);
       setIsModalOpen(false);
       toast.success('Events successfully scheduled!');
-      fetchEvents(); // Refresh events after scheduling a new one
+      fetchScheduleEvents();// Refresh events after scheduling a new one
+      fetchLiveEvents();
     } catch (error) {
       setIsLoading(false);
       toast.error('Failed to schedule events.');
     }
   };
 
-  const fetchEvents = async () => {
+  const fetchScheduleEvents = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.post('http://localhost:5001/user/allevents', {userEmail});
+      const response = await axios.post('http://localhost:5001/user/allScheduleEvents', {userEmail});
       if(response.data.message === "No events found for the user."){
         setIsNoEvents(true);
         // toast.warning('No events found for the user.');
         setIsLoading(false);
         return
       }else{
-      setMeetings(response.data.alleventslist);
+      setScheduleMeetings(response.data.alleventslist);
+      setStatus('schedule');
+      console.log("schedule",status);
+      console.log(response.data)
+      setIsLoading(false);
+      toast.success('Events fetched successfully!');
+      }
+    } catch (error) {
+      setIsLoading(false);
+      toast.error('Failed to fetch events.');
+    }
+  };
+  const fetchLiveEvents = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.post('http://localhost:5001/user/allLiveEvents', {userEmail});
+      if(response.data.message === "No events found for the user."){
+        setIsNoEvents(true);
+        // toast.warning('No events found for the user.');
+        setIsLoading(false);
+        return
+      }else{
+      setLiveMeetings(response.data.alleventslist);
+      setStatus('live');
+      console.log("Live",status);
       console.log(response.data)
       setIsLoading(false);
       toast.success('Events fetched successfully!');
@@ -763,7 +789,8 @@ const Home = () => {
     <div className="h-screen flex">
       <Sidebar
         onScheduleMeetingClick={() => setIsModalOpen(true)}
-        onShowAllEventsClick={fetchEvents}
+        onShowScheduleEventsClick={fetchScheduleEvents}
+        onShowLiveEventsClick={fetchLiveEvents}
         onShowLiveMeeting={()=>setIsLiveMeetingModalOpen(true)}
         isLoading={isLoading}
       />
@@ -948,11 +975,12 @@ const Home = () => {
               </div>
             </div>
           )}
-          <div className="mt-8">
-            <h2 className="text-xl font-bold mb-4">Meetings</h2>
+          {status==='schedule'?(
+            <div className="mt-8">
+            <h2 className="text-xl text-blue-500 font-bold mb-4">Schedule Meetings</h2>
             <table className="min-w-full divide-y divide-gray-200">
               <tbody className="bg-white divide-y divide-gray-200">
-                {meetings.map((event, index) => (
+                {ScheduleMeetings.map((event, index) => (
                   <tr key={index}>
                     <td
                       className="px-2 py-2 whitespace-nowrap"
@@ -985,6 +1013,80 @@ const Home = () => {
               </tbody>
             </table>
           </div>
+          ):(<div className="mt-8">
+          <h2 className="text-xl text-blue-500 font-bold mb-4">Live Meetings</h2>
+          <table className="min-w-full divide-y divide-gray-200">
+            <tbody className="bg-white divide-y divide-gray-200">
+              {LiveMeetings.map((event, index) => (
+                <tr key={index}>
+                  <td
+                    className="px-2 py-2 whitespace-nowrap"
+                    onClick={() => handleMeetingDetails(event.MeetingId)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {event.summary}
+                  </td>
+                  <td className="px-2 py-2 whitespace-nowrap">
+                    <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-500 mr-1" />
+                    {format(new Date(event.start), 'EEE, MMM do')}
+                    <FaClock className="inline-block ml-2 mr-1" />
+                    {format(new Date(event.start), 'h:mm a')}
+                  </td>
+                  <td className="px-2 py-2 whitespace-nowrap relative">
+                    <button
+                      onClick={() => {
+                        handleMeetingLinkClick(event.url);
+                        window.open(event.url, '_blank');
+                      }}
+                      className="p-1 rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M5 4a2 2 0 00-2 2v8a2 2 0 002 2h5v2H8l3 3-3-3h-2v-2h5a2 2 0 002-2V6a2 2 0 00-2-2H5zm5 10V8l5 3-5 3z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>)}
+          {/* <div className="mt-8">
+            <h2 className="text-xl font-bold mb-4">Meetings</h2>
+            <table className="min-w-full divide-y divide-gray-200">
+              <tbody className="bg-white divide-y divide-gray-200">
+                {ScheduleMeetings.map((event, index) => (
+                  <tr key={index}>
+                    <td
+                      className="px-2 py-2 whitespace-nowrap"
+                      onClick={() => handleMeetingDetails(event.MeetingId)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {event.summary}
+                    </td>
+                    <td className="px-2 py-2 whitespace-nowrap">
+                      <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-500 mr-1" />
+                      {format(new Date(event.start), 'EEE, MMM do')}
+                      <FaClock className="inline-block ml-2 mr-1" />
+                      {format(new Date(event.start), 'h:mm a')}
+                    </td>
+                    <td className="px-2 py-2 whitespace-nowrap relative">
+                      <button
+                        onClick={() => {
+                          handleMeetingLinkClick(event.url);
+                          window.open(event.url, '_blank');
+                        }}
+                        className="p-1 rounded-full bg-gray-200 hover:bg-gray-300 focus:outline-none"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M5 4a2 2 0 00-2 2v8a2 2 0 002 2h5v2H8l3 3-3-3h-2v-2h5a2 2 0 002-2V6a2 2 0 00-2-2H5zm5 10V8l5 3-5 3z" clipRule="evenodd" />
+                        </svg>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div> */}
           <ToastContainer />
         </div>
       </div>

@@ -139,7 +139,7 @@ async function HandleScheduleEvent(req, res) {
             // attendees: attendees
         };
         console.log(alldata)
-        user.events.push(alldata);
+        user.scheduleEvents.push(alldata);
         await user.save();
 
         const startTime = parseISO(scheduleStartTime);
@@ -302,7 +302,7 @@ async function HandleLiveMeeting(req, res) {
         // Check if the meetingId already exists in user's events and generate a unique meetingId if necessary
         let originalMeetingId = meetingId;
         let suffix = 1;
-        while (user.events.some(event => event.MeetingId === meetingId)) {
+        while (user.liveEvents.some(event => event.MeetingId === meetingId)) {
             meetingId = `${originalMeetingId}${suffix}`;
             suffix++;
         }
@@ -321,7 +321,7 @@ async function HandleLiveMeeting(req, res) {
             MeetingId: meetingId
         };
         console.log(alldata);
-        user.events.push(alldata);
+        user.liveEvents.push(alldata);
         await user.save();
         puppeteer.use(StealthPlugin());
         const browser = await launch(puppeteer, {
@@ -723,16 +723,40 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream, meeting
     }
 }
 
-async function HandelEventList(req, res) {
+async function HandelScheduleEventList(req, res) {
     try {
         const { userEmail } = req.body
         const user = await User.findOne({ email: userEmail })
         // // Check if user exists and has events
 
         if (user) {
-            if (user.events.length > 0) {
+            if (user.scheduleEvents.length > 0) {
                 // If user exists and has events, send the list of events
-                const alleventslist = user.events.map(event => event);
+                const alleventslist = user.scheduleEvents.map(event => event);
+                res.status(200).json({ message: 'All Events are listed', alleventslist });
+            } else {
+                // If user exists but has no events, send a custom message
+                res.status(200).json({ message: 'No events found for the user.' });
+            }
+        } else {
+            // If user doesn't exist, send a message indicating user not found
+            res.status(404).json({ message: 'User not found.' });
+        }
+    } catch (error) {
+        console.error('Error fetching events:', error);
+        res.status(500).send('Internal Server Error');
+    }
+}
+async function HandelLiveEventList(req, res) {
+    try {
+        const { userEmail } = req.body
+        const user = await User.findOne({ email: userEmail })
+        // // Check if user exists and has events
+
+        if (user) {
+            if (user.liveEvents.length > 0) {
+                // If user exists and has events, send the list of events
+                const alleventslist = user.liveEvents.map(event => event);
                 res.status(200).json({ message: 'All Events are listed', alleventslist });
             } else {
                 // If user exists but has no events, send a custom message
@@ -878,7 +902,8 @@ async function HandleUpdateMappedTranscripts(req, res ){
 
 module.exports = {
     HandleScheduleEvent,
-    HandelEventList,
+    HandelScheduleEventList,
+    HandelLiveEventList,
     HandleMeetingdetails,
     HandleVideoStream,
     HandleLiveMeeting,

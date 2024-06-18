@@ -1956,8 +1956,15 @@ const MeetingDetails = () => {
       speaketime: entry.start,
       text: entry.text
     }));
+    if(meetingDetails.meeting.UpdatedMappedTranscript.length===0){
+      meetingDetails.meeting.UpdatedMappedTranscript=initialTranscripts
+    }else{
+      setUpdatedMappedTranscript(initialTranscripts);
+    }
+    // meetingDetails.meeting.UpdatedMappedTranscript=initialTranscripts
 
-    setUpdatedMappedTranscript(initialTranscripts);
+    // setUpdatedMappedTranscript(initialTranscripts);
+    
   }, [meetingDetails.meeting]);
 
   const handleOpenModal = (event, speaker, timestamp) => {
@@ -2142,6 +2149,7 @@ const MeetingDetails = () => {
   //   );
   // };
   const renderAssemblySpeakerTranscription = () => {
+    console.log("Updated Map",UpdatedMappedTranscript);
     if (!meetingDetails.meeting.UpdatedMappedTranscript) return null;
 
     return (

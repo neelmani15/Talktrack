@@ -3,7 +3,8 @@ const router=express.Router();
 
 
 const {
-        HandelEventList,
+        HandelScheduleEventList,
+        HandelLiveEventList,
         HandleScheduleEvent,
         HandleMeetingdetails,
         HandleVideoStream,
@@ -20,7 +21,9 @@ router.post("/schedule-event",HandleScheduleEvent)
 
 router.post("/start-live-meeting",HandleLiveMeeting)
 
-router.post('/allevents',HandelEventList)
+router.post('/allScheduleEvents',HandelScheduleEventList)
+
+router.post('/allLiveEvents',HandelLiveEventList)
 
 router.post('/meetingdetails',HandleMeetingdetails)
 router.get('/video',HandleVideoStream)
