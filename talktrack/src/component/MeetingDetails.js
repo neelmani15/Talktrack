@@ -1983,7 +1983,7 @@ const MeetingDetails = () => {
   useEffect(() => {
     const sendMappedTranscripts = async () => {
       try {
-        const response = await axios.post('http://localhost:5001/user/update-mapped-transcript', {
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/update-mapped-transcript`, {
           meetingId: meetingDetails.meeting.meetingId,
           UpdatedMappedTranscript
         });

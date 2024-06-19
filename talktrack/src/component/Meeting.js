@@ -35,7 +35,7 @@ const Meetings = () => {
   const startRecording = async (meetUrl) => {
     try {
       setIsLoading(true);
-      const response = await axios.post('http://localhost:5001/start-recording', { meetUrl, userEmail });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/start-recording`, { meetUrl, userEmail });
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
@@ -73,7 +73,7 @@ const Meetings = () => {
       setIsLoading(true);
       const filteredAttendees = formData.attendees.filter(email => email.trim() !== '');
       const dataToSubmit = { ...formData, userEmail, attendees: filteredAttendees };
-      const response = await axios.post('http://localhost:5001/user/schedule-event', { dataToSubmit });
+      const response = await axios.post('/user/schedule-event', { dataToSubmit });
       setIsLoading(false);
       setIsModalOpen(false);
       toast.success('Events successfully scheduled!');
@@ -87,7 +87,7 @@ const Meetings = () => {
   const fetchEvents = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.post('http://localhost:5001/user/allevents', {userEmail});
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/allevents`, {userEmail});
       if(response.data.message === "No events found for the user."){
         setIsNoEvents(true);
         // toast.warning('No events found for the user.');
@@ -109,7 +109,7 @@ const Meetings = () => {
     const parts = eventUrl.split('/');
     const meetingId = parts[parts.length - 1];
     try {
-      const response = await axios.post('http://localhost:5001/user/meetingdetails', { meetingId,userEmail });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/meetingdetails`, { meetingId,userEmail });
       
       navigate('/meetingdetails', { state: { meetingDetails: response.data } });
     } catch (error) {
@@ -131,7 +131,7 @@ const Meetings = () => {
       setIsLoading(true);
 
       console.log(meetingUrl);
-      const response = await axios.post('http://localhost:5001/user/start-live-meeting', { meetUrl: meetingUrl, userEmail });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/start-live-meeting`, { meetUrl: meetingUrl, userEmail });
       setIsLoading(false);
       setIsLiveMeetingModalOpen(false);
       toast.success('Live meeting added successfully!');
