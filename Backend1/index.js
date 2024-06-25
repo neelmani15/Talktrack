@@ -41,6 +41,11 @@ app.get('/', (req, res) => {
 });
 
 
+app.get('/testing', (req, res) => {
+    consolog
+    res.send('Hello, Welcome to TalkTrack Backend!');
+});
+
 const userRouter= require("./Routes/user")
 const OAuthRouter= require("./Routes/oauth")
 app.use("/user",userRouter)
