@@ -284,6 +284,7 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
 }
 
 async function HandleLiveMeeting(req, res) {
+    let botPresence1=false;
     console.log("Joining Meet");
     const { meetUrl, userEmail } = req.body;
     console.log(meetUrl);
@@ -384,7 +385,7 @@ async function HandleLiveMeeting(req, res) {
 
         const participantCheckInterval = setInterval(async () => {
             const botPresence = await HandleCheckBotPresence(page, browser, meetingId, userEmail);
-            const botPresence1 = botPresence.status;
+            botPresence1 = botPresence.status;
             const orderedSpeaker = botPresence.orderedParticipants;
             console.log("Getting", botPresence1);
             if (botPresence1 || isRecordingStopped) {
@@ -460,6 +461,72 @@ async function HandleStopRecording(browser, stream, fileStream, meetingId, userE
 // let isParticipantsButtonClicked = false;
 // let checkInterval = null;
 
+
+// async function extractMicDetails(page, initialSpeak, seenParticipants) {
+//     try {
+//         const mainDivXPath = '//div[contains(@class, "AE8xFb OrqRRb GvcuGe goTdfd")]';
+//         const { details, updatedInitialSpeak, newSeenParticipants } = await page.evaluate((mainDivXPath, initialSpeak, seenParticipants) => {
+//             const details = [];
+//             const seenParticipantsMap = new Map(JSON.parse(seenParticipants));
+//             const mainDivNodes = document.evaluate(mainDivXPath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+//             for (let i = 0; i < mainDivNodes.snapshotLength; i++) {
+//                 const mainDiv = mainDivNodes.snapshotItem(i);
+//                 const spanXPath = './/span[contains(@class, "zWGUib")]';
+//                 const spanNodes = document.evaluate(spanXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+//                 const jsControllerDivXPath = './/div[@jscontroller="ES310d"]';
+//                 const jsControllerDivNodes = document.evaluate(jsControllerDivXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+
+//                 if (spanNodes.snapshotLength === jsControllerDivNodes.snapshotLength) {
+//                     let speakingParticipants = 0;
+//                     let currentSpeaker = '';
+
+//                     for (let j = 0; j < spanNodes.snapshotLength; j++) {
+//                         const spanNode = spanNodes.snapshotItem(j);
+//                         const spanText = spanNode ? spanNode.textContent : '';
+//                         const jsControllerDivNode = jsControllerDivNodes.snapshotItem(j);
+//                         const classValue = jsControllerDivNode ? jsControllerDivNode.getAttribute('class') : '';
+//                         // Detect actual speaking events based on class names indicating speaking
+//                         const isSpeaking = classValue.includes('IisKdb GF8M7d gjg47c KUNJSe x9nQ6') || classValue.includes('IisKdb GF8M7d gjg47c MNVeFb kT2pkb'); // Adjust these conditions based on the actual class names
+
+//                         if (!isSpeaking) {
+//                             speakingParticipants++;
+//                             currentSpeaker = spanText;
+//                         }
+//                     }
+
+//                     if (speakingParticipants === 1 && currentSpeaker) {
+//                         const speakTime = new Date().toISOString();
+//                         if (!seenParticipantsMap.has(currentSpeaker)) {
+//                             seenParticipantsMap.set(currentSpeaker, []);
+//                         }
+//                         if (!initialSpeak) {
+//                             seenParticipantsMap.get(currentSpeaker).push(speakTime);
+//                             initialSpeak = true;
+//                         } else {
+//                             initialSpeak = false;
+//                         }
+//                         details.push({ speak_time: speakTime, participantname: currentSpeaker });
+//                     }
+//                 }
+//             }
+//             return {
+//                 details,
+//                 updatedInitialSpeak: initialSpeak,
+//                 newSeenParticipants: JSON.stringify(Array.from(seenParticipantsMap.entries()))
+//             };
+//         }, mainDivXPath, initialSpeak, JSON.stringify(Array.from(seenParticipants.entries())));
+//         initialSpeak = updatedInitialSpeak;
+//         seenParticipants.clear();
+//         new Map(JSON.parse(newSeenParticipants)).forEach((value, key) => seenParticipants.set(key, value));
+//         console.log('Extracted Details:', details);
+//         console.log("Seen Participants", seenParticipants);
+//         return { details, seenParticipants };
+//     } catch (error) {
+//         console.error('Error extracting details:', error);
+//         return { details: [], seenParticipants };
+//     }
+// }
+
 // async function extractMicDetails(page, initialSpeak, seenParticipants) {
 //     try {
 //         const mainDivXPath = '//div[contains(@class, "AE8xFb OrqRRb GvcuGe goTdfd")]';
@@ -509,7 +576,6 @@ async function HandleStopRecording(browser, stream, fileStream, meetingId, userE
 //                 newSeenParticipants: JSON.stringify(Array.from(seenParticipantsMap.entries()))
 //             };
 //         }, mainDivXPath, initialSpeak, JSON.stringify(Array.from(seenParticipants.entries())));
-
 //         initialSpeak = updatedInitialSpeak;
 //         seenParticipants.clear();
 //         new Map(JSON.parse(newSeenParticipants)).forEach((value, key) => seenParticipants.set(key, value));
@@ -527,10 +593,12 @@ async function extractMicDetails(page, initialSpeak, seenParticipants) {
     try {
         const mainDivXPath = '//div[contains(@class, "AE8xFb OrqRRb GvcuGe goTdfd")]';
 
-        const { details, updatedInitialSpeak, newSeenParticipants } = await page.evaluate((mainDivXPath, initialSpeak, seenParticipants) => {
+        const { details, updatedInitialSpeak, newSeenParticipants, logInfo } = await page.evaluate((mainDivXPath, initialSpeak, seenParticipants) => {
             const details = [];
             const seenParticipantsMap = new Map(JSON.parse(seenParticipants));
             const mainDivNodes = document.evaluate(mainDivXPath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+
+            const logInfo = [];
 
             for (let i = 0; i < mainDivNodes.snapshotLength; i++) {
                 const mainDiv = mainDivNodes.snapshotItem(i);
@@ -540,36 +608,31 @@ async function extractMicDetails(page, initialSpeak, seenParticipants) {
                 const jsControllerDivNodes = document.evaluate(jsControllerDivXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
 
                 if (spanNodes.snapshotLength === jsControllerDivNodes.snapshotLength) {
-                    let speakingParticipants = 0;
-                    let currentSpeaker = '';
-
                     for (let j = 0; j < spanNodes.snapshotLength; j++) {
                         const spanNode = spanNodes.snapshotItem(j);
                         const spanText = spanNode ? spanNode.textContent : '';
                         const jsControllerDivNode = jsControllerDivNodes.snapshotItem(j);
                         const classValue = jsControllerDivNode ? jsControllerDivNode.getAttribute('class') : '';
 
-                        // Detect actual speaking events based on class names indicating speaking
-                        const isSpeaking = classValue.includes('IisKdb GF8M7d gjg47c KUNJSe x9nQ6') || classValue.includes('IisKdb GF8M7d gjg47c MNVeFb kT2pkb'); // Adjust these conditions based on the actual class names
+                        // Log the class value and participant information
+                        logInfo.push({ participant: spanText, classValue });
 
-                        if (!isSpeaking) {
-                            speakingParticipants++;
-                            currentSpeaker = spanText;
-                        }
-                    }
+                        // Detect actual speaking events based on class names indicating muted
+                        const isMuted = classValue.includes('IisKdb GF8M7d  gjg47c KUNJSe x9nQ6') || classValue.includes('IisKdb GF8M7d  gjg47c MNVeFb kT2pkb');
 
-                    if (speakingParticipants === 1 && currentSpeaker) {
-                        const speakTime = new Date().toISOString();
-                        if (!seenParticipantsMap.has(currentSpeaker)) {
-                            seenParticipantsMap.set(currentSpeaker, []);
+                        if (spanText && !isMuted) {
+                            const speakTime = new Date().toISOString();
+                            if (!seenParticipantsMap.has(spanText)) {
+                                seenParticipantsMap.set(spanText, []);
+                            }
+                            if (!initialSpeak) {
+                                seenParticipantsMap.get(spanText).push(speakTime);
+                                initialSpeak = true;
+                            } else {
+                                initialSpeak = false;
+                            }
+                            details.push({ speak_time: speakTime, participantname: spanText });
                         }
-                        if (!initialSpeak) {
-                            seenParticipantsMap.get(currentSpeaker).push(speakTime);
-                            initialSpeak = true;
-                        } else {
-                            initialSpeak = false;
-                        }
-                        details.push({ speak_time: speakTime, participantname: currentSpeaker });
                     }
                 }
             }
@@ -577,7 +640,8 @@ async function extractMicDetails(page, initialSpeak, seenParticipants) {
             return {
                 details,
                 updatedInitialSpeak: initialSpeak,
-                newSeenParticipants: JSON.stringify(Array.from(seenParticipantsMap.entries()))
+                newSeenParticipants: JSON.stringify(Array.from(seenParticipantsMap.entries())),
+                logInfo
             };
         }, mainDivXPath, initialSpeak, JSON.stringify(Array.from(seenParticipants.entries())));
 
@@ -585,8 +649,9 @@ async function extractMicDetails(page, initialSpeak, seenParticipants) {
         seenParticipants.clear();
         new Map(JSON.parse(newSeenParticipants)).forEach((value, key) => seenParticipants.set(key, value));
 
+        console.log('Log Information:', logInfo); // Log the collected information
         console.log('Extracted Details:', details);
-        console.log("Seen Participants", seenParticipants);
+        console.log('Seen Participants:', seenParticipants);
         return { details, seenParticipants };
     } catch (error) {
         console.error('Error extracting details:', error);
@@ -596,13 +661,15 @@ async function extractMicDetails(page, initialSpeak, seenParticipants) {
 
 
 
-let orderedParticipants = [];
-let allParticipants = new Set();
-let isParticipantsButtonClicked = false;
-let checkInterval;
-let initialSpeak = false;
-let seenParticipants = new Map();
-let isRecordingStopped = false;
+
+
+// let orderedParticipants = [];
+// let allParticipants = new Set();
+// let isParticipantsButtonClicked = false;
+// let checkInterval;
+// let initialSpeak = false;
+// let seenParticipants = new Map();
+// let isRecordingStopped = false;
 
 function getDistinctParticipants(data) {
     const participantsSet = new Set(data.map(entry => entry.participantname));
@@ -642,6 +709,14 @@ function getTransitions(data, meetingStartTime) {
     return transitions;
 }
 
+let orderedParticipants = [];
+let allParticipants = new Set();
+let isParticipantsButtonClicked = false;
+let checkInterval;
+let initialSpeak = false;
+let seenParticipants = new Map();
+let isRecordingStopped = false;
+
 async function HandleCheckBotPresence(page, browser, stream, fileStream, meetingId, userEmail) {
     try {
         const botName = 'riktam.ai NoteTaker';
@@ -676,7 +751,7 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream, meeting
                             const { details, seenParticipants: newSeenParticipants } = await extractMicDetails(page, initialSpeak, seenParticipants);
                             seenParticipants = newSeenParticipants;
                             orderedParticipants = [...orderedParticipants, ...details];
-                            console.log(details);
+                            console.log("Details",details);
                         } else {
                             console.log('Frame is detached, stopping interval.');
                             clearInterval(checkInterval);
@@ -722,6 +797,7 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream, meeting
         return { orderedParticipants: orderedParticipants || [], status: true };
     }
 }
+
 
 async function HandelScheduleEventList(req, res) {
     try {
