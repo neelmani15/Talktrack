@@ -853,13 +853,20 @@ async function HandleMeetingdetails(req, res) {
         const { meetingId, userEmail } = req.body;
         console.log("Meeting Details in Handle Meeting",meetingId);
         let meeting = await Meeting.findOne({ meetingId });
-        console.log(meeting);
+        // console.log("meetingdetails",meeting);
 
         if (meeting) {
             if (meeting.assemblytranscritps != '') {
-                console.log("iam executed")
+                // console.log("iam executed")
                 const videoaccess_url = await HandleVideoStream(meetingId);
                 const audioaccess_url = await handleAudioStream(meetingId);
+                if(meeting.MappedTranscript.length===0){
+                    console.log("i am excuteded")
+                    const mappedTranscripts = mapTheSpeakerNames(meeting)
+                 }
+                // const mappedTranscripts = mapTheSpeakerNames(meeting)
+                // console.log("this is from meetingdetails",mappedTranscripts)
+                // console.log(meeting)
                 return res.status(200).json({ meeting, videoaccess_url, audioaccess_url });
             } else {
                 // const videoExists = await checkVideoExists(process.env.S3_BUCKET_NAME, meetingId);
@@ -883,6 +890,7 @@ async function HandleMeetingdetails(req, res) {
                 await meeting.save();
                 const videoaccess_url = await HandleVideoStream(meetingId);
                 const audioaccess_url = await handleAudioStream(meetingId);
+                const mappedTranscripts =await mapTheSpeakerNames(meeting)
                 return res.status(200).json({ meeting, videoaccess_url, audioaccess_url });
 
             }
@@ -910,6 +918,62 @@ async function HandleMeetingdetails(req, res) {
     }
 }
 
+
+
+const mapTheSpeakerNames = async (meeting) => {
+    const { assemblytranscritps, orderedSpeaker, orderSpeakerTimeBasis } = meeting;
+  
+    // Create a mapping of speaker letters to indices
+    const speakerLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+    const speakers = {};
+  
+    // Assign letters to each speaker
+    assemblytranscritps.transcriptionData.forEach((dialogue) => {
+      if (!(dialogue.speaker in speakers)) {
+        speakers[dialogue.speaker] = speakerLetters[Object.keys(speakers).length];
+      }
+    });
+  
+    const speakersKeys = Object.keys(speakers);
+    const speakerNameMap = {};
+    let anonymousCount = 1;
+  
+    // Map orderedSpeaker names to speaker letters
+    orderedSpeaker.forEach((name, index) => {
+      if (speakersKeys[index]) {
+        speakerNameMap[speakersKeys[index]] = name;
+      }
+    });
+  
+    // Assign Anonymous labels for additional speakers
+    speakersKeys.forEach((letter) => {
+      if (!(letter in speakerNameMap)) {
+        speakerNameMap[letter] = `Anonymous ${anonymousCount++}`;
+      }
+    });
+  
+    const mappedTranscripts = assemblytranscritps.transcriptionData.map((entry, index) => {
+      let speakerName;
+      if (orderSpeakerTimeBasis.length > 0) {
+        const timeBasis = orderSpeakerTimeBasis[index] || {};
+        speakerName = timeBasis.previous || orderedSpeaker[index % orderedSpeaker.length];
+      } else {
+        speakerName = orderedSpeaker[index % orderedSpeaker.length];
+      }
+  
+      return {
+        ...entry,
+        speakerName: speakerNameMap[entry.speaker] || `Anonymous ${anonymousCount++}`,
+      };
+    });
+  
+    // Update the meeting document
+    meeting.MappedTranscript = mappedTranscripts;
+    await meeting.save();
+  
+    return mappedTranscripts;
+  };
+  
 const AWS = require('aws-sdk');
 const { log } = require('console');
 require("aws-sdk/lib/maintenance_mode_message").suppress = true;
@@ -948,18 +1012,17 @@ const s3Client = new S3Client({
     credentials: fromEnv() // Automatically fetch credentials from environment variables
 });
 
-
-async function HandleUpdateMappedTranscripts(req, res ){
+const HandleUpdateMappedTranscripts = async (req, res) => {
     const { meetingId, UpdatedMappedTranscript } = req.body;
-
+  
     console.log('Received request to update mappedTranscript:', req.body);
   
     try {
-      // Find the meeting by meetingId and update mappedTranscript
+      // Update the meeting using findOneAndUpdate
       const updatedMeeting = await Meeting.findOneAndUpdate(
-        { meetingId: meetingId },
-        { $set: { UpdatedMappedTranscript: UpdatedMappedTranscript } },
-        { new: true } 
+        { meetingId },
+        { $set: { MappedTranscript: UpdatedMappedTranscript } },
+        { new: true } // Return the updated document
       );
   
       if (!updatedMeeting) {
@@ -968,14 +1031,15 @@ async function HandleUpdateMappedTranscripts(req, res ){
       }
   
       console.log('Updated meeting:', updatedMeeting);
-     
       res.json(updatedMeeting);
     } catch (error) {
       console.error('Error updating mapped transcript:', error);
       res.status(500).json({ error: 'Server error' });
     }
-}
+  };
 
+  
+  
 module.exports = {
     HandleScheduleEvent,
     HandelScheduleEventList,

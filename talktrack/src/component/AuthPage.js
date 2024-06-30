@@ -10,7 +10,7 @@
 //         }
 //       }, []);
 //   const handleClick = ()=>{
-//     const url= `http://localhost:5001/auth/google`;
+//     const url= `http:///auth/google`;
 //     console.log(url);
 //     window.location.href = url;
 //   }
@@ -169,7 +169,9 @@ const AuthPage = () => {
   }, []);
 
   const handleClick = () => {
-    const url = `http://localhost:5001/auth/google`;
+
+    console.log(process.env.REACT_APP_API_URL)
+    const url = `${process.env.REACT_APP_API_URL}/auth/google`;
     console.log(url);
     window.location.href = url;
   };

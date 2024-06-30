@@ -120,26 +120,246 @@
 // export default CustomAudioPlayer;
 
 
+// import React from 'react';
+// import AudioPlayer from 'react-h5-audio-player';
+// import 'react-h5-audio-player/lib/styles.css';
+// import '../css/audio.css'; // Import your custom CSS
+
+// const CustomAudioPlayer = ({ audioUrl }) => {
+//   const audioRef = React.useRef(null);
+
+//   const handleForward = () => {
+//     if (audioRef.current) {
+//       audioRef.current.audio.current.currentTime += 10; // Forward 10 seconds
+//     }
+//   };
+
+//   const handleRewind = () => {
+//     if (audioRef.current) {
+//       audioRef.current.audio.current.currentTime -= 5; // Rewind 5 seconds
+//       if (audioRef.current.audio.current.currentTime < 0) {
+//         audioRef.current.audio.current.currentTime = 0; // Prevent negative time
+//       }
+//     }
+//   };
+
+//   return (
+//     <div className="audio-player">
+//       <AudioPlayer
+//         ref={audioRef}
+//         src={audioUrl}
+//         onPlay={e => console.log("onPlay")}
+//       />
+//     </div>
+//   );
+// };
+
+// export default CustomAudioPlayer;
+
+
+// import React from 'react';
+// import AudioPlayer from 'react-h5-audio-player';
+// import 'react-h5-audio-player/lib/styles.css';
+// import '../css/audio.css'; // Import your custom CSS
+
+// const CustomAudioPlayer = React.forwardRef(({ audioUrl, onTimeUpdate, onPlay, onPause, onSeeked }, ref) => {
+//   const audioRef = React.useRef(null);
+
+//   React.useImperativeHandle(ref, () => ({
+//     get audio() {
+//       return audioRef.current?.audio?.current;
+//     },
+//   }));
+
+//   React.useEffect(() => {
+//     const audioElement = audioRef.current?.audio?.current;
+//     if (!audioElement) return;
+
+//     const handleTimeUpdate = () => {
+//       if (onTimeUpdate) {
+//         onTimeUpdate(audioElement.currentTime);
+//       }
+//     };
+
+//     audioElement.addEventListener('timeupdate', handleTimeUpdate);
+
+//     return () => {
+//       audioElement.removeEventListener('timeupdate', handleTimeUpdate);
+//     };
+//   }, [onTimeUpdate]);
+
+//   const handleForward = () => {
+//     if (audioRef.current) {
+//       const audioElement = audioRef.current.audio.current;
+//       if (audioElement) {
+//         audioElement.currentTime += 10; // Forward 10 seconds
+//       }
+//     }
+//   };
+
+//   const handleRewind = () => {
+//     if (audioRef.current) {
+//       const audioElement = audioRef.current.audio.current;
+//       if (audioElement) {
+//         audioElement.currentTime -= 5; // Rewind 5 seconds
+//         if (audioElement.currentTime < 0) {
+//           audioElement.currentTime = 0; // Prevent negative time
+//         }
+//       }
+//     }
+//   };
+
+//   const handleSeeked = (event) => {
+//     if (onSeeked) {
+//       onSeeked(event.target.currentTime);
+//     }
+//   };
+
+//   return (
+//     <div className="audio-player">
+//       <AudioPlayer
+//         ref={audioRef}
+//         src={audioUrl}
+//         onPlay={onPlay}
+//         onPause={onPause}
+//         onSeeked={handleSeeked}
+//       />
+//     </div>
+//   );
+// });
+
+// export default CustomAudioPlayer;
+
+// import React from 'react';
+// import AudioPlayer from 'react-h5-audio-player';
+// import 'react-h5-audio-player/lib/styles.css';
+// import '../css/audio.css'; // Import your custom CSS
+
+// const CustomAudioPlayer = React.forwardRef(({ audioUrl, onTimeUpdate, onPlay, onPause, onSeeked }, ref) => {
+//   const audioRef = React.useRef(null);
+
+//   React.useImperativeHandle(ref, () => ({
+//     get audio() {
+//       return audioRef.current?.audio?.current;
+//     },
+//   }));
+
+//   React.useEffect(() => {
+//     const audioElement = audioRef.current?.audio?.current;
+//     if (!audioElement) return;
+
+//     const handleTimeUpdate = () => {
+//       if (onTimeUpdate) {
+//         onTimeUpdate(audioElement.currentTime);
+//       }
+//     };
+
+//     audioElement.addEventListener('timeupdate', handleTimeUpdate);
+
+//     return () => {
+//       audioElement.removeEventListener('timeupdate', handleTimeUpdate);
+//     };
+//   }, [onTimeUpdate]);
+
+//   const handleForward = () => {
+//     if (audioRef.current) {
+//       const audioElement = audioRef.current.audio.current;
+//       if (audioElement) {
+//         audioElement.currentTime += 10; // Forward 10 seconds
+//       }
+//     }
+//   };
+
+//   const handleRewind = () => {
+//     if (audioRef.current) {
+//       const audioElement = audioRef.current.audio.current;
+//       if (audioElement) {
+//         audioElement.currentTime -= 5; // Rewind 5 seconds
+//         if (audioElement.currentTime < 0) {
+//           audioElement.currentTime = 0; // Prevent negative time
+//         }
+//       }
+//     }
+//   };
+
+//   const handleSeeked = (event) => {
+//     if (onSeeked) {
+//       onSeeked(event.target.currentTime);
+//     }
+//   };
+
+//   return (
+//     <div className="audio-player">
+//       <AudioPlayer
+//         ref={audioRef}
+//         src={audioUrl}
+//         onPlay={onPlay}
+//         onPause={onPause}
+//         onSeeked={handleSeeked}
+//       />
+//     </div>
+//   );
+// });
+
+// export default CustomAudioPlayer;
+
+
+
 import React from 'react';
 import AudioPlayer from 'react-h5-audio-player';
 import 'react-h5-audio-player/lib/styles.css';
-import '../css/audio.css'; // Import your custom CSS
+import '../css/audio.css';
 
-const CustomAudioPlayer = ({ audioUrl }) => {
+const CustomAudioPlayer = React.forwardRef(({ audioUrl, onTimeUpdate, onPlay, onPause, onSeeked }, ref) => {
   const audioRef = React.useRef(null);
+
+  React.useImperativeHandle(ref, () => ({
+    get audio() {
+      return audioRef.current?.audio?.current;
+    },
+  }));
+
+  React.useEffect(() => {
+    const audioElement = audioRef.current?.audio?.current;
+    if (!audioElement) return;
+
+    const handleTimeUpdate = () => {
+      if (onTimeUpdate) {
+        onTimeUpdate(audioElement.currentTime);
+      }
+    };
+
+    audioElement.addEventListener('timeupdate', handleTimeUpdate);
+
+    return () => {
+      audioElement.removeEventListener('timeupdate', handleTimeUpdate);
+    };
+  }, [onTimeUpdate]);
 
   const handleForward = () => {
     if (audioRef.current) {
-      audioRef.current.audio.current.currentTime += 10; // Forward 10 seconds
+      const audioElement = audioRef.current.audio.current;
+      if (audioElement) {
+        audioElement.currentTime += 10; // Forward 10 seconds
+      }
     }
   };
 
   const handleRewind = () => {
     if (audioRef.current) {
-      audioRef.current.audio.current.currentTime -= 5; // Rewind 5 seconds
-      if (audioRef.current.audio.current.currentTime < 0) {
-        audioRef.current.audio.current.currentTime = 0; // Prevent negative time
+      const audioElement = audioRef.current.audio.current;
+      if (audioElement) {
+        audioElement.currentTime -= 5; // Rewind 5 seconds
+        if (audioElement.currentTime < 0) {
+          audioElement.currentTime = 0; // Prevent negative time
+        }
       }
+    }
+  };
+
+  const handleSeeked = (event) => {
+    if (onSeeked) {
+      onSeeked(event.target.currentTime);
     }
   };
 
@@ -148,10 +368,12 @@ const CustomAudioPlayer = ({ audioUrl }) => {
       <AudioPlayer
         ref={audioRef}
         src={audioUrl}
-        onPlay={e => console.log("onPlay")}
+        onPlay={onPlay}
+        onPause={onPause}
+        onSeeked={handleSeeked}
       />
     </div>
   );
-};
+});
 
 export default CustomAudioPlayer;

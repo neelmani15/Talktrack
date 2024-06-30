@@ -7,11 +7,14 @@ import App from './App';
 import { UserProvider } from './contextapi/UserEmailContext';
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
-  <React.StrictMode>
-    <UserProvider>
+  // <React.StrictMode>
+  //   <UserProvider>
+  //     <App />
+  //   </UserProvider>
+  // </React.StrictMode>
+  <UserProvider>
       <App />
     </UserProvider>
-  </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function

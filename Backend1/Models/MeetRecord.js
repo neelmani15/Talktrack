@@ -40,9 +40,10 @@ const meetingRecordSchema = new mongoose.Schema({
     type:Date,
     required:true
   },
-  UpdatedMappedTranscript:{
+  MappedTranscript:{
     type: Array,
-    required: true
+    required: true,
+    default:{}
   }
 });
 

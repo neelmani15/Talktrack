@@ -6,7 +6,7 @@ const SpeakerModal = ({ isOpen, onRequestClose, orderedSpeaker, position ,speake
   const { top, left } = position;
   const [hoveredSpeaker, setHoveredSpeaker] = useState(null);
   const [isTooltipOpen, setIsTooltipOpen] = useState(false); 
-  console.log(speakerName)
+  console.log(orderedSpeaker)
 
   const handleMouseEnter = (index,speaker) => {
     setHoveredSpeaker(index);
@@ -19,10 +19,10 @@ const SpeakerModal = ({ isOpen, onRequestClose, orderedSpeaker, position ,speake
     setIsTooltipOpen(false);
   };
   const handleApplyToCurrentSpeaker = (speaker) => {
-    onApplyToCurrentSpeaker(speaker,timestamp);
+    onApplyToCurrentSpeaker(speaker);
   };
   const handleApplyToAllSpeaker = (speaker) => {
-    onApplyToAllSpeaker(speaker,timestamp);
+    onApplyToAllSpeaker(speaker);
   };
 
   return (

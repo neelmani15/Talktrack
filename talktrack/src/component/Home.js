@@ -28,7 +28,7 @@
 //     try {
 //       setIsLoading(true);
 //       // Make a POST request to your backend to start recording
-//       const response = await axios.post('http://localhost:5001/start-recording', { meetUrl ,userEmail});
+//       const response = await axios.post('http:///start-recording', { meetUrl ,userEmail});
 //       console.log('Recording started successfully:', response.data);
 //       setIsLoading(false);
 //       toast.success('Meeting Recording successfully started!');
@@ -57,7 +57,7 @@
 //       setIsLoading(true);
 //       console.log(formData);
 //       // Make a POST request to your backend route for scheduling a meeting
-//       const response = await axios.post('http://localhost:5001/schedule-event', {formData});
+//       const response = await axios.post('http:///schedule-event', {formData});
 //       console.log('Meeting scheduled successfully:', response.data);
 //       setIsLoading(false);
 //       setIsModalOpen(false);
@@ -74,7 +74,7 @@
 //     try {
 //       setIsLoading(true);
 //       // Make a GET request to fetch all events
-//       const response = await axios.get('http://localhost:5001/allevents', {
+//       const response = await axios.get('http:///allevents', {
 //         withCredentials: true // Ensure credentials are sent along with the request
 //       });
 //       setEvents(response.data.alleventslist);
@@ -93,7 +93,7 @@
 //     console.log(meetingId);
   
 //     try {
-//       const response = await axios.get(`http://localhost:5001/user/meetingdetails`, {
+//       const response = await axios.get(`http:///user/meetingdetails`, {
 //         params: { meetingId } // Passing meetingId as a query parameter
 //       });
 //       console.log(response.data);
@@ -339,7 +339,7 @@
 //   const startRecording = async (meetUrl) => {
 //     try {
 //       setIsLoading(true);
-//       const response = await axios.post('http://localhost:5001/start-recording', { meetUrl, userEmail });
+//       const response = await axios.post('http:///start-recording', { meetUrl, userEmail });
 //       setIsLoading(false);
 //       // toast.success('Meeting Recording successfully started!');
 
@@ -381,7 +381,7 @@
 //       const filteredAttendees = formData.attendees.filter(email => email.trim() !== '');
 //       const dataToSubmit = { ...formData, userEmail, attendees: filteredAttendees };
 //       // const dataToSubmit = { ...formData, userEmail };
-//       const response = await axios.post('http://localhost:5001/user/schedule-event', { dataToSubmit });
+//       const response = await axios.post('http:///user/schedule-event', { dataToSubmit });
 //       setIsLoading(false);
 //       setIsModalOpen(false);
 //       toast.success('Events successfully scheduled!');
@@ -394,7 +394,7 @@
 //   const fetchEvents = async () => {
 //     try {
 //       setIsLoading(true);
-//       const response = await axios.post('http://localhost:5001/user/allevents', {userEmail});
+//       const response = await axios.post('http:///user/allevents', {userEmail});
 //       setEvents(response.data.alleventslist);
 //       console.log(response.data)
 //       setIsLoading(false);
@@ -409,7 +409,7 @@
 //     const parts = eventUrl.split('/');
 //     const meetingId = parts[parts.length - 1];
 //     try {
-//       const response = await axios.get(`http://localhost:5001/user/meetingdetails`, { params: { meetingId } });
+//       const response = await axios.get(`http:///user/meetingdetails`, { params: { meetingId } });
 //       navigate('/meetingdetails', { state: { meetingDetails: response.data } });
 //     } catch (error) {
 //       console.error('Error fetching meeting details:', error);
@@ -654,7 +654,7 @@ const Home = () => {
   const startRecording = async (meetUrl) => {
     try {
       setIsLoading(true);
-      const response = await axios.post('http://localhost:5001/start-recording', { meetUrl, userEmail });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/start-recording`, { meetUrl, userEmail });
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
@@ -692,7 +692,7 @@ const Home = () => {
       setIsLoading(true);
       const filteredAttendees = formData.attendees.filter(email => email.trim() !== '');
       const dataToSubmit = { ...formData, userEmail, attendees: filteredAttendees };
-      const response = await axios.post('http://localhost:5001/user/schedule-event', { dataToSubmit });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/schedule-event`, { dataToSubmit });
       setIsLoading(false);
       setIsModalOpen(false);
       toast.success('Events successfully scheduled!');
@@ -707,7 +707,7 @@ const Home = () => {
   const fetchScheduleEvents = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.post('http://localhost:5001/user/allScheduleEvents', {userEmail});
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/allScheduleEvents`, {userEmail});
       if(response.data.message === "No events found for the user."){
         setIsNoEvents(true);
         // toast.warning('No events found for the user.');
@@ -729,7 +729,7 @@ const Home = () => {
   const fetchLiveEvents = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.post('http://localhost:5001/user/allLiveEvents', {userEmail});
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/allLiveEvents`, {userEmail});
       if(response.data.message === "No events found for the user."){
         setIsNoEvents(true);
         // toast.warning('No events found for the user.');
@@ -753,9 +753,9 @@ const Home = () => {
     const parts = eventUrl.split('/');
     const meetingId = parts[parts.length - 1];
     try {
-      const response = await axios.post('http://localhost:5001/user/meetingdetails', { meetingId,userEmail });
+      // const response = await axios.post('http:///user/meetingdetails', { meetingId,userEmail });
       
-      navigate('/meetingdetails', { state: { meetingDetails: response.data } });
+      navigate('/meetingdetails', { state: { meetingId,userEmail }  });
     } catch (error) {
       console.error('Error fetching meeting details:', error);
     }
@@ -775,7 +775,7 @@ const Home = () => {
       setIsLoading(true);
 
       console.log(meetingUrl);
-      const response = await axios.post('http://localhost:5001/user/start-live-meeting', { meetUrl: meetingUrl, userEmail });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/start-live-meeting`, { meetUrl: meetingUrl, userEmail });
       setIsLoading(false);
       setIsLiveMeetingModalOpen(false);
       toast.success('Live meeting added successfully!');
