@@ -190,6 +190,7 @@ let stop = false;
 let meetingstartTime;
 async function HandlejoinMeeting(meetUrl, userEmail) {
     console.log("Joining Meet");
+    let botPresence1=false;
     // const { meetUrl } = req.body;
     console.log(meetUrl);
     console.log(userEmail);
@@ -264,7 +265,7 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
 
         const participantCheckInterval = setInterval(async () => {
             const botPresence = await HandleCheckBotPresence(page, browser, meetingId, userEmail);
-            const botPresence1 = botPresence.status;
+            botPresence1 = botPresence.status;
             const orderedSpeaker = botPresence.orderedParticipants;
             console.log("Getting", botPresence1);
             if (botPresence1 || isRecordingStopped) {
@@ -449,145 +450,6 @@ async function HandleStopRecording(browser, stream, fileStream, meetingId, userE
         console.error('Error stopping recording:', error);
     }
 }
-
-// let allParticipants = new Set();
-// let speakingOrder = new Map();
-// let speakingCounter = 1;
-// let gotItClicked = false;
-// let isRecordingStopped = false;
-
-// let initialSpeak = false;
-// const seenParticipants = new Map(); 
-// let isParticipantsButtonClicked = false;
-// let checkInterval = null;
-
-
-// async function extractMicDetails(page, initialSpeak, seenParticipants) {
-//     try {
-//         const mainDivXPath = '//div[contains(@class, "AE8xFb OrqRRb GvcuGe goTdfd")]';
-//         const { details, updatedInitialSpeak, newSeenParticipants } = await page.evaluate((mainDivXPath, initialSpeak, seenParticipants) => {
-//             const details = [];
-//             const seenParticipantsMap = new Map(JSON.parse(seenParticipants));
-//             const mainDivNodes = document.evaluate(mainDivXPath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-//             for (let i = 0; i < mainDivNodes.snapshotLength; i++) {
-//                 const mainDiv = mainDivNodes.snapshotItem(i);
-//                 const spanXPath = './/span[contains(@class, "zWGUib")]';
-//                 const spanNodes = document.evaluate(spanXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-//                 const jsControllerDivXPath = './/div[@jscontroller="ES310d"]';
-//                 const jsControllerDivNodes = document.evaluate(jsControllerDivXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-
-//                 if (spanNodes.snapshotLength === jsControllerDivNodes.snapshotLength) {
-//                     let speakingParticipants = 0;
-//                     let currentSpeaker = '';
-
-//                     for (let j = 0; j < spanNodes.snapshotLength; j++) {
-//                         const spanNode = spanNodes.snapshotItem(j);
-//                         const spanText = spanNode ? spanNode.textContent : '';
-//                         const jsControllerDivNode = jsControllerDivNodes.snapshotItem(j);
-//                         const classValue = jsControllerDivNode ? jsControllerDivNode.getAttribute('class') : '';
-//                         // Detect actual speaking events based on class names indicating speaking
-//                         const isSpeaking = classValue.includes('IisKdb GF8M7d gjg47c KUNJSe x9nQ6') || classValue.includes('IisKdb GF8M7d gjg47c MNVeFb kT2pkb'); // Adjust these conditions based on the actual class names
-
-//                         if (!isSpeaking) {
-//                             speakingParticipants++;
-//                             currentSpeaker = spanText;
-//                         }
-//                     }
-
-//                     if (speakingParticipants === 1 && currentSpeaker) {
-//                         const speakTime = new Date().toISOString();
-//                         if (!seenParticipantsMap.has(currentSpeaker)) {
-//                             seenParticipantsMap.set(currentSpeaker, []);
-//                         }
-//                         if (!initialSpeak) {
-//                             seenParticipantsMap.get(currentSpeaker).push(speakTime);
-//                             initialSpeak = true;
-//                         } else {
-//                             initialSpeak = false;
-//                         }
-//                         details.push({ speak_time: speakTime, participantname: currentSpeaker });
-//                     }
-//                 }
-//             }
-//             return {
-//                 details,
-//                 updatedInitialSpeak: initialSpeak,
-//                 newSeenParticipants: JSON.stringify(Array.from(seenParticipantsMap.entries()))
-//             };
-//         }, mainDivXPath, initialSpeak, JSON.stringify(Array.from(seenParticipants.entries())));
-//         initialSpeak = updatedInitialSpeak;
-//         seenParticipants.clear();
-//         new Map(JSON.parse(newSeenParticipants)).forEach((value, key) => seenParticipants.set(key, value));
-//         console.log('Extracted Details:', details);
-//         console.log("Seen Participants", seenParticipants);
-//         return { details, seenParticipants };
-//     } catch (error) {
-//         console.error('Error extracting details:', error);
-//         return { details: [], seenParticipants };
-//     }
-// }
-
-// async function extractMicDetails(page, initialSpeak, seenParticipants) {
-//     try {
-//         const mainDivXPath = '//div[contains(@class, "AE8xFb OrqRRb GvcuGe goTdfd")]';
-
-//         const { details, updatedInitialSpeak, newSeenParticipants } = await page.evaluate((mainDivXPath, initialSpeak, seenParticipants) => {
-//             const details = [];
-//             const seenParticipantsMap = new Map(JSON.parse(seenParticipants));
-//             const mainDivNodes = document.evaluate(mainDivXPath, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-
-//             for (let i = 0; i < mainDivNodes.snapshotLength; i++) {
-//                 const mainDiv = mainDivNodes.snapshotItem(i);
-//                 const spanXPath = './/span[contains(@class, "zWGUib")]';
-//                 const spanNodes = document.evaluate(spanXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-//                 const jsControllerDivXPath = './/div[@jscontroller="ES310d"]';
-//                 const jsControllerDivNodes = document.evaluate(jsControllerDivXPath, mainDiv, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
-
-//                 if (spanNodes.snapshotLength === jsControllerDivNodes.snapshotLength) {
-//                     for (let j = 0; j < spanNodes.snapshotLength; j++) {
-//                         const spanNode = spanNodes.snapshotItem(j);
-//                         const spanText = spanNode ? spanNode.textContent : '';
-//                         const jsControllerDivNode = jsControllerDivNodes.snapshotItem(j);
-//                         const classValue = jsControllerDivNode ? jsControllerDivNode.getAttribute('class') : '';
-
-//                         // Detect actual speaking events based on class names indicating speaking
-//                         const isSpeaking = classValue.includes('IisKdb GF8M7d gjg47c KUNJSe x9nQ6') || classValue.includes('IisKdb GF8M7d gjg47c MNVeFb kT2pkb'); // Adjust these conditions based on the actual class names
-
-//                         if (spanText && !isSpeaking) {
-//                             const speakTime = new Date().toISOString();
-//                             if (!seenParticipantsMap.has(spanText)) {
-//                                 seenParticipantsMap.set(spanText, []);
-//                             }
-//                             if (!initialSpeak) {
-//                                 seenParticipantsMap.get(spanText).push(speakTime);
-//                                 initialSpeak = true;
-//                             } else {
-//                                 initialSpeak = false;
-//                             }
-//                             details.push({ speak_time: speakTime, participantname: spanText });
-//                         }
-//                     }
-//                 }
-//             }
-
-//             return {
-//                 details,
-//                 updatedInitialSpeak: initialSpeak,
-//                 newSeenParticipants: JSON.stringify(Array.from(seenParticipantsMap.entries()))
-//             };
-//         }, mainDivXPath, initialSpeak, JSON.stringify(Array.from(seenParticipants.entries())));
-//         initialSpeak = updatedInitialSpeak;
-//         seenParticipants.clear();
-//         new Map(JSON.parse(newSeenParticipants)).forEach((value, key) => seenParticipants.set(key, value));
-
-//         console.log('Extracted Details:', details);
-//         console.log("Seen Participants", seenParticipants);
-//         return { details, seenParticipants };
-//     } catch (error) {
-//         console.error('Error extracting details:', error);
-//         return { details: [], seenParticipants };
-//     }
-// }
 
 async function extractMicDetails(page, initialSpeak, seenParticipants) {
     try {
