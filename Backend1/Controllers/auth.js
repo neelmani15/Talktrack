@@ -64,7 +64,7 @@ async  function HandleGcallback(req,res){
         const encodeName = encodeURIComponent(data.name) 
         // res.status(200).json({ message: 'User Login successfully.' });
         // res.redirect('http://localhost:3000/login/success');
-        res.redirect(`http://localhost:3000/login/success?email=${encodedEmail}&picture=${encodePicture}&name=${encodeName}`);
+        res.redirect(`${process.env.BASE_URL}/login/success?email=${encodedEmail}&picture=${encodePicture}&name=${encodeName}`);
         // const user_info = await axios.get(https://www.googleapis.com/oauth2/v3/tokeninfo?id_token=${token})
         // console.log(user_info);
         // res.send({

@@ -31,7 +31,7 @@ const Port = process.env.PORT || 5001;
 app.use(bodyParser.json());
 
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: process.env.BASE_URL,
     methods: "GET,POST,PUT,DELETE",
     credentials: true,
 }));

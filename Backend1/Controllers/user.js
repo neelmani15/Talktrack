@@ -203,11 +203,15 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
     try {
         puppeteer.use(StealthPlugin());
         const browser = await launch(puppeteer, {
-            defaultViewport: null,
+            defaultViewport: { width: 1320, height: 760 },
             headless: true,
             devtools: false,
             args: [
-                "--autoplay-policy=no-user-gesture-required",
+                "--autoplay-policy=no-user-gesture-required", '--no-sandbox', '--disable-setuid-sandbox',    '--disable-audio',
+      '--disable-microphone',
+      '--disable-camera',
+                    '--disable-cache',
+                '--disk-cache-size=0'
             ],
             executablePath: executablePath(),
         });
@@ -235,23 +239,23 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
         console.log('Name input found');
         await page.type('input[aria-label="Your name"]', 'riktam.ai NoteTaker');
 
-        try {
-            const cameraButtonSelector = '[aria-label*="Turn off camera"]';
-            const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
+        // try {
+        //     const cameraButtonSelector = '[aria-label*="Turn off camera"]';
+        //     const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
 
-            await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 60000 });
-            console.log('Camera button found');
-            await page.click(cameraButtonSelector);
-            console.log('Camera turned off');
+        //     await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 60000 });
+        //     console.log('Camera button found');
+        //     await page.click(cameraButtonSelector);
+        //     console.log('Camera turned off');
 
-            await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 60000 });
-            console.log('Microphone button found');
-            await page.click(microphoneButtonSelector);
-            console.log('Microphone turned off');
+        //     await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 60000 });
+        //     console.log('Microphone button found');
+        //     await page.click(microphoneButtonSelector);
+        //     console.log('Microphone turned off');
 
-        } catch (err) {
-            console.error('Error turning off camera/microphone:', err);
-        }
+        // } catch (err) {
+        //     console.error('Error turning off camera/microphone:', err);
+        // }
 
         const askToJoinButtonSelector = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 jEvJdc QJgqC"]';
         await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 50000 });
@@ -327,11 +331,15 @@ async function HandleLiveMeeting(req, res) {
         await user.save();
         puppeteer.use(StealthPlugin());
         const browser = await launch(puppeteer, {
-            defaultViewport: null,
+            defaultViewport: { width: 1320, height: 760 },
             headless: true,
             devtools: false,
             args: [
-                "--autoplay-policy=no-user-gesture-required",
+                "--autoplay-policy=no-user-gesture-required", '--no-sandbox', '--disable-setuid-sandbox',    '--disable-audio',
+      '--disable-microphone',
+      '--disable-camera',
+                    '--disable-cache',
+                '--disk-cache-size=0'
             ],
             executablePath: executablePath(),
         });
@@ -356,23 +364,23 @@ async function HandleLiveMeeting(req, res) {
         console.log('Name input found');
         await page.type('input[aria-label="Your name"]', 'riktam.ai NoteTaker');
 
-        try {
-            const cameraButtonSelector = '[aria-label*="Turn off camera"]';
-            const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
+        // try {
+        //     const cameraButtonSelector = '[aria-label*="Turn off camera"]';
+        //     const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
 
-            await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 60000 });
-            console.log('Camera button found');
-            await page.click(cameraButtonSelector);
-            console.log('Camera turned off');
+        //     await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 60000 });
+        //     console.log('Camera button found');
+        //     await page.click(cameraButtonSelector);
+        //     console.log('Camera turned off');
 
-            await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 60000 });
-            console.log('Microphone button found');
-            await page.click(microphoneButtonSelector);
-            console.log('Microphone turned off');
+        //     await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 60000 });
+        //     console.log('Microphone button found');
+        //     await page.click(microphoneButtonSelector);
+        //     console.log('Microphone turned off');
 
-        } catch (err) {
-            console.error('Error turning off camera/microphone:', err);
-        }
+        // } catch (err) {
+        //     console.error('Error turning off camera/microphone:', err);
+        // }
 
         const askToJoinButtonSelector = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 jEvJdc QJgqC"]';
         await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 50000 });
