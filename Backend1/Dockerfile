@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y google-chrome-stable
 RUN apt-get install -y xvfb
 
 # Set environment variable for display
-ENV DISPLAY=:99
+# ENV DISPLAY=:99
 
 # Set the working directory
 WORKDIR /usr/src/app
@@ -30,4 +30,4 @@ COPY . .
 EXPOSE 5001
 
 # Start Xvfb and then the node application
-CMD ["xvfb-run", "-a", "node", "index.js"]
+CMD ["./start.sh"]
