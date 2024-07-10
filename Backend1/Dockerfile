@@ -25,6 +25,7 @@ RUN npm install
 
 # Copy the rest of the application files
 COPY . .
+RUN mkdir ./report/video
 
 # Expose the port the app runs on
 EXPOSE 5001
