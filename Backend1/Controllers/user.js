@@ -135,7 +135,7 @@ async function HandleScheduleEvent(req, res) {
             start: scheduleStartTime,
             end: scheduleEndTime,
             url: meetinglink,
-            MeetingId: meetingId
+            MeetingId: meetingId,
             // attendees: attendees
         };
         console.log(alldata)
@@ -190,19 +190,23 @@ let stop = false;
 let meetingstartTime;
 async function HandlejoinMeeting(meetUrl, userEmail) {
     console.log("Joining Meet");
-    let botPresence1=false;
-    // const { meetUrl } = req.body;
-    console.log(meetUrl);
-    console.log(userEmail);
+
+    let botPresence1 = false;
     const parts = meetUrl.split('/');
     const meetingId = parts[parts.length - 1];
-    // const file = fs.createWriteStream("./report/test2.mp4");
 
     console.log(meetingId);
 
     try {
         puppeteer.use(StealthPlugin());
         const browser = await launch(puppeteer, {
+            // defaultViewport: null,
+            // headless: true,
+            // devtools: false,
+            // args: [
+            //     "--autoplay-policy=no-user-gesture-required",
+            // ],
+            // executablePath: executablePath(),
             defaultViewport: { width: 1320, height: 760 },
             headless: true,
             devtools: false,
@@ -213,20 +217,17 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
                     '--disable-cache',
                 '--disk-cache-size=0'
             ],
-            executablePath: executablePath(),
+
+            executablePath: process.env.Chrome_Executable_Path
         });
         const page = (await browser.pages())[0];
 
-        // Define the path for storing the recorded file
-        // const filePath = './report/video/meeting_recording.webm';
         const filePath = `./report/video/meetingId_${meetingId}.webm`;
-        console.log(filePath)
+        console.log(filePath);
         const fileStream = fs.createWriteStream(filePath);
 
-        // Get the media stream
         const stream = await getStream(page, { audio: true, video: true });
         stream.pipe(fileStream);
-        // stream.pipe(file);
 
         const navigationPromise = page.waitForNavigation();
         const context = browser.defaultBrowserContext();
@@ -243,12 +244,12 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
         //     const cameraButtonSelector = '[aria-label*="Turn off camera"]';
         //     const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
 
-        //     await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 60000 });
+        //     await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 180000 });
         //     console.log('Camera button found');
         //     await page.click(cameraButtonSelector);
         //     console.log('Camera turned off');
 
-        //     await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 60000 });
+        //     await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 180000 });
         //     console.log('Microphone button found');
         //     await page.click(microphoneButtonSelector);
         //     console.log('Microphone turned off');
@@ -258,13 +259,12 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
         // }
 
         const askToJoinButtonSelector = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 jEvJdc QJgqC"]';
-        await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 50000 });
+        await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 180000 });
         console.log('Ask to join button found');
         await page.click(askToJoinButtonSelector);
         console.log('Clicked on Ask to join button');
 
         meetingstartTime = Date.now();
-
         console.log("MeetingStartTime", meetingstartTime);
 
         const participantCheckInterval = setInterval(async () => {
@@ -275,18 +275,19 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
             if (botPresence1 || isRecordingStopped) {
                 clearInterval(participantCheckInterval);
                 await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail, orderedSpeaker, meetingstartTime);
+                isRecordingStopped=false;
+                isParticipantsButtonClicked=false;
+                checkInterval=null;
             }
         }, 10000);
         return true;
 
-        // res.status(200).json({ message: 'Recording started successfully.' });
-
     } catch (error) {
         console.error('Error starting recording:', error);
         return false;
-        // res.status(500).json({ error: 'An error occurred while starting recording.' });
     }
 }
+
 
 async function HandleLiveMeeting(req, res) {
     let botPresence1=false;
@@ -331,6 +332,13 @@ async function HandleLiveMeeting(req, res) {
         await user.save();
         puppeteer.use(StealthPlugin());
         const browser = await launch(puppeteer, {
+            // defaultViewport: null,
+            // headless: true,
+            // devtools: false,
+            // args: [
+            //     "--autoplay-policy=no-user-gesture-required",
+            // ],
+            // executablePath: executablePath(),
             defaultViewport: { width: 1320, height: 760 },
             headless: true,
             devtools: false,
@@ -341,7 +349,8 @@ async function HandleLiveMeeting(req, res) {
                     '--disable-cache',
                 '--disk-cache-size=0'
             ],
-            executablePath: executablePath(),
+
+            executablePath: process.env.Chrome_Executable_Path
         });
         const page = (await browser.pages())[0];
 
@@ -357,10 +366,10 @@ async function HandleLiveMeeting(req, res) {
         const context = browser.defaultBrowserContext();
         await context.overridePermissions("https://meet.google.com/", ["microphone", "camera", "notifications"]);
 
-        await page.goto(meetUrl, { waitUntil: "networkidle0", timeout: 120000 });
+        await page.goto(meetUrl, { waitUntil: "networkidle0", timeout: 180000 });
         await navigationPromise;
 
-        await page.waitForSelector('input[aria-label="Your name"]', { visible: true, timeout: 50000 });
+        await page.waitForSelector('input[aria-label="Your name"]', { visible: true, timeout: 180000 });
         console.log('Name input found');
         await page.type('input[aria-label="Your name"]', 'riktam.ai NoteTaker');
 
@@ -368,12 +377,12 @@ async function HandleLiveMeeting(req, res) {
         //     const cameraButtonSelector = '[aria-label*="Turn off camera"]';
         //     const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
 
-        //     await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 60000 });
+        //     await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 180000 });
         //     console.log('Camera button found');
         //     await page.click(cameraButtonSelector);
         //     console.log('Camera turned off');
 
-        //     await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 60000 });
+        //     await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 180000 });
         //     console.log('Microphone button found');
         //     await page.click(microphoneButtonSelector);
         //     console.log('Microphone turned off');
@@ -383,7 +392,7 @@ async function HandleLiveMeeting(req, res) {
         // }
 
         const askToJoinButtonSelector = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 jEvJdc QJgqC"]';
-        await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 50000 });
+        await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 180000 });
         console.log('Ask to join button found');
         await page.click(askToJoinButtonSelector);
         console.log('Clicked on Ask to join button');
@@ -394,12 +403,16 @@ async function HandleLiveMeeting(req, res) {
 
         const participantCheckInterval = setInterval(async () => {
             const botPresence = await HandleCheckBotPresence(page, browser, meetingId, userEmail);
+            console.log("Bot",botPresence);
             botPresence1 = botPresence.status;
             const orderedSpeaker = botPresence.orderedParticipants;
             console.log("Getting", botPresence1);
             if (botPresence1 || isRecordingStopped) {
                 clearInterval(participantCheckInterval);
                 await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail, orderedSpeaker, meetingstartTime);
+                isRecordingStopped=false;
+                isParticipantsButtonClicked=false;
+                checkInterval=null;
             }
         }, 10000);
         // return true;
@@ -425,33 +438,51 @@ async function HandleStopRecording(browser, stream, fileStream, meetingId, userE
         console.log("Time of Meeting Start", meetingstartTime);
         console.log("Meeting Id to Stoprecordeing",meetingId);
 
-        const distinctParticipants = getDistinctParticipants(orderedSpeaker);
-        console.log("Distinct Participants:", distinctParticipants);
+        // const distinctParticipants = getDistinctParticipants(orderedSpeaker);
+        // console.log("Distinct Participants:", distinctParticipants);
 
-        // Get transitions
-        const transitions = getTransitions(orderedSpeaker, meetingstartTime);
-        console.log("Transitions:", transitions);
+        // // Get transitions
+        // const transitions = getTransitions(orderedSpeaker, meetingstartTime);
+        // console.log("Transitions:", transitions)
 
-        const s3Url = await uploadToS3(fileStream.path, process.env.S3_BUCKET_NAME, meetingId);
-        console.log(s3Url)
-
-        const meetingRecord = new Meeting({
-            userEmail: userEmail,
-            meetingId: meetingId,
-            videoS3url: s3Url,
-            assemblytranscritps: '',
-            orderedSpeaker: distinctParticipants,
-            orderSpeakerTimeBasis: transitions,
-            meetingStartTime: meetingstartTime
+        promisefun(meetingId,fileStream,userEmail, orderedSpeaker, meetingstartTime).then(() => {
+            console.log("promisefun executed asynchronously.");
+        }).catch(err => {
+            console.error("Error executing promisefun:", err);
         });
 
-        await meetingRecord.save();
+       
+        // const meetingRecord = new Meeting({
+        //     userEmail: userEmail,
+        //     meetingId: meetingId,
+        //     videoS3url: s3Url,
+        //     assemblytranscritps: '',
+        //     orderedSpeaker: distinctParticipants,
+        //     orderSpeakerTimeBasis: transitions,
+        //     meetingStartTime: meetingstartTime
+        // });
 
-        console.log("Meeting record saved successfully.");
-        await browser?.close();
-        console.log("browser closed")
+        // await meetingRecord.save();
 
+        // console.log("Meeting record saved successfully.");
+        // await browser?.close();
+        // console.log("browser closed")
+        try {
+            if (browser && browser.isConnected()) {
+                await browser?.close();
+                console.log("browser closed");
+            }else{
+                console.log('browser not closing')
+            }
+        } catch (error) {
+
+            console.error('Error closing browser:', error);
+
+        }
+   
         isRecordingStopped = true
+        orderedParticipants=[]
+        seenParticipants = new Map();
         return orderedSpeaker
 
     } catch (error) {
@@ -459,6 +490,38 @@ async function HandleStopRecording(browser, stream, fileStream, meetingId, userE
     }
 }
 
+async function promisefun(meetingId,fileStream,userEmail, orderedSpeaker, meetingstartTime){
+    const distinctParticipants = getDistinctParticipants(orderedSpeaker);
+        console.log("Distinct Participants:", distinctParticipants);
+
+        // Get transitions
+        const transitions = getTransitions(orderedSpeaker, meetingstartTime);
+        console.log("Transitions:", transitions)
+
+    const s3Url = await uploadToS3(fileStream.path, process.env.S3_BUCKET_NAME, meetingId);
+    console.log(s3Url)
+
+    const meetingRecord = new Meeting({
+        userEmail: userEmail,
+        meetingId: meetingId,
+        videoS3url: s3Url,
+        assemblytranscritps: '',
+        orderedSpeaker: distinctParticipants,
+        orderSpeakerTimeBasis: transitions,
+        meetingStartTime: meetingstartTime
+    });
+
+    await meetingRecord.save();
+    const videoPath = `./report/video/meetingId_${meetingId}.webm`;
+    const audioOutputDir = path.dirname(videoPath);
+
+    // Extract audio from the video file
+
+    const audioPath = await getAudio(videoPath, audioOutputDir);
+    console.log(audioPath);
+    removeSpecificFile('./report/video', `meetingId_${meetingId}.webm`);
+
+}
 async function extractMicDetails(page, initialSpeak, seenParticipants) {
     try {
         const mainDivXPath = '//div[contains(@class, "AE8xFb OrqRRb GvcuGe goTdfd")]';
@@ -529,18 +592,6 @@ async function extractMicDetails(page, initialSpeak, seenParticipants) {
     }
 }
 
-
-
-
-
-// let orderedParticipants = [];
-// let allParticipants = new Set();
-// let isParticipantsButtonClicked = false;
-// let checkInterval;
-// let initialSpeak = false;
-// let seenParticipants = new Map();
-// let isRecordingStopped = false;
-
 function getDistinctParticipants(data) {
     const participantsSet = new Set(data.map(entry => entry.participantname));
     return Array.from(participantsSet);
@@ -582,7 +633,7 @@ function getTransitions(data, meetingStartTime) {
 let orderedParticipants = [];
 let allParticipants = new Set();
 let isParticipantsButtonClicked = false;
-let checkInterval;
+let checkInterval=null;
 let initialSpeak = false;
 let seenParticipants = new Map();
 let isRecordingStopped = false;
@@ -590,12 +641,19 @@ let isRecordingStopped = false;
 async function HandleCheckBotPresence(page, browser, stream, fileStream, meetingId, userEmail) {
     try {
         const botName = 'riktam.ai NoteTaker';
+        console.log("Variable of isRecording",isRecordingStopped);
+        // console.log("Check Interval",checkInterval);
         if (isRecordingStopped) {
             clearInterval(checkInterval);
-            return { orderedParticipants: orderedParticipants || [], status: true };
+            isRecordingStopped=false;
+            isParticipantsButtonClicked=false;
+            checkInterval=null;
+            return { orderedParticipants: [], status: false };
         } else {
+            console.log("IsParticipantButtonClicked",isParticipantsButtonClicked);
             if (!isParticipantsButtonClicked) {
                 const buttonXPath = '(//button[contains(@class, "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ JsuyRc boDUxc")])[2]';
+                console.log("If block is executed");
 
                 const buttonClicked = await page.evaluate((xpath) => {
                     const button = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
@@ -612,11 +670,30 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream, meeting
                 } else {
                     console.log('Button not found, skipping click operation.');
                 }
+            }else{
+                console.log("Else Participnat button not updated");
+            }
+            const arrowbutton='(//button[contains(@class,"VYBDae-Bz112c-LgbsSe VYBDae-Bz112c-LgbsSe-OWXEXe-SfQLQb-suEOdc hk9qKe  S5GDme gVYcob")])[2]';
+            const arrowButtonExists = await page.evaluate((xpath) => {
+                const button = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                if (button) {
+                    button.click();
+                    return true;
+                }
+                return false;
+            }, arrowbutton);
+
+            if (arrowButtonExists) {
+                isParticipantsButtonClicked = true;
+                console.log('Arrow button exists in the document.');
+            } else {
+                console.log('Arrow button does not exist in the document.');
             }
 
             if (!checkInterval) {
                 checkInterval = setInterval(async () => {
                     if (isParticipantsButtonClicked) {
+                        console.log("Executed Line 603");
                         if (!page.mainFrame().isDetached()) {
                             const { details, seenParticipants: newSeenParticipants } = await extractMicDetails(page, initialSpeak, seenParticipants);
                             seenParticipants = newSeenParticipants;
@@ -628,6 +705,8 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream, meeting
                         }
                     }
                 }, 1000); // Capture details every second
+            }else{
+                console.log("Check Interval is not cleared");
             }
 
             console.log("Ordered Participants:", orderedParticipants);
@@ -659,12 +738,12 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream, meeting
                     return { orderedParticipants: orderedParticipants || [], status: true };
                 }
             }
-            return { orderedParticipants: orderedParticipants || [], status: false };
+            return { orderedParticipants:  orderedParticipants|| [], status: false };
         }
     } catch (error) {
         console.error('Error checking bot presence:', error);
         clearInterval(checkInterval);
-        return { orderedParticipants: orderedParticipants || [], status: true };
+        return { orderedParticipants: [], status: true };
     }
 }
 
@@ -740,16 +819,19 @@ async function HandleMeetingdetails(req, res) {
                 return res.status(200).json({ meeting, videoaccess_url, audioaccess_url });
             } else {
                 // const videoExists = await checkVideoExists(process.env.S3_BUCKET_NAME, meetingId);
-                const bucketName = process.env.S3_BUCKET_NAME;
-                const downloadDir = './downloadfroms3/video';
-                const videoPath = await downloadvideoFromS3(bucketName, meetingId, downloadDir);
-                const audioOutputDir = path.dirname(videoPath);
+                // const bucketName = process.env.S3_BUCKET_NAME;
+                // const downloadDir = './downloadfroms3/video';
+                // const videoPath = await downloadvideoFromS3(bucketName, meetingId, downloadDir);
+                // const audioOutputDir = path.dirname(videoPath);
                 const speakerLength = meeting.orderedSpeaker.length;
 
                 console.log("Speaker Length", speakerLength);
 
                 // Extract audio from the video file
-                const audioPath = await getAudio(videoPath, audioOutputDir);
+                // const audioPath = await getAudio(videoPath, audioOutputDir);
+               
+
+                audioPath=`report/video/MeetingId_${meetingId}.mp3`
                 console.log(audioPath);
                 const result = await generateMultiSpeakerTranscription(audioPath, speakerLength)
                 console.log(result)
@@ -760,6 +842,10 @@ async function HandleMeetingdetails(req, res) {
                 await meeting.save();
                 const videoaccess_url = await HandleVideoStream(meetingId);
                 const audioaccess_url = await handleAudioStream(meetingId);
+                // removeAllFilesInDirectory('./downloadfroms3/video');
+                // const filePath = './report/video';
+                // removeAllFilesInDirectory('./report/video');
+                removeSpecificFile('./report/video', `meetingId_${meetingId}.mp3`);
                 const mappedTranscripts =await mapTheSpeakerNames(meeting)
                 return res.status(200).json({ meeting, videoaccess_url, audioaccess_url });
 
@@ -787,6 +873,35 @@ async function HandleMeetingdetails(req, res) {
         return res.status(500).json({ error: 'An error occurred while fetching meeting details' });
     }
 }
+
+// function removeAllFilesInDirectory(directoryPath) {
+//     fs.readdir(directoryPath, (err, files) => {
+//         if (err) {
+//             console.error('Error reading directory:', err);
+//             return;
+//         }
+
+//         for (const file of files) {
+//             fs.unlink(path.join(directoryPath, file), err => {
+//                 if (err) {
+//                     console.error('Error deleting file:', err);
+//                 }
+//             });
+//         }
+//     });
+// }
+
+function removeSpecificFile(directoryPath, fileName) {
+    const filePath = path.join(directoryPath, fileName);
+    fs.unlink(filePath, (err) => {
+        if (err) {
+            console.error('Error deleting file:', err);
+            return;
+        }
+        console.log(`File ${fileName} was deleted successfully`);
+    });
+}
+
 
 
 
@@ -907,8 +1022,6 @@ const HandleUpdateMappedTranscripts = async (req, res) => {
       res.status(500).json({ error: 'Server error' });
     }
   };
-
-  
   
 module.exports = {
     HandleScheduleEvent,
