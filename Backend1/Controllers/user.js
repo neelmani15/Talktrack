@@ -170,7 +170,7 @@ async function HandleScheduleEvent(req, res) {
 
         const intervalId = setInterval(checkAndJoinMeeting, interval);
 
-        console.log(`📅 Calendar event created: ${summary} at ${location}, from ${scheduleStartTime} to ${scheduleEndTime}, attendees:\n${attendees.map(person => `🧍 ${person.email}`).join('\n')} \n 💻 Join conference call link: ${meetinglink}`);
+        console.log(📅 Calendar event created: ${summary} at ${location}, from ${scheduleStartTime} to ${scheduleEndTime}, attendees:\n${attendees.map(person => `🧍 ${person.email}).join('\n')} \n 💻 Join conference call link: ${meetinglink}`);
         res.send({
             message: "Event Added"
         });
@@ -222,7 +222,7 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
         });
         const page = (await browser.pages())[0];
 
-        const filePath = `./report/video/meetingId_${meetingId}.webm`;
+        const filePath = ./report/video/meetingId_${meetingId}.webm;
         console.log(filePath);
         const fileStream = fs.createWriteStream(filePath);
 
@@ -268,13 +268,13 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
         console.log("MeetingStartTime", meetingstartTime);
 
         const participantCheckInterval = setInterval(async () => {
-            const botPresence = await HandleCheckBotPresence(page, browser, meetingId, userEmail);
+            const botPresence = await HandleCheckBotPresence(page,participantCheckInterval);
             botPresence1 = botPresence.status;
             const orderedSpeaker = botPresence.orderedParticipants;
             console.log("Getting", botPresence1);
             if (botPresence1 || isRecordingStopped) {
                 clearInterval(participantCheckInterval);
-                await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail, orderedSpeaker, meetingstartTime);
+                await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail, orderedSpeaker, meetingstartTime,participantCheckInterval);
                 isRecordingStopped=false;
                 isParticipantsButtonClicked=false;
                 checkInterval=null;
@@ -310,7 +310,7 @@ async function HandleLiveMeeting(req, res) {
         let originalMeetingId = meetingId;
         let suffix = 1;
         while (user.liveEvents.some(event => event.MeetingId === meetingId)) {
-            meetingId = `${originalMeetingId}${suffix}`;
+            meetingId = ${originalMeetingId}${suffix};
             suffix++;
         }
 
@@ -320,7 +320,7 @@ async function HandleLiveMeeting(req, res) {
         const currentDateTime = new Date();
         const oneHourLater = new Date(currentDateTime.getTime() + (60 * 60 * 1000));
         const alldata = {
-            summary: `Live ${meetingId}`,
+            summary: Live ${meetingId},
             description: "Some Topic",
             start: currentDateTime,
             end: oneHourLater,
@@ -354,7 +354,7 @@ async function HandleLiveMeeting(req, res) {
         });
         const page = (await browser.pages())[0];
 
-        const filePath = `./report/video/meetingId_${meetingId}.webm`;
+        const filePath = ./report/video/meetingId_${meetingId}.webm;
         console.log(filePath);
         const fileStream = fs.createWriteStream(filePath);
 
@@ -373,23 +373,23 @@ async function HandleLiveMeeting(req, res) {
         console.log('Name input found');
         await page.type('input[aria-label="Your name"]', 'riktam.ai NoteTaker');
 
-        // try {
-        //     const cameraButtonSelector = '[aria-label*="Turn off camera"]';
-        //     const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
+        try {
+            const cameraButtonSelector = '[aria-label*="Turn off camera"]';
+            const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
 
-        //     await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 180000 });
-        //     console.log('Camera button found');
-        //     await page.click(cameraButtonSelector);
-        //     console.log('Camera turned off');
+            await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 180000 });
+            console.log('Camera button found');
+            await page.click(cameraButtonSelector);
+            console.log('Camera turned off');
 
-        //     await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 180000 });
-        //     console.log('Microphone button found');
-        //     await page.click(microphoneButtonSelector);
-        //     console.log('Microphone turned off');
+            await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 180000 });
+            console.log('Microphone button found');
+            await page.click(microphoneButtonSelector);
+            console.log('Microphone turned off');
 
-        // } catch (err) {
-        //     console.error('Error turning off camera/microphone:', err);
-        // }
+        } catch (err) {
+            console.error('Error turning off camera/microphone:', err);
+        }
 
         const askToJoinButtonSelector = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 jEvJdc QJgqC"]';
         await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 180000 });
@@ -402,20 +402,22 @@ async function HandleLiveMeeting(req, res) {
         console.log("MeetingStartTime", meetingstartTime);
 
         const participantCheckInterval = setInterval(async () => {
-            const botPresence = await HandleCheckBotPresence(page, browser, meetingId, userEmail);
+            const botPresence = await HandleCheckBotPresence(page,participantCheckInterval);
             console.log("Bot",botPresence);
             botPresence1 = botPresence.status;
             const orderedSpeaker = botPresence.orderedParticipants;
             console.log("Getting", botPresence1);
             if (botPresence1 || isRecordingStopped) {
                 clearInterval(participantCheckInterval);
-                await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail, orderedSpeaker, meetingstartTime);
+                await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail, orderedSpeaker, meetingstartTime,participantCheckInterval);
                 isRecordingStopped=false;
                 isParticipantsButtonClicked=false;
                 checkInterval=null;
             }
+            
         }, 10000);
         // return true;
+       
         return res.status(200).json({ status: true, message: 'Recording started successfully.' });
 
 
@@ -428,7 +430,7 @@ async function HandleLiveMeeting(req, res) {
 }
 
 
-async function HandleStopRecording(browser, stream, fileStream, meetingId, userEmail, orderedSpeaker, meetingstartTime) {
+async function HandleStopRecording(browser, stream, fileStream, meetingId, userEmail, orderedSpeaker, meetingstartTime,participantCheckInterval) {
     try {
         stop = true
         stream.unpipe(fileStream);
@@ -437,7 +439,8 @@ async function HandleStopRecording(browser, stream, fileStream, meetingId, userE
         console.log("Recording stopped successfully.");
         console.log("Time of Meeting Start", meetingstartTime);
         console.log("Meeting Id to Stoprecordeing",meetingId);
-
+        clearInterval(participantCheckInterval)
+        allParticipants.clear();
         // const distinctParticipants = getDistinctParticipants(orderedSpeaker);
         // console.log("Distinct Participants:", distinctParticipants);
 
@@ -512,14 +515,14 @@ async function promisefun(meetingId,fileStream,userEmail, orderedSpeaker, meetin
     });
 
     await meetingRecord.save();
-    const videoPath = `./report/video/meetingId_${meetingId}.webm`;
+    const videoPath = ./report/video/meetingId_${meetingId}.webm;
     const audioOutputDir = path.dirname(videoPath);
 
     // Extract audio from the video file
 
     const audioPath = await getAudio(videoPath, audioOutputDir);
     console.log(audioPath);
-    removeSpecificFile('./report/video', `meetingId_${meetingId}.webm`);
+    removeSpecificFile('./report/video', meetingId_${meetingId}.webm);
 
 }
 async function extractMicDetails(page, initialSpeak, seenParticipants) {
@@ -638,16 +641,18 @@ let initialSpeak = false;
 let seenParticipants = new Map();
 let isRecordingStopped = false;
 
-async function HandleCheckBotPresence(page, browser, stream, fileStream, meetingId, userEmail) {
+async function HandleCheckBotPresence(page,participantCheckInterval) {
     try {
         const botName = 'riktam.ai NoteTaker';
         console.log("Variable of isRecording",isRecordingStopped);
         // console.log("Check Interval",checkInterval);
         if (isRecordingStopped) {
             clearInterval(checkInterval);
+            clearInterval(participantCheckInterval)
             isRecordingStopped=false;
             isParticipantsButtonClicked=false;
             checkInterval=null;
+            allParticipants.clear();
             return { orderedParticipants: [], status: false };
         } else {
             console.log("IsParticipantButtonClicked",isParticipantsButtonClicked);
@@ -735,6 +740,8 @@ async function HandleCheckBotPresence(page, browser, stream, fileStream, meeting
 
                 if (leftMeetingText || participants.length === 1) {
                     clearInterval(checkInterval);
+                    clearInterval(participantCheckInterval)
+                    allParticipants.clear();
                     return { orderedParticipants: orderedParticipants || [], status: true };
                 }
             }
@@ -831,7 +838,7 @@ async function HandleMeetingdetails(req, res) {
                 // const audioPath = await getAudio(videoPath, audioOutputDir);
                
 
-                audioPath=`report/video/MeetingId_${meetingId}.mp3`
+                audioPath=report/video/MeetingId_${meetingId}.mp3
                 console.log(audioPath);
                 const result = await generateMultiSpeakerTranscription(audioPath, speakerLength)
                 console.log(result)
@@ -845,7 +852,7 @@ async function HandleMeetingdetails(req, res) {
                 // removeAllFilesInDirectory('./downloadfroms3/video');
                 // const filePath = './report/video';
                 // removeAllFilesInDirectory('./report/video');
-                removeSpecificFile('./report/video', `meetingId_${meetingId}.mp3`);
+                removeSpecificFile('./report/video', meetingId_${meetingId}.mp3);
                 const mappedTranscripts =await mapTheSpeakerNames(meeting)
                 return res.status(200).json({ meeting, videoaccess_url, audioaccess_url });
 
@@ -898,7 +905,7 @@ function removeSpecificFile(directoryPath, fileName) {
             console.error('Error deleting file:', err);
             return;
         }
-        console.log(`File ${fileName} was deleted successfully`);
+        console.log(File ${fileName} was deleted successfully);
     });
 }
 
@@ -933,7 +940,7 @@ const mapTheSpeakerNames = async (meeting) => {
     // Assign Anonymous labels for additional speakers
     speakersKeys.forEach((letter) => {
       if (!(letter in speakerNameMap)) {
-        speakerNameMap[letter] = `Anonymous ${anonymousCount++}`;
+        speakerNameMap[letter] = Anonymous ${anonymousCount++};
       }
     });
   
@@ -948,7 +955,7 @@ const mapTheSpeakerNames = async (meeting) => {
   
       return {
         ...entry,
-        speakerName: speakerNameMap[entry.speaker] || `Anonymous ${anonymousCount++}`,
+        speakerName: speakerNameMap[entry.speaker] || Anonymous ${anonymousCount++},
       };
     });
   
