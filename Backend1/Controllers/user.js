@@ -170,7 +170,8 @@ async function HandleScheduleEvent(req, res) {
 
         const intervalId = setInterval(checkAndJoinMeeting, interval);
 
-        console.log(📅 Calendar event created: ${summary} at ${location}, from ${scheduleStartTime} to ${scheduleEndTime}, attendees:\n${attendees.map(person => `🧍 ${person.email}).join('\n')} \n 💻 Join conference call link: ${meetinglink}`);
+        console.log(`📅 Calendar event created: ${summary} at ${location}, from ${scheduleStartTime} to ${scheduleEndTime}, attendees:\n${attendees.map(person => `🧍 ${person.email}`).join('\n')} \n 💻 Join conference call link: ${meetinglink}`);
+
         res.send({
             message: "Event Added"
         });
@@ -222,7 +223,7 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
         });
         const page = (await browser.pages())[0];
 
-        const filePath = ./report/video/meetingId_${meetingId}.webm;
+        const filePath =` ./report/video/meetingId_${meetingId}.webm`;
         console.log(filePath);
         const fileStream = fs.createWriteStream(filePath);
 
@@ -310,7 +311,7 @@ async function HandleLiveMeeting(req, res) {
         let originalMeetingId = meetingId;
         let suffix = 1;
         while (user.liveEvents.some(event => event.MeetingId === meetingId)) {
-            meetingId = ${originalMeetingId}${suffix};
+            meetingId = `${originalMeetingId}${suffix}`;
             suffix++;
         }
 
@@ -320,7 +321,7 @@ async function HandleLiveMeeting(req, res) {
         const currentDateTime = new Date();
         const oneHourLater = new Date(currentDateTime.getTime() + (60 * 60 * 1000));
         const alldata = {
-            summary: Live ${meetingId},
+            summary: `Live ${meetingId}`,
             description: "Some Topic",
             start: currentDateTime,
             end: oneHourLater,
@@ -354,7 +355,7 @@ async function HandleLiveMeeting(req, res) {
         });
         const page = (await browser.pages())[0];
 
-        const filePath = ./report/video/meetingId_${meetingId}.webm;
+        const filePath = `./report/video/meetingId_${meetingId}.webm`;
         console.log(filePath);
         const fileStream = fs.createWriteStream(filePath);
 
@@ -515,14 +516,14 @@ async function promisefun(meetingId,fileStream,userEmail, orderedSpeaker, meetin
     });
 
     await meetingRecord.save();
-    const videoPath = ./report/video/meetingId_${meetingId}.webm;
+    const videoPath = `./report/video/meetingId_${meetingId}.webm`;
     const audioOutputDir = path.dirname(videoPath);
 
     // Extract audio from the video file
 
     const audioPath = await getAudio(videoPath, audioOutputDir);
     console.log(audioPath);
-    removeSpecificFile('./report/video', meetingId_${meetingId}.webm);
+    removeSpecificFile('./report/video', `meetingId_${meetingId}.webm`);
 
 }
 async function extractMicDetails(page, initialSpeak, seenParticipants) {
@@ -838,7 +839,7 @@ async function HandleMeetingdetails(req, res) {
                 // const audioPath = await getAudio(videoPath, audioOutputDir);
                
 
-                audioPath=report/video/MeetingId_${meetingId}.mp3
+                audioPath=report/video/`MeetingId_${meetingId}.mp3`
                 console.log(audioPath);
                 const result = await generateMultiSpeakerTranscription(audioPath, speakerLength)
                 console.log(result)
@@ -852,7 +853,7 @@ async function HandleMeetingdetails(req, res) {
                 // removeAllFilesInDirectory('./downloadfroms3/video');
                 // const filePath = './report/video';
                 // removeAllFilesInDirectory('./report/video');
-                removeSpecificFile('./report/video', meetingId_${meetingId}.mp3);
+                removeSpecificFile('./report/video', `meetingId_${meetingId}.mp3`);
                 const mappedTranscripts =await mapTheSpeakerNames(meeting)
                 return res.status(200).json({ meeting, videoaccess_url, audioaccess_url });
 
@@ -905,7 +906,7 @@ function removeSpecificFile(directoryPath, fileName) {
             console.error('Error deleting file:', err);
             return;
         }
-        console.log(File ${fileName} was deleted successfully);
+        console.log(`File ${fileName} was deleted successfully`);
     });
 }
 
@@ -940,7 +941,7 @@ const mapTheSpeakerNames = async (meeting) => {
     // Assign Anonymous labels for additional speakers
     speakersKeys.forEach((letter) => {
       if (!(letter in speakerNameMap)) {
-        speakerNameMap[letter] = Anonymous ${anonymousCount++};
+        speakerNameMap[letter] = Anonymous `${anonymousCount++}`;
       }
     });
   
@@ -955,7 +956,7 @@ const mapTheSpeakerNames = async (meeting) => {
   
       return {
         ...entry,
-        speakerName: speakerNameMap[entry.speaker] || Anonymous ${anonymousCount++},
+        speakerName: speakerNameMap[entry.speaker] || Anonymous `${anonymousCount++}`,
       };
     });
   
