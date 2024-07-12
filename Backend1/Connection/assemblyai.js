@@ -164,6 +164,7 @@ async function generateMultiSpeakerTranscription(audioPath,speakerLength) {
         console.log('Waiting for transcription to complete...');
         const transcriptionResult = await getTranscriptionResult(transcriptionId);
         console.log('Transcription completed.');
+        console.log(transcriptionResult)
 
         // Format the transcription result to include timestamps
         const formattedTranscription = transcriptionResult.utterances.map(utterance => ({

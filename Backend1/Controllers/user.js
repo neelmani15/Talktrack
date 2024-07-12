@@ -331,6 +331,7 @@ async function HandleLiveMeeting(req, res) {
         console.log(alldata);
         user.liveEvents.push(alldata);
         await user.save();
+        
         puppeteer.use(StealthPlugin());
         const browser = await launch(puppeteer, {
             // defaultViewport: null,
@@ -374,23 +375,23 @@ async function HandleLiveMeeting(req, res) {
         console.log('Name input found');
         await page.type('input[aria-label="Your name"]', 'riktam.ai NoteTaker');
 
-        // try {
-        //     const cameraButtonSelector = '[aria-label*="Turn off camera"]';
-        //     const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
+        try {
+            const cameraButtonSelector = '[aria-label*="Turn off camera"]';
+            const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
 
-        //     await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 180000 });
-        //     console.log('Camera button found');
-        //     await page.click(cameraButtonSelector);
-        //     console.log('Camera turned off');
+            await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 180000 });
+            console.log('Camera button found');
+            await page.click(cameraButtonSelector);
+            console.log('Camera turned off');
 
-        //     await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 180000 });
-        //     console.log('Microphone button found');
-        //     await page.click(microphoneButtonSelector);
-        //     console.log('Microphone turned off');
+            await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 180000 });
+            console.log('Microphone button found');
+            await page.click(microphoneButtonSelector);
+            console.log('Microphone turned off');
 
-        // } catch (err) {
-        //     console.error('Error turning off camera/microphone:', err);
-        // }
+        } catch (err) {
+            console.error('Error turning off camera/microphone:', err);
+        }
 
         const askToJoinButtonSelector = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 jEvJdc QJgqC"]';
         await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 180000 });
@@ -401,8 +402,9 @@ async function HandleLiveMeeting(req, res) {
         meetingstartTime = Date.now();
 
         console.log("MeetingStartTime", meetingstartTime);
-
-        const participantCheckInterval = setInterval(async () => {
+        
+        try{
+         participantCheckInterval = setInterval(async () => {
             const botPresence = await HandleCheckBotPresence(page,participantCheckInterval);
             console.log("Bot",botPresence);
             botPresence1 = botPresence.status;
@@ -417,6 +419,9 @@ async function HandleLiveMeeting(req, res) {
             }
             
         }, 10000);
+    }catch(error){
+        console.error("error while excuting participantinterval check",error)
+    }
         // return true;
        
         return res.status(200).json({ status: true, message: 'Recording started successfully.' });
@@ -638,80 +643,367 @@ let orderedParticipants = [];
 let allParticipants = new Set();
 let isParticipantsButtonClicked = false;
 let checkInterval=null;
+let participantCheckInterval;
 let initialSpeak = false;
 let seenParticipants = new Map();
 let isRecordingStopped = false;
 
-async function HandleCheckBotPresence(page,participantCheckInterval) {
+// async function HandleCheckBotPresence(page,participantCheckInterval) {
+//     try {
+//         const botName = 'riktam.ai NoteTaker';
+//         console.log("Variable of isRecording",isRecordingStopped);
+//         // console.log("Check Interval",checkInterval);
+//         if (isRecordingStopped) {
+//             clearInterval(checkInterval);
+//             clearInterval(participantCheckInterval)
+//             isRecordingStopped=false;
+//             isParticipantsButtonClicked=false;
+//             checkInterval=null;
+//             allParticipants.clear();
+//             return { orderedParticipants: [], status: false };
+//         } else {
+//             console.log("IsParticipantButtonClicked",isParticipantsButtonClicked);
+//             if (!isParticipantsButtonClicked) {
+//                     try{
+//                         const buttonXPath = '(//button[contains(@class, "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ JsuyRc boDUxc")])[2]';
+//                         console.log("If block is executed");
+//                         const buttonClicked = await page.evaluate((xpath) => {
+//                             const button = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+//                             if (button) {
+//                                 button.click();
+//                                 return true;
+//                             }
+//                             return false;
+//                         }, buttonXPath);
+//                         if (buttonClicked) {
+//                             console.log('Button clicked!');
+//                             isParticipantsButtonClicked = true;
+//                         } else {
+//                             console.log('Button not found, skipping click operation.');
+//                         }
+//                     }catch(error){
+//                         console.error("error while clicking the participants button",error)
+//                     }
+//             }else{
+//                 console.log("Else Participnat button not updated");
+//             }
+
+//             try{
+//                 const arrowbutton='(//button[contains(@class,"VYBDae-Bz112c-LgbsSe VYBDae-Bz112c-LgbsSe-OWXEXe-SfQLQb-suEOdc hk9qKe  S5GDme gVYcob")])[2]';
+//                 const arrowButtonExists = await page.evaluate((xpath) => {
+//                     const button = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+//                     if (button) {
+//                         button.click();
+//                         return true;
+//                     }
+//                     return false;
+//                 }, arrowbutton);
+
+//                 if (arrowButtonExists) {
+//                     isParticipantsButtonClicked = true;
+//                     console.log('Arrow button exists in the document.');
+//                 } else {
+//                     console.log('Arrow button does not exist in the document.');
+//                 }
+//             }catch(error){
+//                 console.error("error while clicking the arrowbuttom",error)
+//             }
+
+//             if (!checkInterval) {
+//                 try{
+//                     checkInterval = setInterval(async () => {
+//                         if (isParticipantsButtonClicked) {
+//                             console.log("Executed Line 603");
+//                             if (!page.mainFrame().isDetached()) {
+//                                 const { details, seenParticipants: newSeenParticipants } = await extractMicDetails(page, initialSpeak, seenParticipants);
+//                                 seenParticipants = newSeenParticipants;
+//                                 orderedParticipants = [...orderedParticipants, ...details];
+//                                 console.log("Details",details);
+//                             } else {
+//                                 console.log('Frame is detached, stopping interval.');
+//                                 clearInterval(checkInterval);
+//                             }
+//                         }
+//                     }, 1000); // Capture details every second
+
+//                 }catch(error){
+//                     console.error("error in executing checkinterval in checkbotpresence",error)
+//                 }
+//             }else{
+//                 console.log("Check Interval is not cleared");
+//             }
+
+//             console.log("Ordered Participants:", orderedParticipants);
+            
+//             try{
+//                 const frame = page.mainFrame();
+//                 if (!frame.isDetached()) {
+//                     const { participants, leftMeetingText } = await frame.evaluate(() => {
+//                         const leftMeetingElement = document.querySelector('h1[jsname="r4nke"].roSPhc');
+//                         const leftMeetingText = leftMeetingElement ? leftMeetingElement.textContent : null;
+//                         const participants = [];
+//                         const participantElements = document.querySelectorAll('div.dwSJ2e');
+//                         participantElements.forEach(participant => {
+//                             const participantName = participant.innerText;
+//                             participants.push(participantName);
+//                         });
+//                         return { participants, leftMeetingText };
+//                     });
+        
+//                     participants.forEach(participant => {
+//                         allParticipants.add(participant);
+//                     });
+
+//                     console.log('All Participants:', allParticipants);
+//                     console.log('Participants:', participants);
+//                     console.log('Meeting status:', leftMeetingText);
+
+//                     if (leftMeetingText || participants.length === 1) {
+//                         clearInterval(checkInterval);
+//                         clearInterval(participantCheckInterval)
+//                         allParticipants.clear();
+//                         return { orderedParticipants: orderedParticipants || [], status: true };
+//                     }
+//                 }
+//             }catch(error){
+//                 console.error("error while interacting with frame",error)
+//             }
+//             return { orderedParticipants:  orderedParticipants|| [], status: false };
+//         }
+//     } catch (error) {
+//         console.error('Error checking bot presence:', error);
+//         clearInterval(checkInterval);
+//         return { orderedParticipants: [], status: true };
+//     }
+// }
+// async function HandleCheckBotPresence(page, participantCheckInterval) {
+//     try {
+//         const botName = 'riktam.ai NoteTaker';
+//         console.log("Variable of isRecording", isRecordingStopped);
+
+//         if (isRecordingStopped) {
+//             clearInterval(checkInterval);
+//             clearInterval(participantCheckInterval);
+//             isRecordingStopped = false;
+//             isParticipantsButtonClicked = false;
+//             checkInterval = null;
+//             allParticipants.clear();
+//             return { orderedParticipants: [], status: false };
+//         } else {
+//             console.log("IsParticipantButtonClicked", isParticipantsButtonClicked);
+
+//             if (!isParticipantsButtonClicked) {
+//                 try {
+//                     const buttonXPath = '(//button[contains(@class, "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ JsuyRc boDUxc")])[2]';
+//                     console.log("If block is executed");
+
+//                     const buttonClicked = await page.evaluate((xpath) => {
+//                         const button = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+//                         if (button) {
+//                             button.click();
+//                             return true;
+//                         }
+//                         return false;
+//                     }, buttonXPath);
+
+//                     if (buttonClicked) {
+//                         console.log('Button clicked!');
+//                         isParticipantsButtonClicked = true;
+//                     } else {
+//                         console.log('Button not found, skipping click operation.');
+//                     }
+//                 } catch (error) {
+//                     console.error('Error clicking participant button:', error);
+//                 }
+//             } else {
+//                 console.log("Else Participant button not updated");
+//             }
+
+//             try {
+//                 const arrowButtonXPath = '(//button[contains(@class,"VYBDae-Bz112c-LgbsSe VYBDae-Bz112c-LgbsSe-OWXEXe-SfQLQb-suEOdc hk9qKe  S5GDme gVYcob")])[2]';
+//                 const arrowButtonExists = await page.evaluate((xpath) => {
+//                     const button = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+//                     if (button) {
+//                         button.click();
+//                         return true;
+//                     }
+//                     return false;
+//                 }, arrowButtonXPath);
+
+//                 if (arrowButtonExists) {
+//                     isParticipantsButtonClicked = true;
+//                     console.log('Arrow button exists in the document.');
+//                 } else {
+//                     console.log('Arrow button does not exist in the document.');
+//                 }
+//             } catch (error) {
+//                 console.error('Error clicking arrow button:', error);
+//             }
+
+//             if (!checkInterval) {
+//                 checkInterval = setInterval(async () => {
+//                     try {
+//                         if (isParticipantsButtonClicked) {
+//                             console.log("Executed Line 603");
+//                             if (!page.mainFrame().isDetached()) {
+//                                 const { details, seenParticipants: newSeenParticipants } = await extractMicDetails(page, initialSpeak, seenParticipants);
+//                                 seenParticipants = newSeenParticipants;
+//                                 orderedParticipants = [...orderedParticipants, ...details];
+//                                 console.log("Details", details);
+//                             } else {
+//                                 console.log('Frame is detached, stopping interval.');
+//                                 clearInterval(checkInterval);
+//                             }
+//                         }
+//                     } catch (error) {
+//                         console.error('Error during check interval:', error);
+//                     }
+//                 }, 1000); // Capture details every second
+//             } else {
+//                 console.log("Check Interval is not cleared");
+//             }
+
+//             console.log("Ordered Participants:", orderedParticipants);
+
+//             const frame = page.mainFrame();
+//             if (!frame.isDetached()) {
+//                 try {
+//                     const { participants, leftMeetingText } = await frame.evaluate(() => {
+//                         const leftMeetingElement = document.querySelector('h1[jsname="r4nke"].roSPhc');
+//                         const leftMeetingText = leftMeetingElement ? leftMeetingElement.textContent : null;
+//                         const participants = [];
+//                         const participantElements = document.querySelectorAll('div.dwSJ2e');
+//                         participantElements.forEach(participant => {
+//                             const participantName = participant.innerText;
+//                             participants.push(participantName);
+//                         });
+//                         return { participants, leftMeetingText };
+//                     });
+
+//                     participants.forEach(participant => {
+//                         allParticipants.add(participant);
+//                     });
+
+//                     console.log('All Participants:', allParticipants);
+//                     console.log('Participants:', participants);
+//                     console.log('Meeting status:', leftMeetingText);
+
+//                     if (leftMeetingText || participants.length === 1) {
+//                         clearInterval(checkInterval);
+//                         clearInterval(participantCheckInterval);
+//                         allParticipants.clear();
+//                         return { orderedParticipants: orderedParticipants || [], status: true };
+//                     }
+//                 } catch (error) {
+//                     console.error('Error evaluating frame content:', error);
+//                 }
+//             }
+//             return { orderedParticipants: orderedParticipants || [], status: false };
+//         }
+//     } catch (error) {
+//         console.error('Error checking bot presence:', error);
+//         clearInterval(checkInterval);
+//         clearInterval(participantCheckInterval);
+//         return { orderedParticipants: [], status: true };
+//     }
+// }
+
+// // Catch and handle "Target closed" errors specifically
+// process.on('unhandledRejection', (reason, p) => {
+//     if (reason.message.includes('Target closed')) {
+//         console.error('Target closed error:', reason);
+//         clearInterval(checkInterval);
+//         // clearInterval(participantCheckInterval);
+//     } else {
+//         console.error('Unhandled Rejection at:', p, 'reason:', reason);
+//     }
+// });
+
+
+async function HandleCheckBotPresence(page, participantCheckInterval) {
     try {
         const botName = 'riktam.ai NoteTaker';
-        console.log("Variable of isRecording",isRecordingStopped);
-        // console.log("Check Interval",checkInterval);
+        console.log("Variable of isRecording", isRecordingStopped);
+
         if (isRecordingStopped) {
             clearInterval(checkInterval);
-            clearInterval(participantCheckInterval)
-            isRecordingStopped=false;
-            isParticipantsButtonClicked=false;
-            checkInterval=null;
+            clearInterval(participantCheckInterval);
+            isRecordingStopped = false;
+            isParticipantsButtonClicked = false;
+            checkInterval = null;
             allParticipants.clear();
             return { orderedParticipants: [], status: false };
         } else {
-            console.log("IsParticipantButtonClicked",isParticipantsButtonClicked);
-            if (!isParticipantsButtonClicked) {
-                const buttonXPath = '(//button[contains(@class, "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ JsuyRc boDUxc")])[2]';
-                console.log("If block is executed");
+            console.log("IsParticipantButtonClicked", isParticipantsButtonClicked);
 
-                const buttonClicked = await page.evaluate((xpath) => {
+            if (!isParticipantsButtonClicked) {
+                try {
+                    const buttonXPath = '(//button[contains(@class, "VfPpkd-Bz112c-LgbsSe yHy1rc eT1oJ JsuyRc boDUxc")])[2]';
+                    console.log("If block is executed");
+
+                    const buttonClicked = await page.evaluate((xpath) => {
+                        const button = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+                        if (button) {
+                            button.click();
+                            return true;
+                        }
+                        return false;
+                    }, buttonXPath);
+
+                    if (buttonClicked) {
+                        console.log('Button clicked!');
+                        isParticipantsButtonClicked = true;
+                    } else {
+                        console.log('Button not found, skipping click operation.');
+                    }
+                } catch (error) {
+                    console.error('Error clicking participant button:', error);
+                }
+            } else {
+                console.log("Else Participant button not updated");
+            }
+
+            try {
+                const arrowButtonXPath = '(//button[contains(@class,"VYBDae-Bz112c-LgbsSe VYBDae-Bz112c-LgbsSe-OWXEXe-SfQLQb-suEOdc hk9qKe  S5GDme gVYcob")])[2]';
+                const arrowButtonExists = await page.evaluate((xpath) => {
                     const button = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
                     if (button) {
                         button.click();
                         return true;
                     }
                     return false;
-                }, buttonXPath);
+                }, arrowButtonXPath);
 
-                if (buttonClicked) {
-                    console.log('Button clicked!');
+                if (arrowButtonExists) {
                     isParticipantsButtonClicked = true;
+                    console.log('Arrow button exists in the document.');
                 } else {
-                    console.log('Button not found, skipping click operation.');
+                    console.log('Arrow button does not exist in the document.');
                 }
-            }else{
-                console.log("Else Participnat button not updated");
-            }
-            const arrowbutton='(//button[contains(@class,"VYBDae-Bz112c-LgbsSe VYBDae-Bz112c-LgbsSe-OWXEXe-SfQLQb-suEOdc hk9qKe  S5GDme gVYcob")])[2]';
-            const arrowButtonExists = await page.evaluate((xpath) => {
-                const button = document.evaluate(xpath, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
-                if (button) {
-                    button.click();
-                    return true;
-                }
-                return false;
-            }, arrowbutton);
-
-            if (arrowButtonExists) {
-                isParticipantsButtonClicked = true;
-                console.log('Arrow button exists in the document.');
-            } else {
-                console.log('Arrow button does not exist in the document.');
+            } catch (error) {
+                console.error('Error clicking arrow button:', error);
             }
 
             if (!checkInterval) {
                 checkInterval = setInterval(async () => {
-                    if (isParticipantsButtonClicked) {
-                        console.log("Executed Line 603");
-                        if (!page.mainFrame().isDetached()) {
-                            const { details, seenParticipants: newSeenParticipants } = await extractMicDetails(page, initialSpeak, seenParticipants);
-                            seenParticipants = newSeenParticipants;
-                            orderedParticipants = [...orderedParticipants, ...details];
-                            console.log("Details",details);
-                        } else {
-                            console.log('Frame is detached, stopping interval.');
-                            clearInterval(checkInterval);
+                    try {
+                        if (isParticipantsButtonClicked) {
+                            console.log("Executed Line 603");
+                            if (!page.mainFrame().isDetached()) {
+                                const { details, seenParticipants: newSeenParticipants } = await extractMicDetails(page, initialSpeak, seenParticipants);
+                                seenParticipants = newSeenParticipants;
+                                orderedParticipants = [...orderedParticipants, ...details];
+                                console.log("Details", details);
+                            } else {
+                                console.log('Frame is detached, stopping interval.');
+                                clearInterval(checkInterval);
+                            }
                         }
+                    } catch (error) {
+                        console.error('Error during check interval:', error);
                     }
                 }, 1000); // Capture details every second
-            }else{
+            } else {
                 console.log("Check Interval is not cleared");
             }
 
@@ -719,41 +1011,64 @@ async function HandleCheckBotPresence(page,participantCheckInterval) {
 
             const frame = page.mainFrame();
             if (!frame.isDetached()) {
-                const { participants, leftMeetingText } = await frame.evaluate(() => {
-                    const leftMeetingElement = document.querySelector('h1[jsname="r4nke"].roSPhc');
-                    const leftMeetingText = leftMeetingElement ? leftMeetingElement.textContent : null;
-                    const participants = [];
-                    const participantElements = document.querySelectorAll('div.dwSJ2e');
-                    participantElements.forEach(participant => {
-                        const participantName = participant.innerText;
-                        participants.push(participantName);
+                try {
+                    const { participants, leftMeetingText } = await frame.evaluate(() => {
+                        const leftMeetingElement = document.querySelector('h1[jsname="r4nke"].roSPhc');
+                        const leftMeetingText = leftMeetingElement ? leftMeetingElement.textContent : null;
+                        const participants = [];
+                        const participantElements = document.querySelectorAll('div.dwSJ2e');
+                        participantElements.forEach(participant => {
+                            const participantName = participant.innerText;
+                            participants.push(participantName);
+                        });
+                        return { participants, leftMeetingText };
                     });
-                    return { participants, leftMeetingText };
-                });
 
-                participants.forEach(participant => {
-                    allParticipants.add(participant);
-                });
+                    participants.forEach(participant => {
+                        allParticipants.add(participant);
+                    });
 
-                console.log('All Participants:', allParticipants);
-                console.log('Participants:', participants);
-                console.log('Meeting status:', leftMeetingText);
+                    console.log('All Participants:', allParticipants);
+                    console.log('Participants:', participants);
+                    console.log('Meeting status:', leftMeetingText);
 
-                if (leftMeetingText || participants.length === 1) {
-                    clearInterval(checkInterval);
-                    clearInterval(participantCheckInterval)
-                    allParticipants.clear();
-                    return { orderedParticipants: orderedParticipants || [], status: true };
+                    if (leftMeetingText || participants.length === 1) {
+                        clearInterval(checkInterval);
+                        clearInterval(participantCheckInterval);
+                        allParticipants.clear();
+                        return { orderedParticipants: orderedParticipants || [], status: true };
+                    }
+                } catch (error) {
+                    console.error('Error evaluating frame content:', error);
                 }
             }
-            return { orderedParticipants:  orderedParticipants|| [], status: false };
+            return { orderedParticipants: orderedParticipants || [], status: false };
         }
     } catch (error) {
         console.error('Error checking bot presence:', error);
         clearInterval(checkInterval);
+        clearInterval(participantCheckInterval);
         return { orderedParticipants: [], status: true };
     }
 }
+
+process.on('unhandledRejection', (reason, p) => {
+    if (reason.message.includes('Target closed')) {
+        console.error('Target closed error jayakrishna:', reason);
+        clearInterval(checkInterval);
+        clearInterval(participantCheckInterval);
+    } else {
+        console.error('Unhandled Rejection at:', p, 'reason:', reason);
+    }
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught Exception:', error);
+    if (error.message.includes('write after end')) {
+        clearInterval(checkInterval);
+        clearInterval(participantCheckInterval);
+    }
+});
 
 
 async function HandelScheduleEventList(req, res) {
@@ -839,7 +1154,7 @@ async function HandleMeetingdetails(req, res) {
                 // const audioPath = await getAudio(videoPath, audioOutputDir);
                
 
-                audioPath=report/video/`MeetingId_${meetingId}.mp3`
+                audioPath=`report/video/MeetingId_${meetingId}.mp3`
                 console.log(audioPath);
                 const result = await generateMultiSpeakerTranscription(audioPath, speakerLength)
                 console.log(result)

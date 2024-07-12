@@ -692,6 +692,7 @@ const MeetingDetails = () => {
   const audioPlayerRef = useRef(null);
   const [highlightedTranscript, setHighlightedTranscript] = useState(null);
   const transcriptRefs = useRef([]);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -701,6 +702,7 @@ const MeetingDetails = () => {
         const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/meetingdetails`, { meetingId, userEmail });
         setMeetingDetails(response.data);
       } catch (error) {
+        setError("On Going meeting is happening try after sometime  ");
         console.log("Error:", error);
       } finally {
         setLoading(false);
@@ -1039,13 +1041,14 @@ const MeetingDetails = () => {
         {loading ? (
           <Loader />
         ) : (
-          meetingDetails.meeting ? renderMeetingDetails() : renderEventDetails()
+          error? <div>{error}</div>:meetingDetails.meeting ? renderMeetingDetails() : renderEventDetails()
         )}
       </div>
 
       {loading ? (
         <div></div>
       ) : (
+        error? <div></div>:
         <SpeakerModal
           isOpen={isModalOpen}
           onRequestClose={handleCloseModal}
