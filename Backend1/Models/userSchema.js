@@ -30,6 +30,7 @@ const userSchema = new mongoose.Schema({
         // },
         url: String,
         MeetingId:String,
+        status:String,
         // attendees: [String]
     }],
     liveEvents: [{
@@ -45,6 +46,7 @@ const userSchema = new mongoose.Schema({
         // },
         url: String,
         MeetingId:String,
+        status:String,
         // attendees: [String]
     }]
 });

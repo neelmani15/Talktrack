@@ -932,8 +932,8 @@ const MeetingDetails = () => {
   };
   
   const renderAssemblySpeakerTextTranscription = () => {
-    const { assemblytranscritps } = meetingDetails.meeting;
-    const combinedText = assemblytranscritps.plainTextTranscription;
+    const { assemblytranscripts} = meetingDetails.meeting;
+    const combinedText = assemblytranscripts.plainTextTranscription;
     return <div>{combinedText}</div>;
   };
 
@@ -1022,6 +1022,9 @@ const MeetingDetails = () => {
           <div className="flex flex-row items-center mt-8">
             <div className="mr-8">
               <strong>Event Summary:</strong> {event.summary}
+            </div>
+            <div className="mr-8">
+              <strong>Event Summary:</strong> {event.status}
             </div>
           </div>
         </div>

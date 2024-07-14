@@ -989,13 +989,14 @@ const Home = () => {
                     >
                       {event.summary}
                     </td>
+                    
                     <td className="px-2 py-2 whitespace-nowrap">
                       <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-500 mr-1" />
                       {format(new Date(event.start), 'EEE, MMM do')}
                       <FaClock className="inline-block ml-2 mr-1" />
                       {format(new Date(event.start), 'h:mm a')}
                     </td>
-                    <td className="px-2 py-2 whitespace-nowrap relative">
+                    {/* <td className="px-2 py-2 whitespace-nowrap relative">
                       <button
                         onClick={() => {
                           handleMeetingLinkClick(event.url);
@@ -1007,6 +1008,13 @@ const Home = () => {
                           <path fillRule="evenodd" d="M5 4a2 2 0 00-2 2v8a2 2 0 002 2h5v2H8l3 3-3-3h-2v-2h5a2 2 0 002-2V6a2 2 0 00-2-2H5zm5 10V8l5 3-5 3z" clipRule="evenodd" />
                         </svg>
                       </button>
+                    </td> */}
+                    <td
+                      className="px-2 py-2 whitespace-nowrap"
+                      onClick={() => handleMeetingDetails(event.MeetingId)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {event.status}
                     </td>
                   </tr>
                 ))}
@@ -1025,6 +1033,13 @@ const Home = () => {
                     style={{ cursor: 'pointer' }}
                   >
                     {event.summary}
+                  </td>
+                  <td
+                    className="px-2 py-2 whitespace-nowrap"
+                   
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {event.status}
                   </td>
                   <td className="px-2 py-2 whitespace-nowrap">
                     <FontAwesomeIcon icon={faCalendarAlt} className="text-gray-500 mr-1" />

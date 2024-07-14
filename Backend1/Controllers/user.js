@@ -136,6 +136,7 @@ async function HandleScheduleEvent(req, res) {
             end: scheduleEndTime,
             url: meetinglink,
             MeetingId: meetingId,
+            status:"Not Completed"
             // attendees: attendees
         };
         console.log(alldata)
@@ -189,6 +190,7 @@ async function HandleScheduleEvent(req, res) {
 let stop = false;
 
 let meetingstartTime;
+let islivemeeting=false;
 async function HandlejoinMeeting(meetUrl, userEmail) {
     console.log("Joining Meet");
 
@@ -241,23 +243,23 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
         console.log('Name input found');
         await page.type('input[aria-label="Your name"]', 'riktam.ai NoteTaker');
 
-        // try {
-        //     const cameraButtonSelector = '[aria-label*="Turn off camera"]';
-        //     const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
+        try {
+            const cameraButtonSelector = '[aria-label*="Turn off camera"]';
+            const microphoneButtonSelector = '[aria-label*="Turn off microphone"]';
 
-        //     await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 180000 });
-        //     console.log('Camera button found');
-        //     await page.click(cameraButtonSelector);
-        //     console.log('Camera turned off');
+            await page.waitForSelector(cameraButtonSelector, { visible: true, timeout: 180000 });
+            console.log('Camera button found');
+            await page.click(cameraButtonSelector);
+            console.log('Camera turned off');
 
-        //     await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 180000 });
-        //     console.log('Microphone button found');
-        //     await page.click(microphoneButtonSelector);
-        //     console.log('Microphone turned off');
+            await page.waitForSelector(microphoneButtonSelector, { visible: true, timeout: 180000 });
+            console.log('Microphone button found');
+            await page.click(microphoneButtonSelector);
+            console.log('Microphone turned off');
 
-        // } catch (err) {
-        //     console.error('Error turning off camera/microphone:', err);
-        // }
+        } catch (err) {
+            console.error('Error turning off camera/microphone:', err);
+        }
 
         const askToJoinButtonSelector = 'button[class="VfPpkd-LgbsSe VfPpkd-LgbsSe-OWXEXe-k8QpJ VfPpkd-LgbsSe-OWXEXe-dgl2Hf nCP5yc AjY5Oe DuMIQc LQeN7 jEvJdc QJgqC"]';
         await page.waitForSelector(askToJoinButtonSelector, { visible: true, timeout: 180000 });
@@ -298,7 +300,7 @@ async function HandleLiveMeeting(req, res) {
     console.log(userEmail);
     const parts = meetUrl.split('/');
     let meetingId = parts[parts.length - 1];
-
+    islivemeeting=true
     console.log(meetingId);
 
     try {
@@ -309,10 +311,12 @@ async function HandleLiveMeeting(req, res) {
 
         // Check if the meetingId already exists in user's events and generate a unique meetingId if necessary
         let originalMeetingId = meetingId;
+        
         let suffix = 1;
         while (user.liveEvents.some(event => event.MeetingId === meetingId)) {
             meetingId = `${originalMeetingId}${suffix}`;
             suffix++;
+            
         }
 
         oauth2Client.setCredentials({
@@ -326,7 +330,8 @@ async function HandleLiveMeeting(req, res) {
             start: currentDateTime,
             end: oneHourLater,
             url: meetUrl,
-            MeetingId: meetingId
+            MeetingId: meetingId,
+            status:"Not completed"
         };
         console.log(alldata);
         user.liveEvents.push(alldata);
@@ -412,7 +417,7 @@ async function HandleLiveMeeting(req, res) {
             console.log("Getting", botPresence1);
             if (botPresence1 || isRecordingStopped) {
                 clearInterval(participantCheckInterval);
-                await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail, orderedSpeaker, meetingstartTime,participantCheckInterval);
+                await HandleStopRecording(browser, stream, fileStream, meetingId, userEmail, orderedSpeaker, meetingstartTime,participantCheckInterval,islivemeeting);
                 isRecordingStopped=false;
                 isParticipantsButtonClicked=false;
                 checkInterval=null;
@@ -436,7 +441,7 @@ async function HandleLiveMeeting(req, res) {
 }
 
 
-async function HandleStopRecording(browser, stream, fileStream, meetingId, userEmail, orderedSpeaker, meetingstartTime,participantCheckInterval) {
+async function HandleStopRecording(browser, stream, fileStream, meetingId, userEmail, orderedSpeaker, meetingstartTime,participantCheckInterval,islivemeeting) {
     try {
         stop = true
         stream.unpipe(fileStream);
@@ -454,7 +459,7 @@ async function HandleStopRecording(browser, stream, fileStream, meetingId, userE
         // const transitions = getTransitions(orderedSpeaker, meetingstartTime);
         // console.log("Transitions:", transitions)
 
-        promisefun(meetingId,fileStream,userEmail, orderedSpeaker, meetingstartTime).then(() => {
+        promisefun(meetingId,fileStream,userEmail, orderedSpeaker, meetingstartTime,islivemeeting).then(() => {
             console.log("promisefun executed asynchronously.");
         }).catch(err => {
             console.error("Error executing promisefun:", err);
@@ -499,7 +504,7 @@ async function HandleStopRecording(browser, stream, fileStream, meetingId, userE
     }
 }
 
-async function promisefun(meetingId,fileStream,userEmail, orderedSpeaker, meetingstartTime){
+async function promisefun(meetingId,fileStream,userEmail, orderedSpeaker, meetingstartTime,islivemeeting){
     const distinctParticipants = getDistinctParticipants(orderedSpeaker);
         console.log("Distinct Participants:", distinctParticipants);
 
@@ -510,26 +515,71 @@ async function promisefun(meetingId,fileStream,userEmail, orderedSpeaker, meetin
     const s3Url = await uploadToS3(fileStream.path, process.env.S3_BUCKET_NAME, meetingId);
     console.log(s3Url)
 
-    const meetingRecord = new Meeting({
-        userEmail: userEmail,
-        meetingId: meetingId,
-        videoS3url: s3Url,
-        assemblytranscritps: '',
-        orderedSpeaker: distinctParticipants,
-        orderSpeakerTimeBasis: transitions,
-        meetingStartTime: meetingstartTime
-    });
-
-    await meetingRecord.save();
+    
     const videoPath = `./report/video/meetingId_${meetingId}.webm`;
     const audioOutputDir = path.dirname(videoPath);
 
     // Extract audio from the video file
 
     const audioPath = await getAudio(videoPath, audioOutputDir);
-    console.log(audioPath);
+    // console.log(audioPath);
+    // audioPath=`report/video/MeetingId_${meetingId}.mp3`
+    // console.log(audioPath);
+    const speakerLength =distinctParticipants.length;
+    const result = await generateMultiSpeakerTranscription(audioPath, speakerLength)
+    console.log(result)
+   
+
+    const audios3Url = await uploadAudioToS3(audioPath, process.env.S3_BUCKET_NAME, meetingId);
+
+    const meetingRecord = new Meeting({
+        userEmail: userEmail,
+        meetingId: meetingId,
+        videoS3url: s3Url,
+        assemblytranscripts: result,
+        orderedSpeaker: distinctParticipants,
+        orderSpeakerTimeBasis: transitions,
+        meetingStartTime: meetingstartTime
+    });
+
+    await meetingRecord.save();
+    await updateLiveEventStatus( userEmail,meetingId,islivemeeting);
     removeSpecificFile('./report/video', `meetingId_${meetingId}.webm`);
 
+}
+
+
+async function updateLiveEventStatus(userEmail,meetingId,  islivemeeting) {
+    try {
+
+        console.log(islivemeeting)
+        let user
+        if( islivemeeting){
+            console.log("hey i am updateliveevent executes")
+             user = await User.findOneAndUpdate(
+                { email: userEmail, "liveEvents.MeetingId": meetingId },
+                { $set: { "liveEvents.$.status": "completed" } },
+                { new: true } 
+            )
+            islivemeeting=false
+        }else{
+             user = await User.findOneAndUpdate(
+                { email: userEmail, "scheduleEvents.MeetingId": meetingId },
+                { $set: { "scheduleEvents.$.status": "completed" } },
+                { new: true } 
+            )
+
+        }
+        console.log(islivemeeting)
+        if (!user) {
+            console.log('User or meeting not found');
+            return;
+        }
+
+        console.log('Updated user:', user);
+    } catch (err) {
+        console.error('Error updating live event status:', err);
+    }
 }
 async function extractMicDetails(page, initialSpeak, seenParticipants) {
     try {
@@ -1095,20 +1145,47 @@ async function HandelScheduleEventList(req, res) {
         res.status(500).send('Internal Server Error');
     }
 }
+// async function HandelLiveEventList(req, res) {
+//     try {
+//         const { userEmail } = req.body
+//         const user = await User.findOne({ email: userEmail })
+//         // // Check if user exists and has events
+
+//         if (user) {
+//             if (user.liveEvents.length > 0) {
+//                 // If user exists and has events, send the list of events
+//                 const alleventslist = user.liveEvents.map(event => event);
+//                 res.status(200).json({ message: 'All Events are listed', alleventslist });
+//             } else {
+//                 // If user exists but has no events, send a custom message
+//                 res.status(200).json({ message: 'No events found for the user.' });
+//             }
+//         } else {
+//             // If user doesn't exist, send a message indicating user not found
+//             res.status(404).json({ message: 'User not found.' });
+//         }
+//     } catch (error) {
+//         console.error('Error fetching events:', error);
+//         res.status(500).send('Internal Server Error');
+//     }
+// }
+
 async function HandelLiveEventList(req, res) {
     try {
-        const { userEmail } = req.body
-        const user = await User.findOne({ email: userEmail })
-        // // Check if user exists and has events
-
+        const { userEmail } = req.body;
+        const user = await User.findOne({ email: userEmail });
+        
+        // Check if user exists and has events
         if (user) {
-            if (user.liveEvents.length > 0) {
-                // If user exists and has events, send the list of events
-                const alleventslist = user.liveEvents.map(event => event);
-                res.status(200).json({ message: 'All Events are listed', alleventslist });
+            // Filter liveEvents to include only those with status "completed"
+            const alleventslist = user.liveEvents.filter(event => event.status === 'completed');
+
+            if (alleventslist.length > 0) {
+                // If user has completed events, send the list of completed events
+                res.status(200).json({ message: 'Completed Events are listed', alleventslist });
             } else {
-                // If user exists but has no events, send a custom message
-                res.status(200).json({ message: 'No events found for the user.' });
+                // If user exists but has no completed events, send a custom message
+                res.status(200).json({ message: 'No completed events found for the user.' });
             }
         } else {
             // If user doesn't exist, send a message indicating user not found
@@ -1125,15 +1202,16 @@ async function HandleMeetingdetails(req, res) {
         const { meetingId, userEmail } = req.body;
         console.log("Meeting Details in Handle Meeting",meetingId);
         let meeting = await Meeting.findOne({ meetingId });
-        // console.log("meetingdetails",meeting);
+        console.log("meetingdetails",meeting);
 
         if (meeting) {
-            if (meeting.assemblytranscritps != '') {
-                // console.log("iam executed")
+            if (meeting.assemblytranscripts != '') {
+                console.log("iam executed 1209")
                 const videoaccess_url = await HandleVideoStream(meetingId);
                 const audioaccess_url = await handleAudioStream(meetingId);
-                if(meeting.MappedTranscript.length===0){
-                    console.log("i am excuteded")
+                // const mappedTranscripts = mapTheSpeakerNames(meeting)
+                if(meeting.MappedTranscript && meeting.MappedTranscript.length === 0){
+                    console.log("i am excuteded 1213")
                     const mappedTranscripts = mapTheSpeakerNames(meeting)
                  }
                 // const mappedTranscripts = mapTheSpeakerNames(meeting)
@@ -1159,7 +1237,7 @@ async function HandleMeetingdetails(req, res) {
                 const result = await generateMultiSpeakerTranscription(audioPath, speakerLength)
                 console.log(result)
 
-                meeting.assemblytranscritps = result;
+                meeting.assemblytranscripts = result;
                 const audios3Url = await uploadAudioToS3(audioPath, process.env.S3_BUCKET_NAME, meetingId);
 
                 await meeting.save();
@@ -1229,14 +1307,14 @@ function removeSpecificFile(directoryPath, fileName) {
 
 
 const mapTheSpeakerNames = async (meeting) => {
-    const { assemblytranscritps, orderedSpeaker, orderSpeakerTimeBasis } = meeting;
+    const { assemblytranscripts, orderedSpeaker, orderSpeakerTimeBasis } = meeting;
   
     // Create a mapping of speaker letters to indices
     const speakerLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
     const speakers = {};
   
     // Assign letters to each speaker
-    assemblytranscritps.transcriptionData.forEach((dialogue) => {
+    assemblytranscripts.transcriptionData.forEach((dialogue) => {
       if (!(dialogue.speaker in speakers)) {
         speakers[dialogue.speaker] = speakerLetters[Object.keys(speakers).length];
       }
@@ -1260,7 +1338,7 @@ const mapTheSpeakerNames = async (meeting) => {
       }
     });
   
-    const mappedTranscripts = assemblytranscritps.transcriptionData.map((entry, index) => {
+    const mappedTranscripts = assemblytranscripts.transcriptionData.map((entry, index) => {
       let speakerName;
       if (orderSpeakerTimeBasis.length > 0) {
         const timeBasis = orderSpeakerTimeBasis[index] || {};

@@ -27,7 +27,7 @@ const meetingRecordSchema = new mongoose.Schema({
     required:true,
     default:{}
   },
-  assemblytranscritps: {
+  assemblytranscripts: {
     type: JSON,
     required:true,
     default:{}
@@ -43,7 +43,6 @@ const meetingRecordSchema = new mongoose.Schema({
   MappedTranscript:{
     type: Array,
     required: true,
-    default:{}
   }
 });
 
