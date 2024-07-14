@@ -638,6 +638,7 @@ const Home = () => {
   const navigate = useNavigate();
   const { userEmail,userPicture,userName, ScheduleMeetings, setScheduleMeetings,LiveMeetings,setLiveMeetings  } = useUser();
   const [isNoEvents, setIsNoEvents] = useState(false);
+  const [isNoLiveEvents, setIsNoLiveEvents] = useState(false);
   const [formData, setFormData] = useState({
     summary: '',
     description: '',
@@ -732,8 +733,8 @@ const Home = () => {
     try {
       setIsLoading(true);
       const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/notetaker/allLiveEvents`, {userEmail});
-      if(response.data.message === "No events found for the user."){
-        setIsNoEvents(true);
+      if(response.data.message === "No completed events found for the user."){
+        setIsNoLiveEvents(true);
         // toast.warning('No events found for the user.');
         setIsLoading(false);
         return
@@ -769,6 +770,7 @@ const Home = () => {
   };
   const handleCloseModal = () => {
     setIsNoEvents(false);
+    setIsNoLiveEvents(false);
   };
 
   const handleLiveMeetingSubmit = async (e) => {
@@ -804,9 +806,16 @@ const Home = () => {
       <div className="flex-1 p-6">
       {isNoEvents && (
         <Modal
-          title="No Events Found"
-          message="No events found for the user."
+          title="No Schedule Events Found"
+          message="No Schedule events found for the user."
           onClose={handleCloseModal}
+        />
+      )}
+      {isNoLiveEvents && (
+        <Modal 
+        title="No Live Events Found"
+        message="No Live events found for the user."
+        onClose={handleCloseModal}
         />
       )}
         <Navbar />
