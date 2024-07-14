@@ -649,6 +649,8 @@ const Home = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLiveMeetingModalOpen, setIsLiveMeetingModalOpen] = useState(false);
   const [meetingUrl, setMeetingUrl] = useState('');
+  const [title1,setTitle1]=useState('');
+  const [description1,setDescription1]=useState('');
   const [status,setStatus]=useState('');
 
   const startRecording = async (meetUrl) => {
@@ -692,7 +694,7 @@ const Home = () => {
       setIsLoading(true);
       const filteredAttendees = formData.attendees.filter(email => email.trim() !== '');
       const dataToSubmit = { ...formData, userEmail, attendees: filteredAttendees };
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/schedule-event`, { dataToSubmit });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/notetaker/schedule-event`, { dataToSubmit });
       setIsLoading(false);
       setIsModalOpen(false);
       toast.success('Events successfully scheduled!');
@@ -707,7 +709,7 @@ const Home = () => {
   const fetchScheduleEvents = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/allScheduleEvents`, {userEmail});
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/notetaker/allScheduleEvents`, {userEmail});
       if(response.data.message === "No events found for the user."){
         setIsNoEvents(true);
         // toast.warning('No events found for the user.');
@@ -729,7 +731,7 @@ const Home = () => {
   const fetchLiveEvents = async () => {
     try {
       setIsLoading(true);
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/allLiveEvents`, {userEmail});
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/notetaker/allLiveEvents`, {userEmail});
       if(response.data.message === "No events found for the user."){
         setIsNoEvents(true);
         // toast.warning('No events found for the user.');
@@ -775,7 +777,12 @@ const Home = () => {
       setIsLoading(true);
 
       console.log(meetingUrl);
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/start-live-meeting`, { meetUrl: meetingUrl, userEmail });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/notetaker/start-live-meeting`, 
+        { meetUrl: meetingUrl, 
+          userEmail, 
+          title1:title1, 
+          // description1:description1 
+        });
       setIsLoading(false);
       setIsLiveMeetingModalOpen(false);
       toast.success('Live meeting added successfully!');
@@ -939,6 +946,35 @@ const Home = () => {
                 <div className="inline-block rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-6 sm:align-middle sm:max-w-3xl sm:w-full">
                   <form onSubmit={handleLiveMeetingSubmit}>
                     <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div className="mb-4">
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="title1">
+                          Name of Meeting
+                        </label>
+                        <input
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="title1"
+                          type="text"
+                          placeholder="Name of Meeting"
+                          value={title1}
+                          onChange={(e) => setTitle1(e.target.value)}
+                          required
+                        />
+                      </div>
+                      {/* <div className="mb-4">
+                        <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="description1">
+                          Description
+                        </label>
+                        <input
+                          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                          id="description1"
+                          type="text"
+                          placeholder="Description"
+                          value={description1}
+                          onChange={(e) => setDescription1(e.target.value)}
+                          required
+                        />
+                      </div> */}
+                      
                       <div className="mb-4">
                         <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="meetingUrl">
                           Meeting URL

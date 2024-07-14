@@ -43,8 +43,8 @@ app.get('/', (req, res) => {
 
 const userRouter= require("./Routes/user")
 const OAuthRouter= require("./Routes/oauth")
-app.use("/user",userRouter)
-app.use("/auth",OAuthRouter)
+app.use("/api/notetaker",userRouter)
+app.use("/api/auth",OAuthRouter)
 
 const Meeting=require('./Models/MeetRecord.js');
 

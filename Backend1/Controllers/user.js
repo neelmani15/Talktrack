@@ -225,7 +225,7 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
         });
         const page = (await browser.pages())[0];
 
-        const filePath =` ./report/video/meetingId_${meetingId}.webm`;
+        const filePath =`./report/video/meetingId_${meetingId}.webm`;
         console.log(filePath);
         const fileStream = fs.createWriteStream(filePath);
 
@@ -295,7 +295,7 @@ async function HandlejoinMeeting(meetUrl, userEmail) {
 async function HandleLiveMeeting(req, res) {
     let botPresence1=false;
     console.log("Joining Meet");
-    const { meetUrl, userEmail } = req.body;
+    const { meetUrl, userEmail, title1, description1 } = req.body;
     console.log(meetUrl);
     console.log(userEmail);
     const parts = meetUrl.split('/');
@@ -325,7 +325,7 @@ async function HandleLiveMeeting(req, res) {
         const currentDateTime = new Date();
         const oneHourLater = new Date(currentDateTime.getTime() + (60 * 60 * 1000));
         const alldata = {
-            summary: `Live ${meetingId}`,
+            summary: title1,
             description: "Some Topic",
             start: currentDateTime,
             end: oneHourLater,

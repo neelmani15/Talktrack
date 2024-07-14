@@ -10,7 +10,7 @@ function App() {
         <Routes>
           <Route path="/" element={<AuthPage />} />
           <Route path="/login/success" element={<UserDummyComponent />} />
-          <Route path="/user" element={<Home />} />
+          <Route path="/notetaker" element={<Home />} />
           <Route path="/meetingdetails" element={<MeetingDetails/>} />
         </Routes>
       </Router>

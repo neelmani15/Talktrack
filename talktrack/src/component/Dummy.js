@@ -19,7 +19,7 @@ const UserDummyComponent = () => {
     setUserEmail(email || '');
     setUserPicture(picture || '')
     setUserName(name || '')
-    navigate('/user');
+    navigate('/notetaker');
   }, [location, navigate, setUserEmail]);
 
   return <div>Loading...</div>;

@@ -171,7 +171,7 @@ const AuthPage = () => {
   const handleClick = () => {
 
     console.log(process.env.REACT_APP_API_URL)
-    const url = `${process.env.REACT_APP_API_URL}/auth/google`;
+    const url = `${process.env.REACT_APP_API_URL}/api/auth/google`;
     console.log(url);
     window.location.href = url;
   };

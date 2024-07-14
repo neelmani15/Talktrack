@@ -669,6 +669,7 @@ import axios from 'axios';
 import { useLocation, useNavigate } from 'react-router-dom';
 import VideoPlayer from './VideoPlayer';
 import CustomAudioPlayer from './AudioPlayer';
+import { AiOutlineArrowLeft } from 'react-icons/ai';
 import { format } from 'date-fns';
 import { FaClock } from 'react-icons/fa';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -676,6 +677,7 @@ import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import Sidebar from './Sidebar';
 import SpeakerModal from './speakereditmodal';
 import Loader from './Loader';
+import Modal from './Modal';
 
 const MeetingDetails = () => {
   const location = useLocation();
@@ -699,7 +701,7 @@ const MeetingDetails = () => {
       console.log("fetch data is executed");
       try {
         const { meetingId, userEmail } = location.state;
-        const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/meetingdetails`, { meetingId, userEmail });
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/notetaker/meetingdetails`, { meetingId, userEmail });
         setMeetingDetails(response.data);
       } catch (error) {
         setError("On Going meeting is happening try after sometime  ");
@@ -719,7 +721,7 @@ const MeetingDetails = () => {
     const sendMappedTranscripts = async () => {
       try {
         console.log(UpdatedMappedTranscript);
-        const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/update-mapped-transcript`, {
+        const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/notetaker/update-mapped-transcript`, {
           meetingId: meetingDetails.meeting.meetingId,
           UpdatedMappedTranscript,
         });
@@ -1034,17 +1036,24 @@ const MeetingDetails = () => {
 
   return (
     <div className="flex h-screen">
-      <Sidebar
-        onScheduleMeetingClick={() => navigate('/schedule-meeting')}
-        onShowAllEventsClick={() => navigate('/meetings')}
-        onShowLiveMeeting={() => navigate('/live-meeting')}
-        isLoading={false}
-      />
+      <button
+        className="p-4 flex pr-12 mr-8 pt-8 bg-gray-200"
+        onClick={() => navigate(-1)}
+      >
+        <div className='flex items-center justify-center bg-gray-600 px-2 py-1 rounded-md'>
+          <AiOutlineArrowLeft size={20} color='#fff' />
+          <p className='font-semibold text-white m-1'>Back</p>
+        </div>
+      </button>
       <div className="flex-1 p-6 overflow-y-auto">
         {loading ? (
           <Loader />
         ) : (
-          error? <div>{error}</div>:meetingDetails.meeting ? renderMeetingDetails() : renderEventDetails()
+          error? <Modal
+          title="Something went wrong"
+          message={error}
+          onClose={() => navigate(-1)}
+        />:meetingDetails.meeting ? renderMeetingDetails() : renderEventDetails()
         )}
       </div>
 

@@ -131,7 +131,7 @@ const Meetings = () => {
       setIsLoading(true);
 
       console.log(meetingUrl);
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/user/start-live-meeting`, { meetUrl: meetingUrl, userEmail });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/notetaker/start-live-meeting`, { meetUrl: meetingUrl, userEmail });
       setIsLoading(false);
       setIsLiveMeetingModalOpen(false);
       toast.success('Live meeting added successfully!');
