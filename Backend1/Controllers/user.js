@@ -544,8 +544,9 @@ async function promisefun(meetingId,fileStream,userEmail, orderedSpeaker, meetin
 
     await meetingRecord.save();
     await updateLiveEventStatus( userEmail,meetingId,islivemeeting);
-    removeSpecificFile('./report/video', `meetingId_${meetingId}.webm`);
-
+    // removeSpecificFile('./report/video', `meetingId_${meetingId}.webm`);
+    const directoryPath = './report/video'
+    removeAllFilesInDirectory(directoryPath);  
 }
 
 
@@ -1275,22 +1276,23 @@ async function HandleMeetingdetails(req, res) {
     }
 }
 
-// function removeAllFilesInDirectory(directoryPath) {
-//     fs.readdir(directoryPath, (err, files) => {
-//         if (err) {
-//             console.error('Error reading directory:', err);
-//             return;
-//         }
+function removeAllFilesInDirectory(directoryPath) {
+    fs.readdir(directoryPath, (err, files) => {
+        if (err) {
+            console.error('Error reading directory:', err);
+            return;
+        }
 
-//         for (const file of files) {
-//             fs.unlink(path.join(directoryPath, file), err => {
-//                 if (err) {
-//                     console.error('Error deleting file:', err);
-//                 }
-//             });
-//         }
-//     });
-// }
+        for (const file of files) {
+            fs.unlink(path.join(directoryPath, file), err => {
+                if (err) {
+                    console.error('Error deleting file:', err);
+                }
+            });
+        }
+    });
+}
+
 
 function removeSpecificFile(directoryPath, fileName) {
     const filePath = path.join(directoryPath, fileName);

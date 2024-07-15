@@ -39,6 +39,7 @@ async function HandelGoogleAuthentication(req,res){
 
 async  function HandleGcallback(req,res){
     // console.log(req.query);
+    console.log("i am executed")
     try{
 
         const code = req.query.code;

@@ -653,6 +653,7 @@ const Home = () => {
   const [title1,setTitle1]=useState('');
   const [description1,setDescription1]=useState('');
   const [status,setStatus]=useState('');
+  const[isCompleted,setisCompleted]=useState(false)
 
   const startRecording = async (meetUrl) => {
     try {
@@ -700,7 +701,7 @@ const Home = () => {
       setIsModalOpen(false);
       toast.success('Events successfully scheduled!');
       fetchScheduleEvents();// Refresh events after scheduling a new one
-      fetchLiveEvents();
+      // fetchLiveEvents();
     } catch (error) {
       setIsLoading(false);
       toast.error('Failed to schedule events.');
@@ -752,13 +753,18 @@ const Home = () => {
     }
   };
 
-  const handleMeetingDetails = async (eventUrl) => {
+  const handleMeetingDetails = async (eventUrl,status) => {
     const parts = eventUrl.split('/');
     const meetingId = parts[parts.length - 1];
     try {
+      console.log(status)
       // const response = await axios.post('http:///user/meetingdetails', { meetingId,userEmail });
-      
-      navigate('/meetingdetails', { state: { meetingId,userEmail }  });
+      if(status==="completed"){
+        navigate('/meetingdetails', { state: { meetingId,userEmail }  });
+      }else{
+        setisCompleted(true)
+      }
+     
     } catch (error) {
       console.error('Error fetching meeting details:', error);
     }
@@ -771,6 +777,7 @@ const Home = () => {
   const handleCloseModal = () => {
     setIsNoEvents(false);
     setIsNoLiveEvents(false);
+    setisCompleted(false)
   };
 
   const handleLiveMeetingSubmit = async (e) => {
@@ -788,6 +795,8 @@ const Home = () => {
       setIsLoading(false);
       setIsLiveMeetingModalOpen(false);
       toast.success('Live meeting added successfully!');
+      setTitle1('')
+      setMeetingUrl('')
     } catch (error) {
       setIsLoading(false);
       toast.error('Failed to add live meeting.');
@@ -815,6 +824,13 @@ const Home = () => {
         <Modal 
         title="No Live Events Found"
         message="No Live events found for the user."
+        onClose={handleCloseModal}
+        />
+      )}
+       {isCompleted && (
+        <Modal 
+        title="meeting status not completed"
+        message="once meeting status is Completed.Try again"
         onClose={handleCloseModal}
         />
       )}
@@ -1029,7 +1045,7 @@ const Home = () => {
                   <tr key={index}>
                     <td
                       className="px-2 py-2 whitespace-nowrap"
-                      onClick={() => handleMeetingDetails(event.MeetingId)}
+                      onClick={() => handleMeetingDetails(event.MeetingId,event.status)}
                       style={{ cursor: 'pointer' }}
                     >
                       {event.summary}
@@ -1041,7 +1057,7 @@ const Home = () => {
                       <FaClock className="inline-block ml-2 mr-1" />
                       {format(new Date(event.start), 'h:mm a')}
                     </td>
-                    {/* <td className="px-2 py-2 whitespace-nowrap relative">
+                    <td className="px-2 py-2 whitespace-nowrap relative">
                       <button
                         onClick={() => {
                           handleMeetingLinkClick(event.url);
@@ -1053,10 +1069,10 @@ const Home = () => {
                           <path fillRule="evenodd" d="M5 4a2 2 0 00-2 2v8a2 2 0 002 2h5v2H8l3 3-3-3h-2v-2h5a2 2 0 002-2V6a2 2 0 00-2-2H5zm5 10V8l5 3-5 3z" clipRule="evenodd" />
                         </svg>
                       </button>
-                    </td> */}
+                    </td>
                     <td
                       className="px-2 py-2 whitespace-nowrap"
-                      onClick={() => handleMeetingDetails(event.MeetingId)}
+                      onClick={() => handleMeetingDetails(event.MeetingId,event.status)}
                       style={{ cursor: 'pointer' }}
                     >
                       {event.status}
@@ -1074,7 +1090,7 @@ const Home = () => {
                 <tr key={index}>
                   <td
                     className="px-2 py-2 whitespace-nowrap"
-                    onClick={() => handleMeetingDetails(event.MeetingId)}
+                    onClick={() => handleMeetingDetails(event.MeetingId,event.status)}
                     style={{ cursor: 'pointer' }}
                   >
                     {event.summary}
